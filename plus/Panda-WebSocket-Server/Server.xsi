@@ -1,0 +1,57 @@
+MODULE = Panda::WebSocket::Server                PACKAGE = Panda::WebSocket::Server
+PROTOTYPES: DISABLE
+
+panda::websocket::server::Server* panda::websocket::server::Server::new (panda::event::Loop* loop = NULL) {
+    RETVAL = new XSServer(loop);
+}
+
+void panda::websocket::server::Server::init (HV* hvcfg) {
+    SV** ref;
+    ServerConfig config;
+    
+    if ((ref = hv_fetch(hvcfg, "locations", 9, 0))) {
+        auto av = typemap_incast<AV*>(*ref);
+        if (av) {
+            auto lasti = AvFILLp(av);
+            auto svlocs = AvARRAY(av);
+            while (lasti-- >= 0) {
+                if (!*svlocs) continue;
+                auto hvloc = typemap_incast<HV*>(*svlocs);
+                if (!hvloc) continue;
+                Location loc = {"", 0, false};
+                if ((ref = hv_fetch(hvloc, "host", 4, 0)))   loc.host   = typemap_incast<string>(*ref);
+                if ((ref = hv_fetch(hvloc, "port", 4, 0)))   loc.port   = SvIV(*ref);
+                if ((ref = hv_fetch(hvloc, "secure", 6, 0))) loc.secure = SvTRUE(*ref) ? true : false;
+                config.locations.push_back(loc);
+                svlocs++;
+            }
+        }
+    } 
+    
+    PWS_TRY({ THIS->init(config); });
+}
+
+panda::event::Loop* panda::websocket::server::Server::loop () {
+    HV* CLASS;
+    RETVAL = THIS->loop();
+}
+
+void panda::websocket::server::Server::run () {
+    PWS_TRY({ THIS->run(); });
+}
+
+void panda::websocket::server::Server::stop () {
+    PWS_TRY({ THIS->stop(); });
+}
+
+void panda::websocket::server::Server::DESTROY () {}
+
+int test () {
+    uint64_t sum = 0;
+    for (int i = 0; i < 1000000; ++i) {
+        void* abc = malloc(64*1024);
+        sum += (uint64_t)abc;
+        free(abc);
+    }
+    RETVAL = sum;
+}
