@@ -9,7 +9,7 @@ write_makefile(
     CPLUS         => 1,
     DEFINE        => $ENV{DEBUG} ? '-DDEBUG' : '',
     TEST_REQUIRES => {'Net::SSLeay' => 0},
-    BIN_DEPS      => ['Panda::Event'],
+    BIN_DEPS      => ['Panda::Event', 'Panda::WebSocket'],
     SRC           => 'src',
     INC           => '-Isrc',
     TYPEMAPS      => 'typemap',
