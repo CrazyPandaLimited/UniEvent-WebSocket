@@ -18,17 +18,19 @@ void panda::websocket::server::Server::init (HV* hvcfg) {
                 if (!*svlocs) continue;
                 auto hvloc = typemap_incast<HV*>(*svlocs);
                 if (!hvloc) continue;
-                Location loc = {"", 0, false};
+                Location loc = {string(), 0, false, 0};
                 if ((ref = hv_fetch(hvloc, "host", 4, 0)))   loc.host   = typemap_incast<string>(*ref);
-                if ((ref = hv_fetch(hvloc, "port", 4, 0)))   loc.port   = SvIV(*ref);
+                if ((ref = hv_fetch(hvloc, "port", 4, 0)))   loc.port   = SvUV(*ref);
                 if ((ref = hv_fetch(hvloc, "secure", 6, 0))) loc.secure = SvTRUE(*ref) ? true : false;
-                config.locations.push_back(loc);
+                config.locations.push_back(std::move(loc));
                 svlocs++;
             }
         }
-    } 
+    }
     
-    PWS_TRY({ THIS->init(config); });
+    PXS_TRY({
+        THIS->init(config);
+    });
 }
 
 panda::event::Loop* panda::websocket::server::Server::loop () {
@@ -37,21 +39,15 @@ panda::event::Loop* panda::websocket::server::Server::loop () {
 }
 
 void panda::websocket::server::Server::run () {
-    PWS_TRY({ THIS->run(); });
+    PXS_TRY({
+        THIS->run();
+    });
 }
 
 void panda::websocket::server::Server::stop () {
-    PWS_TRY({ THIS->stop(); });
+    PXS_TRY({
+        THIS->stop();
+    });
 }
 
 void panda::websocket::server::Server::DESTROY () {}
-
-int test () {
-    uint64_t sum = 0;
-    for (int i = 0; i < 1000000; ++i) {
-        void* abc = malloc(64*1024);
-        sum += (uint64_t)abc;
-        free(abc);
-    }
-    RETVAL = sum;
-}

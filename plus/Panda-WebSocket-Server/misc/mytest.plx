@@ -19,12 +19,12 @@ $f->init({
 
 $f->run;
 
-my $t = new Panda::Event::Timer($f->loop);
-$t->timer_callback(sub {
-    $f->stop;
-    $t->stop;
-});
-#$t->start(2);
+#my $t = new Panda::Event::Timer($f->loop);
+#$t->timer_callback(sub {
+#    $f->stop;
+#    $t->stop;
+#});
+##$t->start(2);
 
 say "entering loop";
 $loop->run;

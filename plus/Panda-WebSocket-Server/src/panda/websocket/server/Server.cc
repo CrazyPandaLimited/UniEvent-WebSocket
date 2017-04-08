@@ -10,13 +10,12 @@ Server::Server (Loop* loop) : _loop(loop), lastid(0), running(false) {
     cout << "Server(): loop is default = " << (_loop == Loop::default_loop()) << "\n";
 }
 
-void Server::init (ServerConfig config) throw(ConfigError) {
-
-	if (!config.locations.size()) throw ConfigError("no locations to listen supplied");
+void Server::init (ServerConfig config) {
+	if (!config.locations.size()) throw std::invalid_argument("no locations to listen supplied");
 
 	for (auto& loc : config.locations) {
-		if (!loc.host)    throw ConfigError("empty host in one of locations");
-		if (!loc.port)    throw ConfigError("empty port in one of locations");
+		if (!loc.host)    throw std::invalid_argument("empty host in one of locations");
+		if (!loc.port)    throw std::invalid_argument("zero port in one of locations");
 		if (!loc.backlog) loc.backlog = 1024;
 	}
 
@@ -40,14 +39,14 @@ void Server::init (ServerConfig config) throw(ConfigError) {
 //}
 
 void Server::run () {
-	if (running) return;
+	if (running) throw std::logic_error("already running");
 	running = true;
 	cout << "run\n";
 
 	for (auto& location : locations) {
-		auto l = new Listener(_loop);
+		auto l = new Listener(_loop, location);
         l->connection_callback = std::bind(&Server::on_connect, this, _1, _2);
-		l->run(location);
+		l->run();
 		listeners.push_back(l);
 	}
 }

@@ -1,25 +1,33 @@
 #pragma once
-#include <panda/websocket/server/inc.h>
+#include <panda/string.h>
+#include <panda/event/TCP.h>
 
 namespace panda { namespace websocket { namespace server {
+
+using panda::string;
+using panda::event::TCP;
+using panda::event::Loop;
 
 struct Location {
     string   host;
     uint16_t port;
-    bool     secure;
-    int      backlog;
+    bool     secure;     // WSS if true
+    bool     reuse_port; // several listeners(servers) can be bound to the same port if true, useful for threaded apps
+    int      backlog;    // max accept queue
 };
 
 class Listener : public TCP {
-public:
-    Listener (Loop* loop);
-
-    void run (Location location);
-    
-    Location location () const { return _location; }
-    
-private:
     Location _location;
+
+public:
+    Listener (Loop* loop, const Location& loc);
+
+    const Location& location () const { return _location; }
+
+    void run ();
+    
 };
+
+typedef shared_ptr<Listener> ListenerSP;
 
 }}}

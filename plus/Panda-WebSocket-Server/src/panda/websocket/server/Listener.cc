@@ -1,22 +1,24 @@
-#include <panda/websocket/server/Server.h>
 #include <panda/websocket/server/Listener.h>
+#include <panda/websocket/server/utils.h>
 
 namespace panda { namespace websocket { namespace server {
 
 using std::cout;
 
-Listener::Listener (Loop* loop) : TCP(loop, AF_INET) {
+// initializing TCP with two params ctor: this way it will pre-create socket so we could set its options in run()
+Listener::Listener (Loop* loop, const Location& loc) : TCP(loop, AF_INET), _location(loc) {
 }
 
-void Listener::run (Location location) {
-    _location = location;
-    int on = 1;
-    setsockopt(SOL_SOCKET, SO_REUSEPORT, &on, sizeof(on));
-    const char* service = panda::lib::itoa(_location.port);
-    cout << "Listener[run]: listening " << (_location.secure ? "wss://" : "ws://") << _location.host << ":" << service << "\n";
-    bind(_location.host.data(), service);
+void Listener::run () {
+    cout << "Listener[run]: listening " << (_location.secure ? "wss://" : "ws://") << _location.host << ":" << _location.port << "\n";
+    if (_location.reuse_port) {
+        int on = 1;
+        setsockopt(SOL_SOCKET, SO_REUSEPORT, &on, sizeof(on));
+    }
+    bind(_location.host, string::from_number(_location.port));
     listen(_location.backlog);
     if (_location.secure) use_ssl();
 }
 
 }}}
+
