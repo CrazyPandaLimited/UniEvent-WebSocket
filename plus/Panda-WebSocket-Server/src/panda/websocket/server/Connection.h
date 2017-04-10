@@ -6,7 +6,6 @@ namespace panda { namespace websocket { namespace server {
 
 using panda::event::TCP;
 using panda::event::Loop;
-using panda::event::buf_t;
 using panda::event::StreamError;
 
 class Connection : public TCP {
@@ -32,10 +31,7 @@ private:
     uint64_t     _id;
     ServerParser _parser;
     
-    virtual void on_buf_alloc (buf_t* buf);
-    virtual void on_buf_free  (const buf_t* buf);
-
-    virtual bool on_read (const buf_t* buf, const StreamError& err);
+    void on_read (const string& buf, const StreamError& err) override;
 
 };
 

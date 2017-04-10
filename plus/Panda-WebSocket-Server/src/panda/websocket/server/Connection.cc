@@ -15,32 +15,20 @@ void Connection::run (Stream* listener) {
     //eof_callback  = std::bind(&Connection::on_eof, )
 }
 
-void Connection::on_buf_alloc (buf_t* buf) {
-    buf->base = (char*)malloc(buf->len);
-    if (!buf->base) throw std::bad_alloc();
-}
-
-void Connection::on_buf_free (const buf_t* buf) {
-    free(buf->base);
-}
-
-static void _buf_dtor (char* ptr, size_t) {
-    free(ptr);
-}
-
-bool Connection::on_read (const buf_t* buf, const StreamError& err) {
+void Connection::on_read (const string& buf, const StreamError& err) {
     if (err) {
-        cout << "Connection(" << _id << ")[on_read]: error " << err << "\n";
+        cout << "Connection(" << _id << ")[on_read]: error " << err.what() << "\n";
         throw "pizdec";
-        return false;
+        return;
     }
 
-    string chunk(buf->base, buf->len, buf->len, _buf_dtor);
-    cout << "Connection(" << _id << ")[on_read]: " << chunk << "\n";
+    cout << "Connection(" << _id << ")[on_read]: " << buf << "\n";
+
+    string chunk = buf;
 
     if (!_parser.accept_parsed()) {
         auto creq = _parser.accept(chunk);
-        if (!creq) return true;
+        if (!creq) return;
 
         if (creq->error) {
             HTTPResponse res;
@@ -48,7 +36,7 @@ bool Connection::on_read (const buf_t* buf, const StreamError& err) {
         }
         else on_ws_accept(creq);
 
-        return true;
+        return;
     }
 
     if (!_parser.accepted()) throw "should not happen";
@@ -57,8 +45,6 @@ bool Connection::on_read (const buf_t* buf, const StreamError& err) {
     for (const auto& msg : msg_range) {
         on_ws_message(msg);
     }
-
-    return true;
 }
 
 void Connection::on_ws_accept (ConnectRequestSP req) {
@@ -70,13 +56,13 @@ void Connection::on_ws_accept (ConnectRequestSP req) {
 void Connection::ws_accept_error (HTTPResponse* res) {
     string data = _parser.accept_error(res);
     cout << "Connection(" << _id << ")[ws_accept_error]: sending\n" << data << "\n";
-    write(data.buf(), data.length());
+    write(data);
 }
 
 void Connection::ws_accept_response (ConnectResponse* res) {
     string data = _parser.accept_response(res);
     cout << "Connection(" << _id << ")[ws_accept_response]: sending\n" << data << "\n";
-    write(data.buf(), data.length());
+    write(data);
 }
 
 void Connection::on_ws_message (MessageSP msg) {

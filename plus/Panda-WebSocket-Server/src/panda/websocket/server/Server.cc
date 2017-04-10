@@ -53,7 +53,7 @@ void Server::run () {
 
 void Server::on_connect (Stream* listener, const StreamError& err) {
     if (err) {
-        cout << "Server[on_connect]: error: " << err << "\n";
+        cout << "Server[on_connect]: error: " << err.what() << "\n";
         return;
     }
     cout << "Server[on_connect]: somebody connected to " << (uint64_t)listener << "\n";
