@@ -7,28 +7,39 @@ namespace panda { namespace websocket { namespace server {
 using panda::event::TCP;
 using panda::event::Loop;
 using panda::event::StreamError;
+class Server;
 
 class Connection : public TCP {
 public:
-    std::function<void(Connection*, const StreamError&)> error_callback;
+    std::function<void(Connection*, ConnectRequestSP)>   accept_callback;
+    std::function<void(Connection*, FrameSP)>            frame_callback;
+    std::function<void(Connection*, MessageSP)>          message_callback;
+    std::function<void(Connection*, const StreamError&)> stream_error_callback;
 
-    Connection (Loop* loop, uint64_t id);
+    Connection (Server* server, uint64_t id);
     
     uint64_t id () const { return _id; }
     
-    void run (Stream* listener);
+    virtual void run (Stream* listener);
     
-    void ws_accept_error    (HTTPResponse* res);
-    void ws_accept_response (ConnectResponse* res);
+    virtual void send_accept_error    (HTTPResponse* res);
+    virtual void send_accept_response (ConnectResponse* res);
+
+    virtual void close (int code);
+    void close (CloseCode code) { close((int)code); }
 
     virtual ~Connection ();
 
 protected:
-    virtual void on_ws_accept  (ConnectRequestSP request);
-    virtual void on_ws_message (MessageSP msg);
+    virtual void on_accept       (ConnectRequestSP request);
+    virtual void on_frame        (FrameSP frame);
+    virtual void on_message      (MessageSP msg);
+    virtual void on_stream_error (const StreamError& err);
+    virtual void on_eof          ();
 
 private:
     uint64_t     _id;
+    Server*      _server;
     ServerParser _parser;
     
     void on_read (const string& buf, const StreamError& err) override;

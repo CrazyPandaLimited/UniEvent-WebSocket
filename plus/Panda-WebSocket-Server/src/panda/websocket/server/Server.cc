@@ -6,7 +6,6 @@ using std::cout;
 using namespace std::placeholders;
 
 Server::Server (Loop* loop) : _loop(loop), lastid(0), running(false) {
-    if (!_loop) _loop = Loop::default_loop();
     cout << "Server(): loop is default = " << (_loop == Loop::default_loop()) << "\n";
 }
 
@@ -51,6 +50,10 @@ void Server::run () {
 	}
 }
 
+Connection* Server::new_connection (uint64_t id) {
+    return new Connection(this, id);
+}
+
 void Server::on_connect (Stream* listener, const StreamError& err) {
     if (err) {
         cout << "Server[on_connect]: error: " << err.what() << "\n";
@@ -58,7 +61,7 @@ void Server::on_connect (Stream* listener, const StreamError& err) {
     }
     cout << "Server[on_connect]: somebody connected to " << (uint64_t)listener << "\n";
 
-    auto conn = new Connection(_loop, ++lastid);
+    auto conn = new_connection(++lastid);
     connections[conn->id()] = conn;
     conn->eof_callback = std::bind(&Server::on_disconnect, this, _1);
     conn->run(listener);

@@ -16,7 +16,7 @@ struct ServerConfig {
 class Server : public virtual RefCounted {
 public:
 
-    Server (Loop* loop);
+    Server (Loop* loop = Loop::default_loop());
 
     void init (ServerConfig config);
     
@@ -24,8 +24,15 @@ public:
     
     void run  ();
     void stop ();
-    
+
+    void close_connection  (Connection* conn, CloseCode code) { conn->close(code); }
+    void close_connection  (Connection* conn, int code)       { conn->close(code); }
+    void remove_connection (Connection* conn);
+
     virtual ~Server ();
+
+protected:
+    Connection* new_connection (uint64_t id);
 
 private:
     typedef std::map<uint64_t, ConnectionSP> ConnectionMap;
@@ -39,7 +46,6 @@ private:
     
     void on_connect        (Stream* handle, const StreamError& err);
     void on_disconnect     (Stream* handle);
-    void remove_connection (Connection* conn);
 
 };
 
