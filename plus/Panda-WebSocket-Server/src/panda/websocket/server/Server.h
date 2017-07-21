@@ -1,6 +1,7 @@
 #pragma once
 #include <map>
 #include <vector>
+#include <functional>
 #include <panda/refcnt.h>
 #include <panda/websocket/server/Listener.h>
 #include <panda/websocket/server/Connection.h>
@@ -31,8 +32,13 @@ public:
 
     virtual ~Server ();
 
+    std::function<void (Server*, Connection*)> connection_callback;
+    std::function<void (Server*, Connection*)> remove_connection_callback;
+
 protected:
-    Connection* new_connection (uint64_t id);
+    virtual Connection* new_connection (uint64_t id);
+    virtual void on_connection(Connection* conn);
+    virtual void on_remove_connection(Connection* conn);
 
 private:
     typedef std::map<uint64_t, ConnectionSP> ConnectionMap;

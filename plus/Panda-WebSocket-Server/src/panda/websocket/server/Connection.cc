@@ -32,7 +32,9 @@ void Connection::on_read (const string& buf, const StreamError& err) {
             shutdown();
             _server->remove_connection(this);
         }
-        else on_accept(creq);
+        else {
+            on_accept(creq);
+        }
 
         return;
     }
@@ -41,7 +43,9 @@ void Connection::on_read (const string& buf, const StreamError& err) {
 
     auto msg_range = _parser.get_messages(chunk);
     for (const auto& msg : msg_range) {
-        if (msg->error) return close(PROTOCOL_ERROR);
+        if (msg->error) return close(CloseCode::PROTOCOL_ERROR);
+        if (msg->opcode() == Opcode::CLOSE) return close(msg->close_code());
+        if (msg->opcode() == Opcode::PING) return write(_parser.send_pong());
         on_message(msg);
     }
 }
@@ -53,13 +57,14 @@ void Connection::on_eof () {
 void Connection::on_stream_error (const StreamError& err) {
     cout << "Connection(" << _id << ")[on_read]: error " << err.what() << "\n";
     if (stream_error_callback) stream_error_callback(this, err);
-    else close(AWAY);
+    else close(CloseCode::AWAY);
 }
 
 void Connection::on_accept (ConnectRequestSP req) {
     cout << "Connection(" << _id << ")[on_accept]: req=" << req->uri->to_string() << "\n";
     ConnectResponse res;
     send_accept_response(&res);
+    if (accept_callback) accept_callback(this, req);
 }
 
 void Connection::send_accept_error (HTTPResponse* res) {
@@ -77,9 +82,9 @@ void Connection::send_accept_response (ConnectResponse* res) {
 }
 
 void Connection::close (int code) {
-    string data = _parser.send_close(code);
+    auto data = _parser.send_close(code);
     cout << "Connection(" << _id << ")[close]: code=\n" << code << "\n";
-    write(data);
+    write(data.begin(), data.end());
     shutdown();
     _server->remove_connection(this);
 }

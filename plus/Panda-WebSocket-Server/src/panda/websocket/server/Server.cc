@@ -54,6 +54,14 @@ Connection* Server::new_connection (uint64_t id) {
     return new Connection(this, id);
 }
 
+void Server::on_connection(Connection* conn) {
+    if (connection_callback) connection_callback(this, conn);
+}
+
+void Server::on_remove_connection(Connection* conn) {
+    if (remove_connection_callback) remove_connection_callback(this, conn);
+}
+
 void Server::on_connect (Stream* listener, const StreamError& err) {
     if (err) {
         cout << "Server[on_connect]: error: " << err.what() << "\n";
@@ -66,6 +74,8 @@ void Server::on_connect (Stream* listener, const StreamError& err) {
     conn->eof_callback = std::bind(&Server::on_disconnect, this, _1);
     conn->run(listener);
 
+    on_connection(conn);
+
     cout << "Server[on_connect]: now i have " << connections.size() << " connections\n";
 }
 
@@ -77,6 +87,8 @@ void Server::on_disconnect (Stream* handle) {
 
 void Server::remove_connection (Connection* conn) {
     connections.erase(conn->id());
+    on_remove_connection(conn);
+
     cout << "Server[remove_connection]: now i have " << connections.size() << " connections\n";
 }
 
