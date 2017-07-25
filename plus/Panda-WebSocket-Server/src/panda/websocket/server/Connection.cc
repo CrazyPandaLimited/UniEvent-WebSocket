@@ -94,8 +94,7 @@ void Connection::close (int code) {
     auto data = _parser.send_close(code);
     cout << "Connection(" << _id << ")[close]: code=\n" << code << "\n";
     write(data.begin(), data.end());
-    shutdown();
-    _server->remove_connection(this);
+    close();
 }
 
 void Connection::on_frame (FrameSP frame) {
