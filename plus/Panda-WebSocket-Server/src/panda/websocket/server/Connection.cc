@@ -29,6 +29,8 @@ void Connection::on_read (const string& buf, const StreamError& err) {
         if (creq->error) {
             HTTPResponse res;
             send_accept_error(&res);
+            shutdown();
+            _server->remove_connection(this);
         }
         else {
             on_accept(creq);
@@ -69,8 +71,6 @@ void Connection::send_accept_error (HTTPResponse* res) {
     string data = _parser.accept_error(res);
     cout << "Connection(" << _id << ")[send_accept_error]: sending\n" << data << "\n";
     write(data);
-    shutdown();
-    _server->remove_connection(this);
 }
 
 void Connection::send_accept_response (ConnectResponse* res) {
