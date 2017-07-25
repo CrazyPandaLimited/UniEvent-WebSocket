@@ -4,9 +4,10 @@
 namespace panda { namespace websocket { namespace server {
 
 using std::cout;
+using std::endl;
 using namespace std::placeholders;
 
-Connection::Connection (Server* server, uint64_t id) : TCP(server->loop()), _id(id), _server(server) {
+Connection::Connection (Server* server, uint64_t id) : TCP(server->loop()), _id(id), _server(server), _alive(true) {
     cout << "Connection[new]: id = " << _id << "\n";
 }
 
@@ -29,8 +30,7 @@ void Connection::on_read (const string& buf, const StreamError& err) {
         if (creq->error) {
             HTTPResponse res;
             send_accept_error(&res);
-            shutdown();
-            _server->remove_connection(this);
+            close();
         }
         else {
             on_accept(creq);
@@ -50,9 +50,19 @@ void Connection::on_read (const string& buf, const StreamError& err) {
     }
 }
 
+void Connection::close()
+{
+    if (_alive) {
+        shutdown();
+        _server->remove_connection(this);
+        _alive = false;
+    }
+}
+
 void Connection::on_eof () {
-    shutdown();
-    _server->remove_connection(this);
+    cout << "Connection(" << _id << ")[on_eof]" << endl;
+    close();
+
 }
 
 void Connection::on_stream_error (const StreamError& err) {

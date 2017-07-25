@@ -1,6 +1,12 @@
 MODULE = Panda::WebSocket::Server                PACKAGE = Panda::WebSocket::Server::Connection
 PROTOTYPES: DISABLE
 
+uint64_t panda::websocket::server::Connection::id()
+
+void panda::websocket::server::Connection::send_message(string payload)
+
+void panda::websocket::server::Connection::send_text(string payload)
+
 void panda::websocket::server::Connection::accept_callback(CV* cb) {
     xs::SvIntrPtr cb_ptr(cb);
     xs::SvIntrPtr connection_class(SvSTASH(SvRV(ST(0))));
@@ -28,10 +34,5 @@ void panda::websocket::server::Connection::stream_error_callback(CV* cb) {
     };
 }
 
-uint64_t panda::websocket::server::Connection::id()
-
-void panda::websocket::server::Connection::send_message(string payload)
-
-void panda::websocket::server::Connection::send_text(string payload)
 
 void panda::websocket::server::Connection::DESTROY () {}

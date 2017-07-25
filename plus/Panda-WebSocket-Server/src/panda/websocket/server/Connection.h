@@ -53,9 +53,10 @@ private:
     uint64_t     _id;
     Server*      _server;
     ServerParser _parser;
+    bool         _alive;
     
     void on_read (const string& buf, const StreamError& err) override;
-
+    void close();
 };
 
 typedef shared_ptr<Connection> ConnectionSP;
