@@ -51,7 +51,8 @@ void Connection::on_read (const string& buf, const StreamError& err) {
 }
 
 void Connection::on_eof () {
-
+    shutdown();
+    _server->remove_connection(this);
 }
 
 void Connection::on_stream_error (const StreamError& err) {
