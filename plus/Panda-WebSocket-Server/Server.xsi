@@ -43,7 +43,7 @@ void panda::websocket::server::Server::init (HV* hvcfg) {
 }
 
 panda::event::Loop* panda::websocket::server::Server::loop () {
-    HV* CLASS;
+    const char* CLASS = "Panda::Event::Loop";
     RETVAL = THIS->loop();
 }
 

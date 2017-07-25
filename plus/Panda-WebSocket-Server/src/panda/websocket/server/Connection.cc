@@ -29,8 +29,6 @@ void Connection::on_read (const string& buf, const StreamError& err) {
         if (creq->error) {
             HTTPResponse res;
             send_accept_error(&res);
-            shutdown();
-            _server->remove_connection(this);
         }
         else {
             on_accept(creq);
