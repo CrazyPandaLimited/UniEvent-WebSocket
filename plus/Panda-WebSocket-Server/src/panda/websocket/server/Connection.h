@@ -19,6 +19,18 @@ public:
     Connection (Server* server, uint64_t id);
     
     uint64_t id () const { return _id; }
+
+    template<typename... Args>
+    void send_message(Args&&... args) override {
+        auto all = _parser.send_message(std::forward<Args>(args)..., Opcode::BINARY);
+        write(all.begin(), all.end());
+    }
+
+    template<typename... Args>
+    void send_text(Args&&... args) override {
+        auto all = _parser.send_message(std::forward<Args>(args)..., Opcode::TEXT);
+        write(all.begin(), all.end());
+    }
     
     virtual void run (Stream* listener);
     
