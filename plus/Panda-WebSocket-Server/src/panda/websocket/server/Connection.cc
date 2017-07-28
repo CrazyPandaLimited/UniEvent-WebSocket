@@ -1,14 +1,14 @@
 #include <panda/websocket/server/Connection.h>
 #include <panda/websocket/server/Server.h>
+#include <panda/log.h>
 
 namespace panda { namespace websocket { namespace server {
 
-using std::cout;
 using std::endl;
 using namespace std::placeholders;
 
 Connection::Connection (Server* server, uint64_t id) : TCP(server->loop()), _id(id), _server(server), _alive(true) {
-    cout << "Connection[new]: id = " << _id << "\n";
+    panda_log_info("Connection[new]: id = " << _id);
 }
 
 void Connection::run (Stream* listener) {
@@ -19,7 +19,7 @@ void Connection::run (Stream* listener) {
 void Connection::on_read (const string& buf, const StreamError& err) {
     if (err) return on_stream_error(err);
 
-    cout << "Connection(" << _id << ")[on_read]: " << buf << "\n";
+    panda_log_verbose("Connection(" << _id << ")[on_read]: " << buf);
 
     string chunk = buf;
 
@@ -60,63 +60,67 @@ void Connection::close()
 }
 
 void Connection::on_eof () {
-    cout << "Connection(" << _id << ")[on_eof]" << endl;
+    panda_log_info("Connection(" << _id << ")[on_eof]");
     close();
 
 }
 
 void Connection::on_stream_error (const StreamError& err) {
-    cout << "Connection(" << _id << ")[on_read]: error " << err.what() << "\n";
-    if (stream_error_callback) stream_error_callback(this, err);
-    else close(CloseCode::AWAY);
+    panda_log_info("Connection(" << _id << ")[on_read]: error " << err.what());
+    stream_error_callback(this, err);
+    close(CloseCode::AWAY);
 }
 
 void Connection::on_accept (ConnectRequestSP req) {
-    cout << "Connection(" << _id << ")[on_accept]: req=" << req->uri->to_string() << "\n";
+    panda_log_info("Connection(" << _id << ")[on_accept]: req=" << req->uri->to_string());
     ConnectResponse res;
     send_accept_response(&res);
-    if (accept_callback) accept_callback(this, req);
+    accept_callback(this, req);
 }
 
 void Connection::send_accept_error (HTTPResponse* res) {
     string data = _parser.accept_error(res);
-    cout << "Connection(" << _id << ")[send_accept_error]: sending\n" << data << "\n";
+    panda_log_info("Connection(" << _id << ")[send_accept_error]: sending\n" << data);
     write(data);
 }
 
 void Connection::send_accept_response (ConnectResponse* res) {
     string data = _parser.accept_response(res);
-    cout << "Connection(" << _id << ")[send_accept_response]: sending\n" << data << "\n";
+    panda_log_info("Connection(" << _id << ")[send_accept_response]: sending\n" << data);
     write(data);
 }
 
 void Connection::close (int code) {
     auto data = _parser.send_close(code);
-    cout << "Connection(" << _id << ")[close]: code=\n" << code << "\n";
+    panda_log_info("Connection(" << _id << ")[close]: code=" << code);
     write(data.begin(), data.end());
     close();
 }
 
 void Connection::on_frame (FrameSP frame) {
-    cout << "Connection(" << _id << ")[on_frame]: payload=\n";
-    for (const auto& str : frame->payload) {
-        cout << str;
+    {
+        Log logger(Log::VERBOSE);
+        logger << "Connection(" << _id << ")[on_frame]: payload=\n";
+        for (const auto& str : frame->payload) {
+            logger << str;
+        }
     }
-    cout << "\n";
-    if (frame_callback) frame_callback(this, frame);
+    frame_callback(this, frame);
 }
 
 void Connection::on_message (MessageSP msg) {
-    cout << "Connection(" << _id << ")[on_message]: payload=\n";
-    for (const auto& str : msg->payload) {
-        cout << str;
+    {
+        Log logger(Log::VERBOSE);
+        logger << "Connection(" << _id << ")[on_message]: payload=\n";
+        for (const auto& str : msg->payload) {
+            logger << str;
+        }
     }
-    cout << "\n";
-    if (message_callback) message_callback(this, msg);
+    message_callback(this, msg);
 }
 
 Connection::~Connection () {
-    cout << "connection destroy\n";
+    panda_log_info("connection destroy");
 }
 
 }}}

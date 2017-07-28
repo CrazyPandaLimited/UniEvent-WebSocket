@@ -11,7 +11,7 @@ using namespace xs::websocket;
 using panda::event::Loop;
 using xs::event::error_sv;
 
-using std::cout;
+using std::endl;
 
 MODULE = Panda::WebSocket::Server                PACKAGE = Panda::WebSocket::Server
 PROTOTYPES: DISABLE

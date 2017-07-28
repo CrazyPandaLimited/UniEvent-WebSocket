@@ -1,20 +1,23 @@
 #pragma once
 #include <panda/event/TCP.h>
 #include <panda/websocket/ServerParser.h>
+#include <panda/CallbackDispatcher.h>
 
 namespace panda { namespace websocket { namespace server {
 
 using panda::event::TCP;
 using panda::event::Loop;
 using panda::event::StreamError;
+using panda::CallbackDispatcher;
+
 class Server;
 
 class Connection : public TCP {
 public:
-    std::function<void(Connection*, ConnectRequestSP)>   accept_callback;
-    std::function<void(Connection*, FrameSP)>            frame_callback;
-    std::function<void(Connection*, MessageSP)>          message_callback;
-    std::function<void(Connection*, const StreamError&)> stream_error_callback;
+    CallbackDispatcher<void(Connection*, ConnectRequestSP)>   accept_callback;
+    CallbackDispatcher<void(Connection*, FrameSP)>            frame_callback;
+    CallbackDispatcher<void(Connection*, MessageSP)>          message_callback;
+    CallbackDispatcher<void(Connection*, const StreamError&)> stream_error_callback;
 
     Connection (Server* server, uint64_t id);
     

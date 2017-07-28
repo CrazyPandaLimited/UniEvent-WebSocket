@@ -1,12 +1,12 @@
 #include <panda/websocket/server/Server.h>
+#include <panda/log.h>
 
 namespace panda { namespace websocket { namespace server {
 
-using std::cout;
 using namespace std::placeholders;
 
 Server::Server (Loop* loop) : _loop(loop), lastid(0), running(false) {
-    cout << "Server(): loop is default = " << (_loop == Loop::default_loop()) << "\n";
+    panda_log_info("Server(): loop is default = " << (_loop == Loop::default_loop()));
 }
 
 void Server::init (ServerConfig config) {
@@ -40,7 +40,7 @@ void Server::init (ServerConfig config) {
 void Server::run () {
 	if (running) throw std::logic_error("already running");
 	running = true;
-	cout << "run\n";
+    panda_log_info("run");
 
 	for (auto& location : locations) {
 		auto l = new Listener(_loop, location);
@@ -55,19 +55,19 @@ Connection* Server::new_connection (uint64_t id) {
 }
 
 void Server::on_connection(Connection* conn) {
-    if (connection_callback) connection_callback(this, conn);
+    connection_callback(this, conn);
 }
 
 void Server::on_remove_connection(Connection* conn) {
-    if (remove_connection_callback) remove_connection_callback(this, conn);
+    remove_connection_callback(this, conn);
 }
 
 void Server::on_connect (Stream* listener, const StreamError& err) {
     if (err) {
-        cout << "Server[on_connect]: error: " << err.what() << "\n";
+        panda_log_info("Server[on_connect]: error: " << err.what());
         return;
     }
-    cout << "Server[on_connect]: somebody connected to " << (uint64_t)listener << "\n";
+    panda_log_info("Server[on_connect]: somebody connected to " << (uint64_t)listener);
 
     auto conn = new_connection(++lastid);
     connections[conn->id()] = conn;
@@ -76,12 +76,12 @@ void Server::on_connect (Stream* listener, const StreamError& err) {
 
     on_connection(conn);
 
-    cout << "Server[on_connect]: now i have " << connections.size() << " connections\n";
+    panda_log_info("Server[on_connect]: now i have " << connections.size() << " connections");
 }
 
 void Server::on_disconnect (Stream* handle) {
     auto conn = dyn_cast<Connection*>(handle);
-    cout << "Server[on_disconnect]: disconnected id " << conn->id() << "\n";
+    panda_log_info("Server[on_disconnect]: disconnected id " << conn->id());
     remove_connection(conn);
 }
 
@@ -89,12 +89,12 @@ void Server::remove_connection (Connection* conn) {
     connections.erase(conn->id());
     on_remove_connection(conn);
 
-    cout << "Server[remove_connection]: now i have " << connections.size() << " connections\n";
+    panda_log_info("Server[remove_connection]: now i have " << connections.size() << " connections");
 }
 
 void Server::stop () {
 	if (!running) return;
-	cout << "stop!\n";
+    panda_log_info("stop!");
 	listeners.clear();
 	connections.clear();
 	running = false;
@@ -102,7 +102,7 @@ void Server::stop () {
 
 Server::~Server () {
     stop();
-    cout << "server destroy\n";
+    panda_log_info("server destroy");
 }
 
 }}}

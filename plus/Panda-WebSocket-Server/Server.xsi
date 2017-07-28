@@ -61,22 +61,24 @@ void panda::websocket::server::Server::stop () {
 
 void panda::websocket::server::Server::connection_callback (CV* cb) {
     xs::SvIntrPtr cb_ptr(cb);
-    THIS->connection_callback = [cb_ptr](Server* server, Connection* conn) {
+    using Event = decltype(THIS->connection_callback)::Event;
+    THIS->connection_callback.add([cb_ptr](Event&, Server* server, Connection* conn) {
         XSServer* xs_server = panda::dyn_cast<XSServer*>(server);
         HV* conn_class = xs_server ? xs_server->connection_class.get<HV>() : gv_stashpv("Panda::Websocket::Server::Connection", GV_ADD);
         SV* arg = sv_2mortal(typemap_outcast<panda::websocket::server::Connection*, HV* CLASS>(conn, conn_class));
         xs::call_sub_void(cb_ptr.get<CV>(), &arg, 1);
-    };
+    });
 }
 
 void panda::websocket::server::Server::remove_connection_callback (CV* cb) {
     xs::SvIntrPtr cb_ptr(cb);
-    THIS->remove_connection_callback = [cb_ptr](Server* server, Connection* conn) {
+    using Event = decltype(THIS->remove_connection_callback)::Event;
+    THIS->remove_connection_callback.add([cb_ptr](Event&, Server* server, Connection* conn) {
         XSServer* xs_server = panda::dyn_cast<XSServer*>(server);
         HV* conn_class = xs_server ? xs_server->connection_class.get<HV>() : gv_stashpv("Panda::WebSocket::Server::Connection", GV_ADD);
         SV* arg = sv_2mortal(typemap_outcast<panda::websocket::server::Connection*, HV* CLASS>(conn, conn_class));
         xs::call_sub_void(cb_ptr.get<CV>(), &arg, 1);
-    };
+    });
 }
 
 void panda::websocket::server::Server::DESTROY () {}

@@ -16,6 +16,6 @@ write_makefile(
     #    INCLUDE  => {'src' => '/'},
     #    TYPEMAPS => {'typemap' => ''},
     #},
-    OPTIMIZE => '-O2 -g',
+    #OPTIMIZE => '-O2 -g',
     #CC => 'clang++',
 );

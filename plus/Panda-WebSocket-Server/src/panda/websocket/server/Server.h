@@ -1,10 +1,10 @@
 #pragma once
 #include <map>
 #include <vector>
-#include <functional>
 #include <panda/refcnt.h>
 #include <panda/websocket/server/Listener.h>
 #include <panda/websocket/server/Connection.h>
+#include <panda/CallbackDispatcher.h>
 
 namespace panda { namespace websocket { namespace server {
 
@@ -32,8 +32,8 @@ public:
 
     virtual ~Server ();
 
-    std::function<void (Server*, Connection*)> connection_callback;
-    std::function<void (Server*, Connection*)> remove_connection_callback;
+    CallbackDispatcher<void (Server*, Connection*)> connection_callback;
+    CallbackDispatcher<void (Server*, Connection*)> remove_connection_callback;
 
 protected:
     virtual Connection* new_connection (uint64_t id);

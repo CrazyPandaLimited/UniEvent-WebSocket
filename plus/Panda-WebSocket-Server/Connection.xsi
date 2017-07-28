@@ -10,28 +10,34 @@ void panda::websocket::server::Connection::send_text(string payload)
 void panda::websocket::server::Connection::accept_callback(CV* cb) {
     xs::SvIntrPtr cb_ptr(cb);
     xs::SvIntrPtr connection_class(SvSTASH(SvRV(ST(0))));
-    THIS->accept_callback = [cb_ptr, connection_class](Connection* conn, ConnectRequestSP request) {
+    using Event = decltype(THIS->accept_callback)::Event;
+    THIS->accept_callback.add([cb_ptr, connection_class](Event& e, Connection* conn, ConnectRequestSP request) {
         SV* arg = sv_2mortal(typemap_outcast<panda::websocket::ConnectRequestSP, const char* CLASS>(request, "Panda::WebSocket::ConnectRequest"));
         xs::call_sub_void(cb_ptr.get<CV>(), &arg, 1);
-    };
+        e.next(conn, request);
+    });
 }
 
 void panda::websocket::server::Connection::message_callback(CV* cb) {
     xs::SvIntrPtr cb_ptr(cb);
     xs::SvIntrPtr connection_class(SvSTASH(SvRV(ST(0))));
-    THIS->message_callback = [cb_ptr, connection_class](Connection* conn, MessageSP request) {
+    using Event = decltype(THIS->message_callback)::Event;
+    THIS->message_callback.add([cb_ptr, connection_class](Event& e, Connection* conn, MessageSP request) {
         SV* arg = sv_2mortal(typemap_outcast<panda::websocket::MessageSP, const char* CLASS>(request, "Panda::WebSocket::Message"));
         xs::call_sub_void(cb_ptr.get<CV>(), &arg, 1);
-    };
+        e.next(conn, request);
+    });
 }
 
 void panda::websocket::server::Connection::stream_error_callback(CV* cb) {
     xs::SvIntrPtr cb_ptr(cb);
     xs::SvIntrPtr connection_class(SvSTASH(SvRV(ST(0))));
-    THIS->stream_error_callback = [cb_ptr, connection_class](Connection* conn, const panda::event::StreamError& err) {
+    using Event = decltype(THIS->stream_error_callback)::Event;
+    THIS->stream_error_callback.add([cb_ptr, connection_class](Event& e, Connection* conn, const panda::event::StreamError& err) {
         SV* arg = sv_2mortal(error_sv(err));
         xs::call_sub_void(cb_ptr.get<CV>(), &arg, 1);
-    };
+        e.next(conn, err);
+    });
 }
 
 
