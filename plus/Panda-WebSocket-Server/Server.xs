@@ -2,6 +2,8 @@
 #include <xs/websocket/server.h>
 #include <xs/event/error.h>
 #include <panda/websocket/server.h>
+#include <panda/websocket/Client.h>
+#include <panda/websocket/BaseConnection.h>
 #include <iostream>
 
 using namespace panda::websocket::server;
@@ -10,6 +12,7 @@ using namespace xs::websocket::server;
 using namespace xs::websocket;
 using panda::event::Loop;
 using xs::event::error_sv;
+using panda::websocket::Client;
 
 using std::endl;
 
@@ -19,4 +22,6 @@ PROTOTYPES: DISABLE
 INCLUDE: Server.xsi
 
 INCLUDE: Connection.xsi
+
+INCLUDE: Client.xsi
 

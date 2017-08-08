@@ -7,12 +7,18 @@ namespace panda { namespace websocket { namespace server {
 using std::endl;
 using namespace std::placeholders;
 
-Connection::Connection (Server* server, uint64_t id) : TCP(server->loop()), _id(id), _server(server), _alive(true) {
+Connection::Connection (Server* server, uint64_t id)
+    : BaseConnection(_parser, server->loop())
+    , _id(id)
+    , _server(server)
+    , _alive(true)
+{
     panda_log_info("Connection[new]: id = " << _id);
 }
 
 void Connection::run (Stream* listener) {
     listener->accept(this); // TODO: concurrent non-blocking accept in multi-thread may result in not accepting (err from libuv?)
+    state = State::TCP_CONNECTED;
     read_start();
 }
 
@@ -33,6 +39,7 @@ void Connection::on_read (const string& buf, const StreamError& err) {
             close();
         }
         else {
+            state = State::WS_CONNECTED;
             on_accept(creq);
         }
 
@@ -48,27 +55,6 @@ void Connection::on_read (const string& buf, const StreamError& err) {
         if (msg->opcode() == Opcode::PING) return write(_parser.send_pong());
         on_message(msg);
     }
-}
-
-void Connection::close()
-{
-    if (_alive) {
-        shutdown();
-        _server->remove_connection(this);
-        _alive = false;
-    }
-}
-
-void Connection::on_eof () {
-    panda_log_info("Connection(" << _id << ")[on_eof]");
-    close();
-
-}
-
-void Connection::on_stream_error (const StreamError& err) {
-    panda_log_info("Connection(" << _id << ")[on_read]: error " << err.what());
-    stream_error_callback(this, err);
-    close(CloseCode::AWAY);
 }
 
 void Connection::on_accept (ConnectRequestSP req) {
@@ -90,33 +76,14 @@ void Connection::send_accept_response (ConnectResponse* res) {
     write(data);
 }
 
-void Connection::close (int code) {
-    auto data = _parser.send_close(code);
-    panda_log_info("Connection(" << _id << ")[close]: code=" << code);
-    write(data.begin(), data.end());
-    close();
-}
-
-void Connection::on_frame (FrameSP frame) {
-    {
-        Log logger(Log::VERBOSE);
-        logger << "Connection(" << _id << ")[on_frame]: payload=\n";
-        for (const auto& str : frame->payload) {
-            logger << str;
-        }
+void Connection::close(uint16_t code, string payload)
+{
+    if (state != State::DISCONNECTED) {
+        panda_log_debug("server::Connection call server->remove_connection");
+        _server->remove_connection(this);
     }
-    frame_callback(this, frame);
-}
-
-void Connection::on_message (MessageSP msg) {
-    {
-        Log logger(Log::VERBOSE);
-        logger << "Connection(" << _id << ")[on_message]: payload=\n";
-        for (const auto& str : msg->payload) {
-            logger << str;
-        }
-    }
-    message_callback(this, msg);
+    panda_log_debug("server::Connection call base close");
+    BaseConnection::close(code, payload);
 }
 
 Connection::~Connection () {

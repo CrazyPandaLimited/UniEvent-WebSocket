@@ -1,6 +1,10 @@
 MODULE = Panda::WebSocket::Server                PACKAGE = Panda::WebSocket::Server::Connection
 PROTOTYPES: DISABLE
 
+panda::websocket::server::Connection* panda::websocket::server::Connection::new(panda::websocket::server::Server* server) {
+    RETVAL = new panda::websocket::server::Connection(server, 0);
+}
+
 uint64_t panda::websocket::server::Connection::id()
 
 void panda::websocket::server::Connection::send_message(string payload)
@@ -22,7 +26,7 @@ void panda::websocket::server::Connection::message_callback(CV* cb) {
     xs::SvIntrPtr cb_ptr(cb);
     xs::SvIntrPtr connection_class(SvSTASH(SvRV(ST(0))));
     using Event = decltype(THIS->message_callback)::Event;
-    THIS->message_callback.add([cb_ptr, connection_class](Event& e, Connection* conn, MessageSP request) {
+    THIS->message_callback.add([cb_ptr, connection_class](Event& e, BaseConnection* conn, MessageSP request) {
         SV* arg = sv_2mortal(typemap_outcast<panda::websocket::MessageSP, const char* CLASS>(request, "Panda::WebSocket::Message"));
         xs::call_sub_void(cb_ptr.get<CV>(), &arg, 1);
         e.next(conn, request);
@@ -33,7 +37,7 @@ void panda::websocket::server::Connection::stream_error_callback(CV* cb) {
     xs::SvIntrPtr cb_ptr(cb);
     xs::SvIntrPtr connection_class(SvSTASH(SvRV(ST(0))));
     using Event = decltype(THIS->stream_error_callback)::Event;
-    THIS->stream_error_callback.add([cb_ptr, connection_class](Event& e, Connection* conn, const panda::event::StreamError& err) {
+    THIS->stream_error_callback.add([cb_ptr, connection_class](Event& e, BaseConnection* conn, const panda::event::StreamError& err) {
         SV* arg = sv_2mortal(error_sv(err));
         xs::call_sub_void(cb_ptr.get<CV>(), &arg, 1);
         e.next(conn, err);
