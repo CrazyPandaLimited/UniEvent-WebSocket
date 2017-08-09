@@ -50,7 +50,7 @@ void BaseConnection::on_any_error(const string& err) {
 
 void BaseConnection::on_eof() {
     panda_log_info("on_eof");
-    state = State::WS_DISCONNECTED;
+    state = State::DISCONNECTED;
     close();
 }
 
@@ -61,6 +61,7 @@ void BaseConnection::close_tcp() {
         return;
     }
     panda_log_debug("shutdown");
+    panda_debug_v(int(state));
     shutdown();
     panda_log_debug("shutdown done");
     state = State::DISCONNECTED;
