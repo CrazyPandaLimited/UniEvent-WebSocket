@@ -13,7 +13,7 @@ my $state = 0;
 my ($server, $port) = make_server();
 
 my $cl1 = new Panda::Event::TCP();
-$cl1->connect('localhost', $port, undef);
+$cl1->connect('localhost', $port);
 $cl1->shutdown(sub {
 	$state++;
 	my $cl2 = new Panda::Event::TCP();
