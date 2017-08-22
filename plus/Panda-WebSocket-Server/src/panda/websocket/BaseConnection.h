@@ -16,31 +16,36 @@ using panda::event::Loop;
 
 class BaseConnection : public TCP {
 public:
-    BaseConnection(Parser& parser, Loop* loop = Loop::default_loop())
+    BaseConnection(Loop* loop = Loop::default_loop())
         : TCP(loop)
         , state(State::DISCONNECTED)
-        , parser(parser)
+        , parser(nullptr)
     {}
 
-    virtual ~BaseConnection() {}
+    void init(Parser& parser) {
+        this->parser = &parser;
+    }
 
-    CallbackDispatcher<void(BaseConnection*, FrameSP)>            frame_callback;
-    CallbackDispatcher<void(BaseConnection*, MessageSP)>          message_callback;
-    CallbackDispatcher<void(BaseConnection*, const StreamError&)> stream_error_callback;
-    CallbackDispatcher<void(BaseConnection*, const string&)>      any_error_callback;
+    virtual ~BaseConnection() {panda_log_info("~BaseConnection");}
+
+    using BaseConnectionSP = shared_ptr<BaseConnection, true>;
+    CallbackDispatcher<void(BaseConnectionSP, FrameSP)>            frame_callback;
+    CallbackDispatcher<void(BaseConnectionSP, MessageSP)>          message_callback;
+    CallbackDispatcher<void(BaseConnectionSP, const StreamError&)> stream_error_callback;
+    CallbackDispatcher<void(BaseConnectionSP, const string&)>      any_error_callback;
 
 
     template<typename... Args>
     void send_message(Args&&... args) {
         panda_log_debug("send message");
-        auto all = parser.send_message(std::forward<Args>(args)..., Opcode::BINARY);
+        auto all = parser->send_message(std::forward<Args>(args)..., Opcode::BINARY);
         write(all.begin(), all.end());
     }
 
     template<typename... Args>
     void send_text(Args&&... args) {
         panda_log_debug("send text");
-        auto all = parser.send_message(std::forward<Args>(args)..., Opcode::TEXT);
+        auto all = parser->send_message(std::forward<Args>(args)..., Opcode::TEXT);
         write(all.begin(), all.end());
     }
 
@@ -68,7 +73,7 @@ protected:
     State state;
 
 private:
-    Parser& parser;
+    Parser* parser;
 };
 
 }

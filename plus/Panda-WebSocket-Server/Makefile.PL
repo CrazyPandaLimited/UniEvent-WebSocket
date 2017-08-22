@@ -11,11 +11,11 @@ write_makefile(
     SRC           => 'src',
     INC           => '-Isrc',
     TYPEMAPS      => 'typemap',
-    #BIN_SHARE => {
-    #    CPLUS    => 11,
-    #    INCLUDE  => {'src' => '/'},
-    #    TYPEMAPS => {'typemap' => ''},
-    #},
-    #OPTIMIZE => '-O2 -g',
+    BIN_SHARE => {
+        CPLUS    => 11,
+        INCLUDE  => {'src' => '/'},
+        TYPEMAPS => {'typemap' => ''},
+    },
+    OPTIMIZE => '-O2 -g',
     #CC => 'clang++',
 );

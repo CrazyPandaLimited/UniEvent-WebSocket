@@ -50,15 +50,15 @@ void Server::run () {
 	}
 }
 
-Connection* Server::new_connection (uint64_t id) {
+Server::ConnectionSP Server::new_connection(uint64_t id) {
     return new Connection(this, id);
 }
 
-void Server::on_connection(Connection* conn) {
+void Server::on_connection(ConnectionSP conn) {
     connection_callback(this, conn);
 }
 
-void Server::on_remove_connection(Connection* conn) {
+void Server::on_remove_connection(ConnectionSP conn) {
     remove_connection_callback(this, conn);
 }
 
@@ -85,7 +85,7 @@ void Server::on_disconnect (Stream* handle) {
     remove_connection(conn);
 }
 
-void Server::remove_connection (Connection* conn) {
+void Server::remove_connection (ConnectionSP conn) {
     connections.erase(conn->id());
     on_remove_connection(conn);
 

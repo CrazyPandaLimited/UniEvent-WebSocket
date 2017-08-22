@@ -12,9 +12,9 @@ using panda::CallbackDispatcher;
 
 class Server;
 
-class Connection : public BaseConnection {
+class Connection : public virtual BaseConnection {
 public:
-    CallbackDispatcher<void(Connection*, ConnectRequestSP)>   accept_callback;
+    CallbackDispatcher<void(shared_ptr<Connection, true>, ConnectRequestSP)>   accept_callback;
 
     Connection (Server* server, uint64_t id);
     

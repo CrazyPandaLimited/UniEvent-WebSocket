@@ -5,13 +5,16 @@ namespace panda { namespace websocket {
 
 void BaseConnection::close(uint16_t code, string payload) {
     panda_log_info("BaseConnection[close]: code=" << code);
+    panda_debug_v((uint64_t)this);
+    panda_debug_v((uint64_t)uvhp);
+//    panda_debug_v(this->fileno());
+    panda_log_debug("123");
     if (state == State::WS_CONNECTED) {
-        panda_log_info("BaseConnection[close]: sending close payload=" << payload);
-        auto data = parser.send_close(code, payload);
+        auto data = parser->send_close(code, payload);
         write(data.begin(), data.end());
         state = State::WS_DISCONNECTED;
     }
-    close_tcp();
+    //close_tcp();
 }
 
 void BaseConnection::on_frame(FrameSP frame) {

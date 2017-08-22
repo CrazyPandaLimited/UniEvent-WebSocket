@@ -4,8 +4,10 @@
 namespace panda  { namespace websocket {
 
 Client::Client(event::Loop* loop)
-    : BaseConnection(parser, loop)
-{}
+    : BaseConnection(loop)
+{
+    init(parser);
+}
 
 Client::~Client()
 {}

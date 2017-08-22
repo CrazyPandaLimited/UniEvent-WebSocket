@@ -8,12 +8,13 @@ using std::endl;
 using namespace std::placeholders;
 
 Connection::Connection (Server* server, uint64_t id)
-    : BaseConnection(_parser, server->loop())
+    : BaseConnection(server->loop())
     , _id(id)
     , _server(server)
     , _alive(true)
 {
     panda_log_info("Connection[new]: id = " << _id);
+    init(_parser);
 }
 
 void Connection::run (Stream* listener) {
@@ -78,12 +79,11 @@ void Connection::send_accept_response (ConnectResponse* res) {
 
 void Connection::close(uint16_t code, string payload)
 {
+    ConnectionSP sp = this; // keep self from destruction if user loses all references, that how panda::event::TCP works
     if (state != State::DISCONNECTED) {
-        panda_log_debug("server::Connection call server->remove_connection");
-        _server->remove_connection(this);
+        _server->remove_connection(sp);
     }
     panda_log_debug("server::Connection call base close");
-    BaseConnection::close(code, payload);
 }
 
 Connection::~Connection () {

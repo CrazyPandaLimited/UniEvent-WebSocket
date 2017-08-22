@@ -26,19 +26,20 @@ public:
     void run  ();
     void stop ();
 
-    void close_connection  (Connection* conn, CloseCode code) { conn->close(code); }
-    void close_connection  (Connection* conn, int code)       { conn->close(code); }
-    void remove_connection (Connection* conn);
+    using ConnectionSP = shared_ptr<Connection>;
+    void close_connection  (ConnectionSP conn, CloseCode code) { conn->close(code); }
+    void close_connection  (ConnectionSP conn, int code)       { conn->close(code); }
+    void remove_connection (ConnectionSP conn);
 
     virtual ~Server ();
 
-    CallbackDispatcher<void (Server*, Connection*)> connection_callback;
-    CallbackDispatcher<void (Server*, Connection*)> remove_connection_callback;
+    CallbackDispatcher<void (shared_ptr<Server, true>, ConnectionSP)> connection_callback;
+    CallbackDispatcher<void (shared_ptr<Server, true>, ConnectionSP)> remove_connection_callback;
 
 protected:
-    virtual Connection* new_connection (uint64_t id);
-    virtual void on_connection(Connection* conn);
-    virtual void on_remove_connection(Connection* conn);
+    virtual ConnectionSP new_connection (uint64_t id);
+    virtual void on_connection(ConnectionSP conn);
+    virtual void on_remove_connection(ConnectionSP conn);
 
 private:
     typedef std::map<uint64_t, ConnectionSP> ConnectionMap;

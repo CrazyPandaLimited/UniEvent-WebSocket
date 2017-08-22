@@ -14,7 +14,7 @@ public:
 
     using Server::Server;
 
-    Connection* new_connection (uint64_t id) override;
+    ConnectionSP new_connection(uint64_t id) override;
 };
 
 }}}
