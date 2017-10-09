@@ -23,8 +23,8 @@ public:
     
     Loop* loop () const { return _loop; }
     
-    void run  ();
-    void stop ();
+    virtual void run  ();
+    virtual void stop ();
 
     using ConnectionSP = shared_ptr<Connection>;
     void close_connection  (ConnectionSP conn, CloseCode code) { conn->close(code); }
