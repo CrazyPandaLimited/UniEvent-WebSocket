@@ -56,4 +56,13 @@ private:
 
 };
 
+template <typename Stream>
+Stream& operator <<(Stream& stream, const panda::websocket::server::ServerConfig& conf) {
+    stream << "ServerConfig{ locations:[";
+    for (auto loc : conf.locations) {
+        stream << loc << ",";
+    }
+    stream << "]};";
+    return stream;
+}
 }}}
