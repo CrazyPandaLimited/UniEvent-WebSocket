@@ -1,6 +1,7 @@
 #include <panda/websocket/server/Connection.h>
 #include <panda/websocket/server/Server.h>
 #include <panda/log.h>
+#include <panda/encode/base16.h>
 
 namespace panda { namespace websocket { namespace server {
 
@@ -26,7 +27,7 @@ void Connection::run (Stream* listener) {
 void Connection::on_read (const string& buf, const StreamError& err) {
     if (err) return on_stream_error(err);
 
-    panda_log_verbose("Connection(" << _id << ")[on_read]: " << buf);
+    panda_log_debug("Connection(" << _id << ")[on_read]: " << encode::encode_base16(buf));
 
     string chunk = buf;
 

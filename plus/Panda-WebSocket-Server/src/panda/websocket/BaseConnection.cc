@@ -1,5 +1,6 @@
 #include "BaseConnection.h"
 #include <panda/log.h>
+#include <panda/encode/base16.h>
 
 namespace panda { namespace websocket {
 
@@ -14,22 +15,22 @@ void BaseConnection::close(uint16_t code, string payload) {
 }
 
 void BaseConnection::on_frame(FrameSP frame) {
-    {
-        Log logger(Log::VERBOSE);
-        logger << "BaseConnection::on_frame: payload=\n";
+    if (Log::should_log(Log::DEBUG, _panda_code_point_)){
+        Log logger = Log(_panda_code_point_, Log::DEBUG);
+        logger << "websocket BaseConnection::on_frame: payload=\n";
         for (const auto& str : frame->payload) {
-            logger << str;
+            logger << encode::encode_base16(str);
         }
     }
     frame_callback(this, frame);
 }
 
 void BaseConnection::on_message(MessageSP msg) {
-    {
-        Log logger(Log::VERBOSE);
-        logger << "BaseConnection::on_message: payload=\n";
+    if (Log::should_log(Log::DEBUG, _panda_code_point_)){
+        Log logger = Log(_panda_code_point_, Log::DEBUG);
+        logger << "websocket BaseConnection::on_message: payload=\n";
         for (const auto& str : msg->payload) {
-            logger << str;
+            logger << encode::encode_base16(str);
         }
     }
     message_callback(this, msg);
@@ -54,15 +55,11 @@ void BaseConnection::on_eof() {
 }
 
 void BaseConnection::close_tcp() {
-//    message_callback.remove_all();
-//    frame_callback.remove_all();
     if (state == State::DISCONNECTED) {
         return;
     }
-    panda_log_debug("shutdown");
-    panda_debug_v(int(state));
     shutdown();
-    panda_log_debug("shutdown done");
+    disconnect();
     state = State::DISCONNECTED;
 }
 

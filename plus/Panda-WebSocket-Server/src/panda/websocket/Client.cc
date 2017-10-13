@@ -1,5 +1,6 @@
 #include "Client.h"
 #include <panda/log.h>
+#include <panda/encode/base16.h>
 
 namespace panda  { namespace websocket {
 
@@ -38,7 +39,7 @@ void Client::on_connect(const event::StreamError& err, event::ConnectRequest* re
 }
 
 void Client::on_read(const string& buf, const event::StreamError& err) {
-    panda_log_info("on_read: " << buf);
+    panda_log_info("on_read: " << encode::encode_base16(buf));
     if (err) {
         on_stream_error(err);
         return;
@@ -60,7 +61,6 @@ void Client::on_read(const string& buf, const event::StreamError& err) {
         chunk.clear();
     }
     if (state == State::WS_CONNECTED) {
-        panda_debug_v(chunk);
         auto msg_range = parser.get_messages(chunk);
         for (const auto& msg : msg_range) {
             if (msg->error) return close(CloseCode::PROTOCOL_ERROR);

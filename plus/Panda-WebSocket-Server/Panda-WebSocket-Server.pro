@@ -3,7 +3,8 @@ CONFIG += console c++11
 CONFIG -= app_bundle
 CONFIG -= qt
 
-INCLUDEPATH += src ../CPP-panda-lib/src ../Panda-WebSocket/src ../Panda-Event/src ../Panda-XS/src
+INCLUDEPATH += src ../CPP-panda-lib/src ../Panda-WebSocket/src ../Panda-Event/src ../Panda-XS/src \
+               ../Panda-Encode-Base2N/src
 
 SOURCES += \
     src/panda/websocket/server/Connection.cc \
