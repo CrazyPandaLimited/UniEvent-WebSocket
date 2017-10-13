@@ -14,6 +14,7 @@ Client::~Client()
 {}
 
 void Client::connect(ConnectRequestSP request, bool secure, uint16_t port) {
+    parser.reset();
     if (!port) {
         port = secure ? 443 : 80;
     }
