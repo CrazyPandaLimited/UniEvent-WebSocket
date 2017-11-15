@@ -5,7 +5,7 @@
 namespace panda { namespace websocket {
 
 void BaseConnection::close(uint16_t code, string payload) {
-    panda_log_info("BaseConnection[close]: code=" << code);
+    panda_log_info("BaseConnection[close]: code=" << code << ", payload:" << payload);
     if (state == State::WS_CONNECTED) {
         auto data = parser->send_close(code, payload);
         write(data.begin(), data.end());

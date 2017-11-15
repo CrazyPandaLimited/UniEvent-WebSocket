@@ -68,6 +68,9 @@ void Client::on_read(const string& buf, const event::StreamError& err) {
             if (msg->opcode() == Opcode::CLOSE) return close(msg->close_code());
             if (msg->opcode() == Opcode::PING) return write(parser.send_pong());
             on_message(msg);
+            if (state != State::WS_CONNECTED) {
+                break;
+            }
         }
     }
 }
