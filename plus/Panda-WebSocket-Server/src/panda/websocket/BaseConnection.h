@@ -21,12 +21,18 @@ public:
         , state(State::DISCONNECTED)
         , parser(nullptr)
     {}
+    virtual ~BaseConnection() {panda_log_debug("~BaseConnection");}
 
     void init(Parser& parser) {
         this->parser = &parser;
     }
 
-    virtual ~BaseConnection() {panda_log_info("~BaseConnection");}
+    struct Conf {
+        size_t max_frame_size;
+        size_t max_message_size;
+    };
+
+    void configure(Conf conf);
 
     using BaseConnectionSP = shared_ptr<BaseConnection, true>;
     CallbackDispatcher<void(BaseConnectionSP, FrameSP)>            frame_callback;

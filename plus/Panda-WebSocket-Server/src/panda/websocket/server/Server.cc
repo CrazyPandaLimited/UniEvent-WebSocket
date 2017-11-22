@@ -19,6 +19,12 @@ void Server::init (ServerConfig config) {
 	}
 
 	locations = config.locations;
+    conn_conf = config.conn_conf;
+}
+
+void Server::reconfigure(ServerConfig config) {
+    if (running) throw std::logic_error("server must be running for reconfigure");
+
 }
 
 //void die (int en, const char* msg) {
@@ -51,7 +57,9 @@ void Server::run () {
 }
 
 Server::ConnectionSP Server::new_connection(uint64_t id) {
-    return new Connection(this, id);
+    auto res = new Connection(this, id);
+    res->configure(conn_conf);
+    return res;
 }
 
 void Server::on_connection(ConnectionSP conn) {

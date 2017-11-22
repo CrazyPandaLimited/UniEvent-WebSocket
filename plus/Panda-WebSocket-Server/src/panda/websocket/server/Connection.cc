@@ -84,11 +84,15 @@ void Connection::close(uint16_t code, string payload)
     if (state != State::DISCONNECTED) {
         _server->remove_connection(sp);
     }
-    panda_log_debug("server::Connection call base close");
 }
 
 Connection::~Connection () {
     panda_log_info("connection destroy");
+}
+
+void Connection::configure(Connection::Conf conf) {
+    BaseConnection::configure(conf.base);
+    _parser.max_handshake_size = conf.max_handshake_size;
 }
 
 }}}

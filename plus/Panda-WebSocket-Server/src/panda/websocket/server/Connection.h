@@ -30,6 +30,13 @@ public:
 
     virtual ~Connection ();
 
+    struct Conf {
+        BaseConnection::Conf base;
+        size_t max_handshake_size;
+    };
+
+    void configure(Conf conf);
+
 protected:
     virtual void on_accept       (ConnectRequestSP request);
 
