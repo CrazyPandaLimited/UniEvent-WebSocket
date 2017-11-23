@@ -4,6 +4,11 @@
 
 namespace panda { namespace websocket {
 
+void BaseConnection::configure(BaseConnection::Conf conf) {
+    parser->max_frame_size = conf.max_frame_size;
+    parser->max_message_size = conf.max_message_size;
+}
+
 void BaseConnection::close(uint16_t code, string payload) {
     panda_log_info("BaseConnection[close]: code=" << code << ", payload:" << payload);
     if (state == State::WS_CONNECTED) {

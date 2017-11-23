@@ -12,6 +12,7 @@ using panda::event::Stream;
 
 struct ServerConfig {
     std::vector<Location> locations;
+    Connection::Conf conn_conf;
 };
 
 class Server : public virtual RefCounted {
@@ -20,6 +21,7 @@ public:
     Server (Loop* loop = Loop::default_loop());
 
     void init (ServerConfig config);
+    void reconfigure (ServerConfig config);
     
     Loop* loop () const { return _loop; }
     
@@ -46,6 +48,7 @@ private:
 
     shared_ptr<Loop>        _loop;
     std::vector<Location>   locations;
+    Connection::Conf        conn_conf;
     std::vector<ListenerSP> listeners;
     uint64_t                lastid;
     bool                    running;
