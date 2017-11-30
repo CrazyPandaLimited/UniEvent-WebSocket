@@ -14,31 +14,9 @@ const char* xs::websocket::server::XSServer::connection_class (const char* conn_
     RETVAL = HvNAME(THIS->connection_class);
 }
 
-void panda::websocket::server::Server::init (HV* hvcfg) {
-    SV** ref;
-    ServerConfig config;
-    
-    if ((ref = hv_fetch(hvcfg, "locations", 9, 0))) {
-        auto av = typemap_incast<AV*>(*ref);
-        if (av) {
-            auto lasti = AvFILLp(av);
-            auto svlocs = AvARRAY(av);
-            while (lasti-- >= 0) {
-                if (!*svlocs) continue;
-                auto hvloc = typemap_incast<HV*>(*svlocs);
-                if (!hvloc) continue;
-                Location loc = {string(), 0, false, 0};
-                if ((ref = hv_fetch(hvloc, "host", 4, 0)))   loc.host   = typemap_incast<string>(*ref);
-                if ((ref = hv_fetch(hvloc, "port", 4, 0)))   loc.port   = SvUV(*ref);
-                if ((ref = hv_fetch(hvloc, "secure", 6, 0))) loc.secure = SvTRUE(*ref) ? true : false;
-                config.locations.push_back(std::move(loc));
-                svlocs++;
-            }
-        }
-    }
-    
+void panda::websocket::server::Server::init (HV* hvcfg) {    
     PXS_TRY({
-        THIS->init(config);
+        THIS->init(XSServer::make_server_config(hvcfg));
     });
 }
 
