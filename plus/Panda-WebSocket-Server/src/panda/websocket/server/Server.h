@@ -21,7 +21,7 @@ public:
     Server (Loop* loop = Loop::default_loop());
 
     void init (ServerConfig config);
-    void reconfigure (ServerConfig config);
+    void reconfigure (const ServerConfig& conf);
     
     Loop* loop () const { return _loop; }
     
@@ -43,6 +43,21 @@ protected:
     virtual void on_connection(ConnectionSP conn);
     virtual void on_remove_connection(ConnectionSP conn);
 
+    void start_listening();
+    void stop_listening ();
+
+    template <class This, typename Config>
+    void reconfigure(This* self, const Config& conf) {
+        if (!self->running) {
+            throw std::logic_error("server must be running for reconfigure");
+        }
+
+        self->stop_listening();
+        self->init(conf);
+        self->start_listening();
+    }
+
+    bool                    running;
 private:
     typedef std::map<uint64_t, ConnectionSP> ConnectionMap;
 
@@ -51,7 +66,6 @@ private:
     Connection::Conf        conn_conf;
     std::vector<ListenerSP> listeners;
     uint64_t                lastid;
-    bool                    running;
     ConnectionMap           connections;
     
     void on_connect        (Stream* handle, const StreamError& err);

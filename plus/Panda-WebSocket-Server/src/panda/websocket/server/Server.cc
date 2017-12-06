@@ -22,9 +22,8 @@ void Server::init (ServerConfig config) {
     conn_conf = config.conn_conf;
 }
 
-void Server::reconfigure(ServerConfig config) {
-    if (running) throw std::logic_error("server must be running for reconfigure");
-
+void Server::reconfigure(const ServerConfig& conf) {
+    reconfigure(this, conf);
 }
 
 //void die (int en, const char* msg) {
@@ -48,12 +47,7 @@ void Server::run () {
 	running = true;
     panda_log_info("run");
 
-	for (auto& location : locations) {
-		auto l = new Listener(_loop, location);
-        l->connection_callback = std::bind(&Server::on_connect, this, _1, _2);
-		l->run();
-		listeners.push_back(l);
-	}
+    start_listening();
 }
 
 Server::ConnectionSP Server::new_connection(uint64_t id) {
@@ -68,6 +62,19 @@ void Server::on_connection(ConnectionSP conn) {
 
 void Server::on_remove_connection(ConnectionSP conn) {
     remove_connection_callback(this, conn);
+}
+
+void Server::start_listening() {
+    for (auto& location : locations) {
+        auto l = new Listener(_loop, location);
+        l->connection_callback = std::bind(&Server::on_connect, this, _1, _2);
+        l->run();
+        listeners.push_back(l);
+    }
+}
+
+void Server::stop_listening() {
+    listeners.clear();
 }
 
 void Server::on_connect (Stream* listener, const StreamError& err) {
@@ -103,9 +110,9 @@ void Server::remove_connection (ConnectionSP conn) {
 void Server::stop () {
 	if (!running) return;
     panda_log_info("stop!");
-	listeners.clear();
+    stop_listening();
 	connections.clear();
-	running = false;
+    running = false;
 }
 
 Server::~Server () {
