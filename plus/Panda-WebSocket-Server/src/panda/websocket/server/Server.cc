@@ -10,15 +10,15 @@ Server::Server (Loop* loop) : _loop(loop), lastid(0), running(false) {
 }
 
 void Server::init (ServerConfig config) {
-	if (!config.locations.size()) throw std::invalid_argument("no locations to listen supplied");
+    if (!config.locations.size()) throw std::invalid_argument("no locations to listen supplied");
 
-	for (auto& loc : config.locations) {
-		if (!loc.host)    throw std::invalid_argument("empty host in one of locations");
-		if (!loc.port)    throw std::invalid_argument("zero port in one of locations");
-		if (!loc.backlog) loc.backlog = 1024;
-	}
+    for (auto& loc : config.locations) {
+        if (!loc.host)    throw std::invalid_argument("empty host in one of locations");
+        if (!loc.port)    throw std::invalid_argument("zero port in one of locations");
+        if (!loc.backlog) loc.backlog = 1024;
+    }
 
-	locations = config.locations;
+    locations = config.locations;
     conn_conf = config.conn_conf;
 }
 
@@ -43,8 +43,8 @@ void Server::reconfigure(const ServerConfig& conf) {
 //}
 
 void Server::run () {
-	if (running) throw std::logic_error("already running");
-	running = true;
+    if (running) throw std::logic_error("already running");
+    running = true;
     panda_log_info("run");
 
     start_listening();
@@ -108,10 +108,10 @@ void Server::remove_connection (ConnectionSP conn) {
 }
 
 void Server::stop () {
-	if (!running) return;
+    if (!running) return;
     panda_log_info("stop!");
     stop_listening();
-	connections.clear();
+    connections.clear();
     running = false;
 }
 
