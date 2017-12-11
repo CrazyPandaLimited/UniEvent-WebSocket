@@ -5,7 +5,9 @@ namespace panda { namespace websocket { namespace server {
 
 using namespace std::placeholders;
 
-Server::Server (Loop* loop) : _loop(loop), lastid(0), running(false) {
+std::atomic<uint64_t> Server::lastid(0);
+
+Server::Server (Loop* loop) : _loop(loop), running(false) {
     panda_log_info("Server(): loop is default = " << (_loop == Loop::default_loop()));
 }
 

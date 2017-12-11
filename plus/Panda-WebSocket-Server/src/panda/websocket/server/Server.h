@@ -5,6 +5,7 @@
 #include <panda/websocket/server/Listener.h>
 #include <panda/websocket/server/Connection.h>
 #include <panda/CallbackDispatcher.h>
+#include <atomic>
 
 namespace panda { namespace websocket { namespace server {
 
@@ -59,13 +60,13 @@ protected:
 
     bool                    running;
 private:
+    static std::atomic<uint64_t> lastid;
     typedef std::map<uint64_t, ConnectionSP> ConnectionMap;
 
     shared_ptr<Loop>        _loop;
     std::vector<Location>   locations;
     Connection::Conf        conn_conf;
     std::vector<ListenerSP> listeners;
-    uint64_t                lastid;
     ConnectionMap           connections;
     
     void on_connect        (Stream* handle, const StreamError& err);
