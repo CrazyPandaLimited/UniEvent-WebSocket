@@ -39,6 +39,7 @@ public:
     CallbackDispatcher<void(BaseConnectionSP, MessageSP)>          message_callback;
     CallbackDispatcher<void(BaseConnectionSP, const StreamError&)> stream_error_callback;
     CallbackDispatcher<void(BaseConnectionSP, const string&)>      any_error_callback;
+    CallbackDispatcher<void(BaseConnectionSP, uint16_t, string)>   close_callback;
 
 
     template<typename... Args>
@@ -59,6 +60,8 @@ public:
     void close(CloseCode code, string payload = string()) {
         close(uint16_t(code), payload);
     }
+
+    virtual bool connected();
 
 protected:
     virtual void on_frame        (FrameSP frame);

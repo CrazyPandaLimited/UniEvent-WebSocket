@@ -84,6 +84,7 @@ void Connection::close(uint16_t code, string payload)
     if (state != State::DISCONNECTED) {
         _server->remove_connection(sp);
     }
+    BaseConnection::close(code, payload);
 }
 
 Connection::~Connection () {

@@ -58,6 +58,16 @@ protected:
         self->start_listening();
     }
 
+    template <class Conn = Connection>
+    shared_ptr<Conn> get_connection(uint64_t id) {
+        auto iter = connections.find(id);
+        if (iter == connections.end()) {
+            return nullptr;
+        } else {
+            return dynamic_pointer_cast<Conn>(iter->second);
+        }
+    }
+
     bool                    running;
 private:
     static std::atomic<uint64_t> lastid;

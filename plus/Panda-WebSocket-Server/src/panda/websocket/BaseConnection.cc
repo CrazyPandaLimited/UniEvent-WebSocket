@@ -17,6 +17,11 @@ void BaseConnection::close(uint16_t code, string payload) {
         state = State::WS_DISCONNECTED;
     }
     close_tcp();
+    close_callback(this, code, payload);
+}
+
+bool BaseConnection::connected() {
+    return state == State::WS_CONNECTED;
 }
 
 void BaseConnection::on_frame(FrameSP frame) {
@@ -57,6 +62,7 @@ void BaseConnection::on_eof() {
     panda_log_info("on_eof");
     state = State::DISCONNECTED;
     close();
+    TCP::on_eof();
 }
 
 void BaseConnection::close_tcp() {
