@@ -9,13 +9,14 @@ say "START $$";
 
 my $loop = new Panda::Event::Loop;
 
-my $f = new Panda::WebSocket::Server($loop);
+my $f = new Panda::WebSocket::Server();
 $f->init({
     locations => [
         {host => 'dev', port => 4680},
         {host => 'dev', port => 4681, secure => 1},
     ],
 });
+$f->loop;
 
 $f->run;
 
@@ -27,7 +28,7 @@ $f->run;
 ##$t->start(2);
 
 say "entering loop";
-$loop->run;
+$f->loop->run;
 say "loop finished";
 
 1;

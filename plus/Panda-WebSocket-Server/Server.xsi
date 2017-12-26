@@ -1,40 +1,27 @@
 MODULE = Panda::WebSocket::Server                PACKAGE = Panda::WebSocket::Server
 PROTOTYPES: DISABLE
 
-panda::websocket::server::Server* panda::websocket::server::Server::new (panda::event::Loop* loop = NULL) {
+xs::websocket::server::XSServer* panda::websocket::server::Server::new (panda::event::Loop* loop = panda::event::Loop::default_loop()) {
     RETVAL = new XSServer(loop);
+    RETVAL->connection_class = gv_stashpv("Panda::WebSocket::Server::Connection", GV_ADD);
 }
 
-void panda::websocket::server::Server::init (HV* hvcfg) {
-    SV** ref;
-    ServerConfig config;
-    
-    if ((ref = hv_fetch(hvcfg, "locations", 9, 0))) {
-        auto av = typemap_incast<AV*>(*ref);
-        if (av) {
-            auto lasti = AvFILLp(av);
-            auto svlocs = AvARRAY(av);
-            while (lasti-- >= 0) {
-                if (!*svlocs) continue;
-                auto hvloc = typemap_incast<HV*>(*svlocs);
-                if (!hvloc) continue;
-                Location loc = {string(), 0, false, 0};
-                if ((ref = hv_fetch(hvloc, "host", 4, 0)))   loc.host   = typemap_incast<string>(*ref);
-                if ((ref = hv_fetch(hvloc, "port", 4, 0)))   loc.port   = SvUV(*ref);
-                if ((ref = hv_fetch(hvloc, "secure", 6, 0))) loc.secure = SvTRUE(*ref) ? true : false;
-                config.locations.push_back(std::move(loc));
-                svlocs++;
-            }
-        }
+const char* xs::websocket::server::XSServer::connection_class (const char* conn_class = NULL) {
+    if (items > 1) {
+        THIS->connection_class = gv_stashpv(conn_class, GV_ADD);
+        XSRETURN_UNDEF;
     }
-    
+    RETVAL = HvNAME(THIS->connection_class);
+}
+
+void panda::websocket::server::Server::init (HV* hvcfg) {    
     PXS_TRY({
-        THIS->init(config);
+        THIS->init(XSServer::make_server_config(hvcfg));
     });
 }
 
 panda::event::Loop* panda::websocket::server::Server::loop () {
-    HV* CLASS;
+    const char* CLASS = "Panda::Event::Loop";
     RETVAL = THIS->loop();
 }
 
@@ -47,6 +34,28 @@ void panda::websocket::server::Server::run () {
 void panda::websocket::server::Server::stop () {
     PXS_TRY({
         THIS->stop();
+    });
+}
+
+void panda::websocket::server::Server::connection_callback (CV* cb) {
+    xs::SvIntrPtr cb_ptr(cb);
+    using Event = decltype(THIS->connection_callback)::Event;
+    THIS->connection_callback.add([cb_ptr](Event&, Server* server, Connection* conn) {
+        XSServer* xs_server = panda::dyn_cast<XSServer*>(server);
+        HV* conn_class = xs_server ? xs_server->connection_class.get<HV>() : gv_stashpv("Panda::Websocket::Server::Connection", GV_ADD);
+        SV* arg = sv_2mortal(typemap_outcast<panda::websocket::server::Connection*, HV* CLASS>(conn, conn_class));
+        xs::call_sub_void(cb_ptr.get<CV>(), &arg, 1);
+    });
+}
+
+void panda::websocket::server::Server::remove_connection_callback (CV* cb) {
+    xs::SvIntrPtr cb_ptr(cb);
+    using Event = decltype(THIS->remove_connection_callback)::Event;
+    THIS->remove_connection_callback.add([cb_ptr](Event&, Server* server, Connection* conn) {
+        XSServer* xs_server = panda::dyn_cast<XSServer*>(server);
+        HV* conn_class = xs_server ? xs_server->connection_class.get<HV>() : gv_stashpv("Panda::WebSocket::Server::Connection", GV_ADD);
+        SV* arg = sv_2mortal(typemap_outcast<panda::websocket::server::Connection*, HV* CLASS>(conn, conn_class));
+        xs::call_sub_void(cb_ptr.get<CV>(), &arg, 1);
     });
 }
 

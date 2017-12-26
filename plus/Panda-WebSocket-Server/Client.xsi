@@ -1,0 +1,50 @@
+MODULE = Panda::WebSocket::Server                PACKAGE = Panda::WebSocket::Client
+PROTOTYPES: DISABLE
+
+panda::websocket::Client* panda::websocket::Client::new (panda::event::Loop* loop = panda::event::Loop::default_loop()) {
+    RETVAL = new Client(loop);
+}
+
+void panda::websocket::Client::close(uint16_t code)
+
+void panda::websocket::Client::connect(panda::websocket::ConnectRequestSP request, bool secure, uint16_t port)
+
+void panda::websocket::Client::send_message(string payload)
+
+void panda::websocket::Client::send_text(string payload)
+
+void panda::websocket::Client::connect_callback(CV* cb) {
+    xs::SvIntrPtr cb_ptr(cb);
+    using Event = decltype(THIS->connect_callback)::Event;
+    THIS->connect_callback.add([cb_ptr](Event& e, Client* client, ConnectResponseSP request) {
+        SV* arg = sv_2mortal(typemap_outcast<panda::websocket::ConnectResponseSP, const char* CLASS>(request, "Panda::WebSocket::ConnectResponse"));
+        xs::call_sub_void(cb_ptr.get<CV>(), &arg, 1);
+        e.next(client, request);
+    });
+}
+
+void panda::websocket::Client::message_callback(CV* cb) {
+    xs::SvIntrPtr cb_ptr(cb);
+    xs::SvIntrPtr connection_class(SvSTASH(SvRV(ST(0))));
+    using Event = decltype(THIS->message_callback)::Event;
+    THIS->message_callback.add([cb_ptr, connection_class](Event& e, BaseConnection* client, MessageSP request) {
+        SV* arg = sv_2mortal(typemap_outcast<panda::websocket::MessageSP, const char* CLASS>(request, "Panda::WebSocket::Message"));
+        xs::call_sub_void(cb_ptr.get<CV>(), &arg, 1);
+        e.next(client, request);
+    });
+}
+
+void panda::websocket::Client::stream_error_callback(CV* cb) {
+    xs::SvIntrPtr cb_ptr(cb);
+    xs::SvIntrPtr connection_class(SvSTASH(SvRV(ST(0))));
+    using Event = decltype(THIS->stream_error_callback)::Event;
+    THIS->stream_error_callback.add([cb_ptr, connection_class](Event& e, BaseConnection* client, const panda::event::StreamError& err) {
+        SV* arg = sv_2mortal(error_sv(err));
+        xs::call_sub_void(cb_ptr.get<CV>(), &arg, 1);
+        e.next(client, err);
+    });
+}
+
+
+void panda::websocket::Client::DESTROY () {}
+

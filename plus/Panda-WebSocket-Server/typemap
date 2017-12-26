@@ -1,15 +1,26 @@
 TYPEMAP
 
-panda::websocket::server::Server* XT_PWS_SERVER
+xs::websocket::server::XSServer*      XT_PWS_SERVER
+panda::websocket::server::Server*     XT_PWS_SERVER
+xs::websocket::server::XSConnection*  XT_PWS_CONNECTION
+panda::websocket::server::Connection* XT_PWS_CONNECTION
+panda::websocket::Client* XT_PWS_CLIENT
 
 ######################################################################
 OUTPUT
 
-XT_PWS_SERVER : T_OEXT(basetype=panda::websocket::server::Server*, refcnt)
+XT_PWS_SERVER : T_OEXT(basetype=panda::websocket::server::Server*, refcnt, backref)
 
+XT_PWS_CONNECTION : T_OEXT(basetype=panda::websocket::server::Connection*, refcnt, backref)
 
+XT_PWS_CLIENT : T_OEXT(basetype=panda::websocket::Client*, refcnt)
 
 ######################################################################
 INPUT
 
-XT_PWS_SERVER : T_OEXT(basetype=panda::websocket::server::Server*, refcnt)
+XT_PWS_SERVER : T_OEXT(basetype=panda::websocket::server::Server*, refcnt, backref)
+
+XT_PWS_CONNECTION : T_OEXT(basetype=panda::websocket::server::Connection*, refcnt, backref)
+
+XT_PWS_CLIENT : T_OEXT(basetype=panda::websocket::Client*, refcnt)
+

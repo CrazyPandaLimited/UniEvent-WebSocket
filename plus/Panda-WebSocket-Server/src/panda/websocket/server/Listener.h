@@ -30,4 +30,17 @@ public:
 
 typedef shared_ptr<Listener> ListenerSP;
 
+template <typename Stream>
+Stream& operator << (Stream& stream, const panda::websocket::server::Location& loc) {
+    stream << "Location{";
+    stream << "host:\"" << loc.host << "\"";
+    stream << ",port:" << loc.port;
+    stream << ",secure:" << loc.secure;
+    stream << ",reuse_port:" << loc.reuse_port;
+    stream << ",backlog:" << loc.backlog;
+    stream << "}";
+    return stream;
+}
+
 }}}
+
