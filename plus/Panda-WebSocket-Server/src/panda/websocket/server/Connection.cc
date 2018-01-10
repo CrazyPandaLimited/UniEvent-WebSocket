@@ -36,6 +36,7 @@ void Connection::on_read (const string& buf, const StreamError& err) {
         if (!creq) return;
 
         if (creq->error) {
+            panda_log_info(creq->error);
             HTTPResponse res;
             send_accept_error(&res);
             close();
