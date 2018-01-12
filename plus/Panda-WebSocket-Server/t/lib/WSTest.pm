@@ -5,14 +5,14 @@ use Test::More;
 use Panda::WebSocket::Server;
 use Panda::WebSocket;
 use Panda::Event;
-use Panda::Lib qw/add_native_logger/;
+use Panda::Lib qw/set_native_logger/;
 use Socket;
 
 sub make_server {
-	Panda::Lib::add_native_logger(sub {
-		my ($level, $msg) = @_;
+	Panda::Lib::set_native_logger(sub {
+		my ($level, $code, $msg) = @_;
 		if ($level < 3) { #errorlog
-			ok (0, $msg);
+			ok (0, "$code $msg");
 		}
 	});
 

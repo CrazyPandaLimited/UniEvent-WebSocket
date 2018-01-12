@@ -25,8 +25,8 @@ bool BaseConnection::connected() {
 }
 
 void BaseConnection::on_frame(FrameSP frame) {
-    if (Log::should_log(Log::DEBUG, _panda_code_point_)){
-        Log logger = Log(_panda_code_point_, Log::DEBUG);
+    if (Log::should_log(logger::DEBUG, _panda_code_point_)){
+        Log logger = Log(_panda_code_point_, logger::DEBUG);
         logger << "websocket BaseConnection::on_frame: payload=\n";
         for (const auto& str : frame->payload) {
             logger << encode::encode_base16(str);
@@ -36,8 +36,8 @@ void BaseConnection::on_frame(FrameSP frame) {
 }
 
 void BaseConnection::on_message(MessageSP msg) {
-    if (Log::should_log(Log::DEBUG, _panda_code_point_)){
-        Log logger = Log(_panda_code_point_, Log::DEBUG);
+    if (Log::should_log(logger::DEBUG, _panda_code_point_)){
+        Log logger = Log(_panda_code_point_, logger::DEBUG);
         logger << "websocket BaseConnection::on_message: payload=\n";
         for (const auto& str : msg->payload) {
             logger << encode::encode_base16(str);
