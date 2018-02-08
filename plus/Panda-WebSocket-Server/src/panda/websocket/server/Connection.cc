@@ -36,6 +36,7 @@ void Connection::on_read (const string& buf, const StreamError& err) {
         if (!creq) return;
 
         if (creq->error) {
+            panda_log_info(creq->error);
             HTTPResponse res;
             send_accept_error(&res);
             close();
@@ -54,8 +55,11 @@ void Connection::on_read (const string& buf, const StreamError& err) {
     for (const auto& msg : msg_range) {
         if (msg->error) return close(CloseCode::PROTOCOL_ERROR);
         if (msg->opcode() == Opcode::CLOSE) return close(msg->close_code());
-        if (msg->opcode() == Opcode::PING) return write(_parser.send_pong());
+        if (msg->opcode() == Opcode::PING) write(_parser.send_pong());
         on_message(msg);
+        if (state != State::WS_CONNECTED) {
+            break;
+        }
     }
 }
 

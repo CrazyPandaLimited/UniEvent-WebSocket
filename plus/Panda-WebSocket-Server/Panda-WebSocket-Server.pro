@@ -32,5 +32,6 @@ DISTFILES += \
     Server.xsi \
     Connection.xsi \
     typemap \
-    Client.xsi
+    Client.xsi \
+    Makefile.PL
 
