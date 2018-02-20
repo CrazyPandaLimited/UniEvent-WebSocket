@@ -28,22 +28,6 @@ void Server::reconfigure(const ServerConfig& conf) {
     reconfigure(this, conf);
 }
 
-//void die (int en, const char* msg) {
-//	cout << "error(" << msg << "): " << (en ? strerror(en) : "") << "\n";
-//	throw "ebanarot";
-//}
-
-//void kick_client (Stream* handle) {
-//	handle->write("you are kicked\n", 15);
-//	handle->disconnect();
-//	clients.erase(std::find(clients.begin(), clients.end(), handle));
-//	//cout <<"Thread("<<tnum<<") client kicked, now i have " << clients.size() << " clients\n";
-//}
-
-//void on_timer (Timer* timer) {
-//	//cout <<"Thread("<<tnum<<") timer\n";
-//}
-
 void Server::run () {
     if (running) throw std::logic_error("already running");
     running = true;
@@ -62,8 +46,8 @@ void Server::on_connection(ConnectionSP conn) {
     connection_callback(this, conn);
 }
 
-void Server::on_remove_connection(ConnectionSP conn) {
-    remove_connection_callback(this, conn);
+void Server::on_remove_connection(ConnectionSP conn, uint16_t code, string payload) {
+    remove_connection_callback(this, conn, code, payload);
 }
 
 void Server::start_listening() {
@@ -102,7 +86,7 @@ void Server::on_disconnect (Stream* handle) {
     remove_connection(conn);
 }
 
-void Server::remove_connection (ConnectionSP conn) {
+void Server::remove_connection (ConnectionSP conn, uint16_t code, string payload) {
     connections.erase(conn->id());
     on_remove_connection(conn);
 
