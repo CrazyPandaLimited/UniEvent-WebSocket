@@ -30,7 +30,7 @@ public:
     virtual void stop ();
 
     using ConnectionSP = shared_ptr<Connection>;
-    void close_connection  (ConnectionSP conn, CloseCode code) { conn->close(code); }
+    void close_connection  (ConnectionSP conn, uint16_t code) { conn->close(code); }
     void close_connection  (ConnectionSP conn, int code)       { conn->close(code); }
     void remove_connection (ConnectionSP conn, uint16_t code = uint16_t(CloseCode::ABNORMALLY), string payload = "");
 
