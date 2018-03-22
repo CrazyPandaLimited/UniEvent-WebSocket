@@ -69,16 +69,17 @@ protected:
     }
 
     bool                    running;
+
+    typedef std::map<uint64_t, ConnectionSP> ConnectionMap;
+    ConnectionMap           connections;
 private:
     static std::atomic<uint64_t> lastid;
-    typedef std::map<uint64_t, ConnectionSP> ConnectionMap;
 
     shared_ptr<Loop>        _loop;
     std::vector<Location>   locations;
     Connection::Conf        conn_conf;
     std::vector<ListenerSP> listeners;
-    ConnectionMap           connections;
-    
+
     void on_connect        (Stream* handle, const StreamError& err);
     void on_disconnect     (Stream* handle);
 
