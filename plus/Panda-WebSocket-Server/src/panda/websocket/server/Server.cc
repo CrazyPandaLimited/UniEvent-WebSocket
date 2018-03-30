@@ -69,7 +69,7 @@ void Server::on_remove_connection(ConnectionSP conn) {
 void Server::start_listening() {
     for (auto& location : locations) {
         auto l = new Listener(_loop, location);
-        l->connection_callback = std::bind(&Server::on_connect, this, _1, _2);
+        l->connection_event.add(std::bind(&Server::on_connect, this, _1, _2));
         l->run();
         listeners.push_back(l);
     }
@@ -88,7 +88,7 @@ void Server::on_connect (Stream* listener, const StreamError& err) {
 
     auto conn = new_connection(++lastid);
     connections[conn->id()] = conn;
-    conn->eof_callback = std::bind(&Server::on_disconnect, this, _1);
+    conn->eof_event.add(std::bind(&Server::on_disconnect, this, _1));
     conn->run(listener);
 
     on_connection(conn);
