@@ -16,7 +16,7 @@ $cl1->connect('localhost', $port);
 $cl1->shutdown(sub {
 	$state++;
 	my $cl2 = new Panda::Event::TCP();
-	$cl2->connect('localhost', $port, undef, sub {
+	$cl2->connect('localhost', $port, 1, undef, sub {
 		$state++;
 		$loop->stop();
 	});
