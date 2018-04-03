@@ -17,7 +17,7 @@ void Server::init (ServerConfig config) {
     for (auto& loc : config.locations) {
         if (!loc.host)    throw std::invalid_argument("empty host in one of locations");
         if (!loc.port)    throw std::invalid_argument("zero port in one of locations");
-        if (!loc.backlog) loc.backlog = 1024;
+        if (!loc.backlog) loc.backlog = 4096;
     }
 
     locations = config.locations;
