@@ -65,7 +65,10 @@ void Client::on_read(const string& buf, const event::StreamError& err) {
         auto msg_range = parser.get_messages(chunk);
         for (const auto& msg : msg_range) {
             if (msg->error) return close(CloseCode::PROTOCOL_ERROR);
-            if (msg->opcode() == Opcode::CLOSE) return close(msg->close_code());
+            if (msg->opcode() == Opcode::CLOSE) {
+                panda_log_debug("connection closed by server:" << msg->close_code());
+                return close(msg->close_code());
+            }
             if (msg->opcode() == Opcode::PING) write(parser.send_pong());
             on_message(msg);
             if (state != State::WS_CONNECTED) {

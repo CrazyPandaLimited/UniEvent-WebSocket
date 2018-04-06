@@ -9,7 +9,6 @@ namespace panda {
 namespace websocket {
 
 using panda::event::TCP;
-using panda::websocket::CloseCode;
 using panda::event::StreamError;
 using panda::CallbackDispatcher;
 using panda::event::Loop;
@@ -58,10 +57,6 @@ public:
     }
 
     virtual void close(uint16_t code = uint16_t(CloseCode::DONE), string payload = string());
-    void close(CloseCode code, string payload = string()) {
-        close(uint16_t(code), payload);
-    }
-
     virtual bool connected();
 
 protected:

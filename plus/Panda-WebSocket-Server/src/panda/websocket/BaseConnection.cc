@@ -16,8 +16,10 @@ void BaseConnection::close(uint16_t code, string payload) {
         write(data.begin(), data.end());
         state = State::WS_DISCONNECTED;
     }
-    close_tcp();
-    close_callback(this, code, payload);
+    if (state != State::DISCONNECTED) {
+        close_tcp();
+        close_callback(this, code, payload);
+    }
 }
 
 bool BaseConnection::connected() {
@@ -66,9 +68,6 @@ void BaseConnection::on_eof() {
 }
 
 void BaseConnection::close_tcp() {
-    if (state == State::DISCONNECTED) {
-        return;
-    }
     shutdown();
     disconnect();
     state = State::DISCONNECTED;

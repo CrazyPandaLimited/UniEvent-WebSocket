@@ -54,7 +54,10 @@ void Connection::on_read (const string& buf, const StreamError& err) {
     auto msg_range = _parser.get_messages(chunk);
     for (const auto& msg : msg_range) {
         if (msg->error) return close(CloseCode::PROTOCOL_ERROR);
-        if (msg->opcode() == Opcode::CLOSE) return close(msg->close_code());
+        if (msg->opcode() == Opcode::CLOSE) {
+            panda_log_debug("connection(" << id() << ") closed by client:" << msg->close_code());
+            return close(msg->close_code());
+        }
         if (msg->opcode() == Opcode::PING) write(_parser.send_pong());
         on_message(msg);
         if (state != State::WS_CONNECTED) {
@@ -86,7 +89,7 @@ void Connection::close(uint16_t code, string payload)
 {
     ConnectionSP sp = this; // keep self from destruction if user loses all references, that how panda::event::TCP works
     if (state != State::DISCONNECTED) {
-        _server->remove_connection(sp);
+        _server->remove_connection(sp, code, payload);
     }
     BaseConnection::close(code, payload);
 }

@@ -17,7 +17,7 @@ void Server::init (ServerConfig config) {
     for (auto& loc : config.locations) {
         if (!loc.host)    throw std::invalid_argument("empty host in one of locations");
         if (!loc.port)    throw std::invalid_argument("zero port in one of locations");
-        if (!loc.backlog) loc.backlog = 1024;
+        if (!loc.backlog) loc.backlog = 4096;
     }
 
     locations = config.locations;
@@ -27,22 +27,6 @@ void Server::init (ServerConfig config) {
 void Server::reconfigure(const ServerConfig& conf) {
     reconfigure(this, conf);
 }
-
-//void die (int en, const char* msg) {
-//	cout << "error(" << msg << "): " << (en ? strerror(en) : "") << "\n";
-//	throw "ebanarot";
-//}
-
-//void kick_client (Stream* handle) {
-//	handle->write("you are kicked\n", 15);
-//	handle->disconnect();
-//	clients.erase(std::find(clients.begin(), clients.end(), handle));
-//	//cout <<"Thread("<<tnum<<") client kicked, now i have " << clients.size() << " clients\n";
-//}
-
-//void on_timer (Timer* timer) {
-//	//cout <<"Thread("<<tnum<<") timer\n";
-//}
 
 void Server::run () {
     if (running) throw std::logic_error("already running");
@@ -62,8 +46,8 @@ void Server::on_connection(ConnectionSP conn) {
     connection_callback(this, conn);
 }
 
-void Server::on_remove_connection(ConnectionSP conn) {
-    remove_connection_callback(this, conn);
+void Server::on_remove_connection(ConnectionSP conn, uint16_t code, string payload) {
+    remove_connection_callback(this, conn, code, payload);
 }
 
 void Server::start_listening() {
@@ -102,9 +86,9 @@ void Server::on_disconnect (Stream* handle) {
     remove_connection(conn);
 }
 
-void Server::remove_connection (ConnectionSP conn) {
+void Server::remove_connection (ConnectionSP conn, uint16_t code, string payload) {
     connections.erase(conn->id());
-    on_remove_connection(conn);
+    on_remove_connection(conn, code, payload);
 
     panda_log_info("Server[remove_connection]: now i have " << connections.size() << " connections");
 }

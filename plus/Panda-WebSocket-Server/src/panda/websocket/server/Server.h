@@ -30,19 +30,19 @@ public:
     virtual void stop ();
 
     using ConnectionSP = shared_ptr<Connection>;
-    void close_connection  (ConnectionSP conn, CloseCode code) { conn->close(code); }
+    void close_connection  (ConnectionSP conn, uint16_t code) { conn->close(code); }
     void close_connection  (ConnectionSP conn, int code)       { conn->close(code); }
-    void remove_connection (ConnectionSP conn);
+    void remove_connection (ConnectionSP conn, uint16_t code = uint16_t(CloseCode::ABNORMALLY), string payload = "");
 
     virtual ~Server ();
 
     CallbackDispatcher<void (shared_ptr<Server, true>, ConnectionSP)> connection_callback;
-    CallbackDispatcher<void (shared_ptr<Server, true>, ConnectionSP)> remove_connection_callback;
+    CallbackDispatcher<void (shared_ptr<Server, true>, ConnectionSP, uint16_t, string)> remove_connection_callback;
 
 protected:
     virtual ConnectionSP new_connection (uint64_t id);
     virtual void on_connection(ConnectionSP conn);
-    virtual void on_remove_connection(ConnectionSP conn);
+    virtual void on_remove_connection(ConnectionSP conn, uint16_t code = uint16_t(CloseCode::ABNORMALLY), string payload = "");
 
     void start_listening();
     void stop_listening ();
@@ -69,16 +69,17 @@ protected:
     }
 
     bool                    running;
+
+    typedef std::map<uint64_t, ConnectionSP> ConnectionMap;
+    ConnectionMap           connections;
 private:
     static std::atomic<uint64_t> lastid;
-    typedef std::map<uint64_t, ConnectionSP> ConnectionMap;
 
     shared_ptr<Loop>        _loop;
     std::vector<Location>   locations;
     Connection::Conf        conn_conf;
     std::vector<ListenerSP> listeners;
-    ConnectionMap           connections;
-    
+
     void on_connect        (Stream* handle, const StreamError& err);
     void on_disconnect     (Stream* handle);
 
