@@ -8,6 +8,7 @@ write_makefile(
     CPLUS         => 11,
     DEFINE        => $ENV{DEBUG} ? '-DDEBUG' : '',
     BIN_DEPS      => ['Panda::Event', 'Panda::WebSocket', 'Panda::Encode::Base2N'],
+    TEST_REQUIRES => {'Panda::Lib' => '1.3.7'},
     SRC           => 'src',
     INC           => '-Isrc',
     TYPEMAPS      => 'typemap',
