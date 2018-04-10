@@ -8,6 +8,8 @@ use Panda::Event;
 use Panda::Lib;
 use Socket;
 
+plan skip_all => 'set TEST_FULL=1 to enable all tests' unless $ENV{TEST_FULL};
+
 sub make_server {
 	Panda::Lib::Logger::set_native_logger(sub {
 		my ($level, $code, $msg) = @_;
