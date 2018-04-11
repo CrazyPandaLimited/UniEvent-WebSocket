@@ -43,7 +43,6 @@ public:
 
     template<typename... Args>
     void send_message(Args&&... args) {
-        panda_log_debug("send message");
         assert(state == State::WS_CONNECTED);
         auto all = parser->send_message(std::forward<Args>(args)..., Opcode::BINARY);
         write(all.begin(), all.end());
@@ -51,7 +50,6 @@ public:
 
     template<typename... Args>
     void send_text(Args&&... args) {
-        panda_log_debug("send text");
         auto all = parser->send_message(std::forward<Args>(args)..., Opcode::TEXT);
         write(all.begin(), all.end());
     }

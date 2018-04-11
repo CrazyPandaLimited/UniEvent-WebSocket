@@ -38,8 +38,8 @@ void BaseConnection::on_frame(FrameSP frame) {
 }
 
 void BaseConnection::on_message(MessageSP msg) {
-    if (Log::should_log(logger::DEBUG, _panda_code_point_)){
-        Log logger = Log(_panda_code_point_, logger::DEBUG);
+    if (Log::should_log(logger::VERBOSE_DEBUG, _panda_code_point_)){
+        Log logger = Log(_panda_code_point_, logger::VERBOSE_DEBUG);
         logger << "websocket BaseConnection::on_message: payload=\n";
         for (const auto& str : msg->payload) {
             logger << encode::encode_base16(str);
@@ -49,7 +49,7 @@ void BaseConnection::on_message(MessageSP msg) {
 }
 
 void BaseConnection::on_stream_error(const event::StreamError& err) {
-    panda_log_info("on_stream_error: " << err.what());
+    panda_log_info("websocket on_stream_error: " << err.what());
     stream_error_callback(this, err);
     on_any_error(err.what());
 }
@@ -61,7 +61,7 @@ void BaseConnection::on_any_error(const string& err) {
 }
 
 void BaseConnection::on_eof() {
-    panda_log_info("on_eof");
+    panda_log_info("websocket on_eof");
     state = State::DISCONNECTED;
     close();
     TCP::on_eof();

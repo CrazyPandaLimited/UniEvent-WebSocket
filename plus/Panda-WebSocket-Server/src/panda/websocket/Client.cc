@@ -27,7 +27,7 @@ void Client::connect(ConnectRequestSP request, bool secure, uint16_t port) {
 }
 
 void Client::on_connect(ConnectResponseSP response) {
-    panda_log_info("on_connect");
+    panda_log_debug("on_connect");
     connect_callback(this, response);
 }
 
@@ -40,7 +40,6 @@ void Client::on_connect(const event::StreamError& err, event::ConnectRequest* re
 }
 
 void Client::on_read(const string& buf, const event::StreamError& err) {
-    panda_log_info("on_read: " << encode::encode_base16(buf));
     if (err) {
         on_stream_error(err);
         return;
@@ -48,7 +47,6 @@ void Client::on_read(const string& buf, const event::StreamError& err) {
 
     string chunk = buf;
     if (state == State::TCP_CONNECTED) {
-        panda_log_info("handshake is in proccess");
         auto req = parser.connect(chunk);
         if (!req) return;
 

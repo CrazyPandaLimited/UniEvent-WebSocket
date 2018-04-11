@@ -27,8 +27,6 @@ void Connection::run (Stream* listener) {
 void Connection::on_read (const string& buf, const StreamError& err) {
     if (err) return on_stream_error(err);
 
-    panda_log_debug("Connection(" << _id << ")[on_read]: " << encode::encode_base16(buf));
-
     string chunk = buf;
 
     if (!_parser.accept_parsed()) {
@@ -95,7 +93,7 @@ void Connection::close(uint16_t code, string payload)
 }
 
 Connection::~Connection () {
-    panda_log_info("connection destroy");
+    panda_log_debug("connection destroy");
 }
 
 void Connection::configure(Connection::Conf conf) {
