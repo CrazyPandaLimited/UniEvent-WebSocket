@@ -62,8 +62,9 @@ void BaseConnection::on_any_error(const string& err) {
 
 void BaseConnection::on_eof() {
     panda_log_info("websocket on_eof");
-    state = State::DISCONNECTED;
-    close();
+    if (state == State::WS_CONNECTED) {
+        close(CloseCode::ABNORMALLY);
+    }
     TCP::on_eof();
 }
 
