@@ -85,11 +85,11 @@ void Connection::send_accept_response (ConnectResponse* res) {
 
 void Connection::close(uint16_t code, string payload)
 {
+    BaseConnection::close(code, payload);
     ConnectionSP sp = this; // keep self from destruction if user loses all references, that how panda::event::TCP works
     if (state != State::DISCONNECTED) {
         _server->remove_connection(sp, code, payload);
     }
-    BaseConnection::close(code, payload);
 }
 
 Connection::~Connection () {
