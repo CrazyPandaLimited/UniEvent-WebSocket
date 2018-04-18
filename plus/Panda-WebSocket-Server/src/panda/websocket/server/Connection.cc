@@ -65,7 +65,6 @@ void Connection::on_read (const string& buf, const StreamError& err) {
 }
 
 void Connection::on_accept (ConnectRequestSP req) {
-    panda_log_info("Connection(" << _id << ")[on_accept]: req=" << req->uri->to_string());
     ConnectResponse res;
     send_accept_response(&res);
     accept_callback(this, req);
@@ -73,13 +72,11 @@ void Connection::on_accept (ConnectRequestSP req) {
 
 void Connection::send_accept_error (HTTPResponse* res) {
     string data = _parser.accept_error(res);
-    panda_log_info("Connection(" << _id << ")[send_accept_error]: sending\n" << data);
     write(data);
 }
 
 void Connection::send_accept_response (ConnectResponse* res) {
     string data = _parser.accept_response(res);
-    panda_log_info("Connection(" << _id << ")[send_accept_response]: sending\n" << data);
     write(data);
 }
 

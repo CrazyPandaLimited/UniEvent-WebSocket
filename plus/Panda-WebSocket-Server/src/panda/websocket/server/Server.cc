@@ -31,7 +31,7 @@ void Server::reconfigure(const ServerConfig& conf) {
 void Server::run () {
     if (running) throw std::logic_error("already running");
     running = true;
-    panda_log_info("run");
+    panda_log_info("websocket::Server::run");
 
     start_listening();
 }
@@ -68,7 +68,9 @@ void Server::on_connect (Stream* listener, const StreamError& err) {
         panda_log_info("Server[on_connect]: error: " << err.what());
         return;
     }
-    panda_log_info("Server[on_connect]: somebody connected to " << (uint64_t)listener);
+    if (auto l = dyn_cast<Listener*>(listener)) {
+        panda_log_info("Server[on_connect]: somebody connected to " << l->location());
+    }
 
     auto conn = new_connection(++lastid);
     connections[conn->id()] = conn;

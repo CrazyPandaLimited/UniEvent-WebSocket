@@ -19,15 +19,13 @@ void Client::connect(ConnectRequestSP request, bool secure, uint16_t port) {
         port = secure ? 443 : 80;
     }
     string port_str = string::from_number(port);
-    panda_debug_v(request->uri->host());
-    panda_debug_v(port_str);
+    panda_log_debug("connecting to " << request->uri->host() << ":" << port_str);
     connect(request->uri->host(), port_str);
     read_start();
     write(parser.connect_request(request));
 }
 
 void Client::on_connect(ConnectResponseSP response) {
-    panda_log_debug("on_connect");
     connect_callback(this, response);
 }
 
