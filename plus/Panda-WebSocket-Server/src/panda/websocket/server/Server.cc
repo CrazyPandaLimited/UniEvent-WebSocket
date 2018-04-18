@@ -47,7 +47,7 @@ void Server::on_connection(ConnectionSP conn) {
 }
 
 void Server::on_remove_connection(ConnectionSP conn, uint16_t code, string payload) {
-    remove_connection_callback(this, conn, code, payload);
+    disconnection_callback(this, conn, code, payload);
 }
 
 void Server::start_listening() {

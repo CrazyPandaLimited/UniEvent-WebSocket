@@ -33,5 +33,7 @@ DISTFILES += \
     Connection.xsi \
     typemap \
     Client.xsi \
-    Makefile.PL
+    Makefile.PL \
+    t/01-Panda-Websocket-Connection.t \
+    t/lib/WSTest.pm
 

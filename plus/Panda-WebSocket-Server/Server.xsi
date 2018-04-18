@@ -48,10 +48,10 @@ void panda::websocket::server::Server::connection_callback (CV* cb) {
     });
 }
 
-void panda::websocket::server::Server::remove_connection_callback (CV* cb) {
+void panda::websocket::server::Server::disconnection_callback (CV* cb) {
     xs::SvIntrPtr cb_ptr(cb);
-    using Event = decltype(THIS->remove_connection_callback)::Event;
-    THIS->remove_connection_callback.add([cb_ptr](Event&, Server* server, Connection* conn, uint16_t code, string payload) {
+    using Event = decltype(THIS->disconnection_callback)::Event;
+    THIS->disconnection_callback.add([cb_ptr](Event&, Server* server, Connection* conn, uint16_t code, string payload) {
         XSServer* xs_server = panda::dyn_cast<XSServer*>(server);
         HV* conn_class = xs_server ? xs_server->connection_class.get<HV>() : gv_stashpv("Panda::WebSocket::Server::Connection", GV_ADD);
         std::array<SV*, 3> args = {

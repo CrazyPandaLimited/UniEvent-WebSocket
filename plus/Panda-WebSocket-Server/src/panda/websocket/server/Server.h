@@ -37,7 +37,7 @@ public:
     virtual ~Server ();
 
     CallbackDispatcher<void (shared_ptr<Server, true>, ConnectionSP)> connection_callback;
-    CallbackDispatcher<void (shared_ptr<Server, true>, ConnectionSP, uint16_t, string)> remove_connection_callback;
+    CallbackDispatcher<void (shared_ptr<Server, true>, ConnectionSP, uint16_t, string)> disconnection_callback;
 
 protected:
     virtual ConnectionSP new_connection (uint64_t id);
