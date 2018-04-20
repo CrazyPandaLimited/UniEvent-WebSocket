@@ -89,9 +89,12 @@ void Server::on_disconnect (Stream* handle) {
 }
 
 void Server::remove_connection (ConnectionSP conn, uint16_t code, string payload) {
-    connections.erase(conn->id());
-    on_remove_connection(conn, code, payload);
+    auto erased = connections.erase(conn->id());
+    if (!erased) {
+        return;
+    }
 
+    on_remove_connection(conn, code, payload);
     panda_log_info("Server[remove_connection]: now i have " << connections.size() << " connections");
 }
 
