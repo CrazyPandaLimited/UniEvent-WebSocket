@@ -69,6 +69,7 @@ protected:
 
     enum class State {
         DISCONNECTED,
+        CONNECTING,
         TCP_CONNECTED,
         WS_CONNECTED,
         WS_DISCONNECTED

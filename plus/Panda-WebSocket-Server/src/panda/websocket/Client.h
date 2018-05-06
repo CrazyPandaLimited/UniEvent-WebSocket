@@ -21,6 +21,8 @@ public:
     /** @param port default value is 443 for secure and 80 for usual     */
     void connect(ConnectRequestSP request, bool secure = false, uint16_t port = 0);
 
+    virtual void close(uint16_t code = uint16_t(CloseCode::DONE), string = string()) override;
+
 protected:
     virtual void on_connect      (ConnectResponseSP response);
 

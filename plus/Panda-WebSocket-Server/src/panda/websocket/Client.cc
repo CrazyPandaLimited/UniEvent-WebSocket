@@ -20,9 +20,17 @@ void Client::connect(ConnectRequestSP request, bool secure, uint16_t port) {
     }
     string port_str = string::from_number(port);
     panda_log_debug("connecting to " << request->uri->host() << ":" << port_str);
+    state = State::CONNECTING;
     connect(request->uri->host(), port_str);
     read_start();
     write(parser.connect_request(request));
+}
+
+void Client::close(uint16_t code, string payload) {
+    if (state == State::CONNECTING) {
+        throw std::logic_error("can not close websocket when it is connecting, please wait for connect_callback");
+    }
+    BaseConnection::close(code, payload);
 }
 
 void Client::on_connect(ConnectResponseSP response) {
