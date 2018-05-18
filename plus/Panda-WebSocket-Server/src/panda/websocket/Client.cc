@@ -21,6 +21,9 @@ void Client::connect(ConnectRequestSP request, bool secure, uint16_t port) {
     string port_str = string::from_number(port);
     panda_log_debug("connecting to " << request->uri->host() << ":" << port_str);
     state = State::CONNECTING;
+    if (secure) {
+        use_ssl();
+    }
     connect(request->uri->host(), port_str);
     read_start();
     write(parser.connect_request(request));

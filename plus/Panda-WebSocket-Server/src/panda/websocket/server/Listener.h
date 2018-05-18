@@ -14,6 +14,7 @@ struct Location {
     bool     secure;     // WSS if true
     bool     reuse_port; // several listeners(servers) can be bound to the same port if true, useful for threaded apps
     int      backlog;    // max accept queue
+    SSL_CTX* ssl_ctx;    // config with sertificate for server
 };
 
 class Listener : public TCP {
