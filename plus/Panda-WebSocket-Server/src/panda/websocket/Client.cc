@@ -36,6 +36,16 @@ void Client::close(uint16_t code, string payload) {
     BaseConnection::close(code, payload);
 }
 
+void Client::on_stream_error(const event::StreamError& err) {
+    if (state == State::CONNECTING) {
+        ConnectResponseSP res = new ConnectResponse();
+        res->error = err.what();
+        on_connect(res);
+        state = State::WS_DISCONNECTED;
+    }
+    BaseConnection::on_stream_error(err);
+}
+
 void Client::on_connect(ConnectResponseSP response) {
     connect_callback(this, response);
 }
@@ -60,7 +70,7 @@ void Client::on_read(const string& buf, const event::StreamError& err) {
         if (!req) return;
 
         if (req->error) {
-            on_any_error(req->error);
+            on_connect(req);
         }
         else {
             state = State::WS_CONNECTED;

@@ -24,6 +24,7 @@ public:
     virtual void close(uint16_t code = uint16_t(CloseCode::DONE), string = string()) override;
 
 protected:
+    virtual void on_stream_error (const StreamError& err);
     virtual void on_connect      (ConnectResponseSP response);
 
     using TCP::connect;
