@@ -13,7 +13,7 @@ Server::ConnectionSP XSServer::new_connection(uint64_t id) {
 Location XSServer::make_location(HV* hvloc) {
     SV** ref;
     Location loc = {string(), 0, false, true, 0};
-    if ((ref = hv_fetch(hvloc, "host", 4, 0)))   loc.host   = sv2string(*ref);
+    if ((ref = hv_fetch(hvloc, "host", 4, 0)))   loc.host   = sv2string(aTHX_ *ref);
     if ((ref = hv_fetch(hvloc, "port", 4, 0)))   loc.port   = SvUV(*ref);
     if ((ref = hv_fetch(hvloc, "secure", 6, 0))) loc.secure = SvTRUE(*ref) ? true : false;
     if ((ref = hv_fetch(hvloc, "backlog", 7, 0))) loc.backlog = SvUV(*ref);
