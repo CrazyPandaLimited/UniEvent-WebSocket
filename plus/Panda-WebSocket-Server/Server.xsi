@@ -1,9 +1,12 @@
 MODULE = Panda::WebSocket::Server                PACKAGE = Panda::WebSocket::Server
 PROTOTYPES: DISABLE
 
-xs::websocket::server::XSServer* panda::websocket::server::Server::new (panda::event::Loop* loop = panda::event::Loop::default_loop()) {
-    RETVAL = new XSServer(loop);
-    RETVAL->connection_class = gv_stashpv("Panda::WebSocket::Server::Connection", GV_ADD);
+xs::websocket::server::XSServer* panda::websocket::server::Server::new (HV* hvcfg, panda::event::Loop* loop = panda::event::Loop::default_loop()) {
+    PXS_TRY({
+        RETVAL = new XSServer(loop);
+        RETVAL->connection_class = gv_stashpv("Panda::WebSocket::Server::Connection", GV_ADD);
+        RETVAL->init(XSServer::make_server_config(hvcfg));
+    });
 }
 
 const char* xs::websocket::server::XSServer::connection_class (const char* conn_class = NULL) {
@@ -12,12 +15,6 @@ const char* xs::websocket::server::XSServer::connection_class (const char* conn_
         XSRETURN_UNDEF;
     }
     RETVAL = HvNAME(THIS->connection_class);
-}
-
-void panda::websocket::server::Server::init (HV* hvcfg) {    
-    PXS_TRY({
-        THIS->init(XSServer::make_server_config(hvcfg));
-    });
 }
 
 panda::event::Loop* panda::websocket::server::Server::loop () {
