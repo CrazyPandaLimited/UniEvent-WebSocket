@@ -7,7 +7,7 @@ write_makefile(
     ABSTRACT_FROM => 'lib/Panda/WebSocket/Server.pod',
     CPLUS         => 11,
     DEFINE        => $ENV{DEBUG} ? '-DDEBUG' : '',
-    BIN_DEPS      => ['Panda::Event', 'Panda::WebSocket', 'Panda::Encode::Base2N'],
+    BIN_DEPS      => ['Panda::Event', 'Panda::Lib', 'Panda::WebSocket', 'Panda::Encode::Base2N'],
     TEST_REQUIRES => {'Panda::Lib' => '1.3.7'},
     SRC           => 'src',
     INC           => '-Isrc',

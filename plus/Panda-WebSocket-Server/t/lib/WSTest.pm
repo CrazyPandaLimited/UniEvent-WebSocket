@@ -13,9 +13,6 @@ plan skip_all => 'set TEST_FULL=1 to enable all tests' unless $ENV{TEST_FULL};
 sub make_server {
 	Panda::Lib::Logger::set_native_logger(sub {
 		my ($level, $code, $msg) = @_;
-		if ($level < 3) { #errorlog
-			ok (0, "$code $msg");
-		}
 	});
 
 	my $loop = Panda::Event::Loop->default_loop;
@@ -25,8 +22,7 @@ sub make_server {
 	my $adr = $s->getsockname;
 	my ($port, $adrrrr) = sockaddr_in ($adr);
 
-	my $server = new Panda::WebSocket::Server();
-	$server->init({
+	my $server = new Panda::WebSocket::Server({
 		locations => [{
 			host => 'localhost',
 			port => $port,

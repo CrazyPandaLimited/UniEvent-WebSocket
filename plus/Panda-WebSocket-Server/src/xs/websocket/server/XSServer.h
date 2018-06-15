@@ -12,8 +12,6 @@ using panda::websocket::server::Connection;
 
 class XSServer : public Server, public xs::XSBackref {
 public:
-    SvIntrPtr connection_class;
-
     using Server::Server;
 
     ConnectionSP new_connection(uint64_t id) override;

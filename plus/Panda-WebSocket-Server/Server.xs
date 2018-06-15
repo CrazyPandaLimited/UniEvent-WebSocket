@@ -4,6 +4,7 @@
 #include <panda/websocket/server.h>
 #include <panda/websocket/Client.h>
 #include <panda/websocket/BaseConnection.h>
+#include <xs/lib/NativeCallbackDispatcher.h>
 #include <iostream>
 
 using namespace panda::websocket::server;
@@ -13,6 +14,8 @@ using namespace xs::websocket;
 using panda::event::Loop;
 using xs::event::error_sv;
 using panda::websocket::Client;
+using xs::lib::NativeCallbackDispatcher;
+using panda::function;
 
 using std::endl;
 

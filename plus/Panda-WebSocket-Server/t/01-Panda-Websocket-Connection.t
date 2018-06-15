@@ -1,40 +1,50 @@
 use 5.020;
 use warnings;
 
+
 use Test::More;
 use Panda::WebSocket::Server;
 use Panda::WebSocket;
+use Panda::WebSocket::Server::Connection;
 use Panda::Event;
 use lib 't/lib'; use WSTest;
+
+package Flogs::GetLogs::Connection;
+use parent 'Panda::WebSocket::Server::Connection';
+
+package main;
 
 my $loop = Panda::Event::Loop->default_loop;
 my $state = 0;
 my ($server, $port) = make_server();
 
-$server->connection_callback(sub {
-	my ($conn) = @_;
-	$conn->accept_callback(sub {
-		$conn->send_text('Hey!');
-	});
+$server->connection_callback->add(sub {
+    my ($serv, $conn) = @_;
+    bless $conn, 'Flogs::GetLogs::Connection';
+    $conn->accept_callback->add(sub {
+        my $conn1 = shift;
+        is(ref($conn1), 'Flogs::GetLogs::Connection');
+        $conn1->send_text('Hey!');
+    });
 });
 
-$server->remove_connection_callback(sub {
-	$state++;
-	$loop->stop();
+$server->disconnection_callback->add(sub {
+    $state++;
+    $loop->stop();
 });
 
 {
-	my $client = make_client($port);
+    my $client = make_client($port);
 
-	$client->message_callback(sub {
-		my ($msg) = @_;
-		$state++;
-		ok ($msg->payload eq 'Hey!');
-		$client->close(1001);
-	});
+    $client->message_callback->add(sub {
+        my ($client, $msg) = @_;
+        $state++;
+        ok ($msg->payload eq 'Hey!');
+        $client->close(1001);
+    });
 
-	$server->run();
-	$loop->run();
+    $server->run();
+    $loop->run();
 
 }
 ok($state == 2);

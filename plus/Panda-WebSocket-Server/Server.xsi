@@ -4,17 +4,8 @@ PROTOTYPES: DISABLE
 xs::websocket::server::XSServer* panda::websocket::server::Server::new (HV* hvcfg, panda::event::Loop* loop = panda::event::Loop::default_loop()) {
     PXS_TRY({
         RETVAL = new XSServer(loop);
-        RETVAL->connection_class = gv_stashpv("Panda::WebSocket::Server::Connection", GV_ADD);
         RETVAL->init(XSServer::make_server_config(hvcfg));
     });
-}
-
-const char* xs::websocket::server::XSServer::connection_class (const char* conn_class = NULL) {
-    if (items > 1) {
-        THIS->connection_class = gv_stashpv(conn_class, GV_ADD);
-        XSRETURN_UNDEF;
-    }
-    RETVAL = HvNAME(THIS->connection_class);
 }
 
 panda::event::Loop* panda::websocket::server::Server::loop () {
@@ -34,30 +25,43 @@ void panda::websocket::server::Server::stop () {
     });
 }
 
-void panda::websocket::server::Server::connection_callback (CV* cb) {
-    xs::SvIntrPtr cb_ptr(cb);
-    using Event = decltype(THIS->connection_callback)::Event;
-    THIS->connection_callback.add([cb_ptr](Event&, Server* server, Connection* conn) {
-        XSServer* xs_server = panda::dyn_cast<XSServer*>(server);
-        HV* conn_class = xs_server ? xs_server->connection_class.get<HV>() : gv_stashpv("Panda::Websocket::Server::Connection", GV_ADD);
-        SV* arg = sv_2mortal(typemap_outcast<panda::websocket::server::Connection*, HV* CLASS>(conn, conn_class));
-        xs::call_sub_void(cb_ptr.get<CV>(), &arg, 1);
-    });
+xs::lib::NativeCallbackDispatcher* panda::websocket::server::Server::connection_callback () {
+    const char* CLASS = "Panda::Lib::NativeCallbackDispatcher";
+
+    function<SV*(shared_ptr<panda::websocket::server::Server>)> serv_caster = [](shared_ptr<panda::websocket::server::Server> s) {
+        return sv_2mortal(typemap_outcast<panda::websocket::server::Server*, const char* CLASS>(s, "Panda::WebSocket::Server"));
+    };
+    function<SV*(shared_ptr<panda::websocket::server::Connection>)> conn_caster = [](shared_ptr<panda::websocket::server::Connection> c) {
+        return sv_2mortal(typemap_outcast<panda::websocket::server::Connection*, const char* CLASS>(c, "Panda::WebSocket::Server::Connection"));
+    };
+
+    RETVAL = NativeCallbackDispatcher::create(THIS->connection_callback,
+                                              std::make_tuple(serv_caster, nullptr),
+                                              std::make_tuple(conn_caster, nullptr));
 }
 
-void panda::websocket::server::Server::disconnection_callback (CV* cb) {
-    xs::SvIntrPtr cb_ptr(cb);
-    using Event = decltype(THIS->disconnection_callback)::Event;
-    THIS->disconnection_callback.add([cb_ptr](Event&, Server* server, Connection* conn, uint16_t code, string payload) {
-        XSServer* xs_server = panda::dyn_cast<XSServer*>(server);
-        HV* conn_class = xs_server ? xs_server->connection_class.get<HV>() : gv_stashpv("Panda::WebSocket::Server::Connection", GV_ADD);
-        std::array<SV*, 3> args = {
-            sv_2mortal(typemap_outcast<panda::websocket::server::Connection*, HV* CLASS>(conn, conn_class)),
-            sv_2mortal(newSVuv(code)),
-            sv_2mortal(newSVpvn(payload.data(), payload.size()))
-        };
-        xs::call_sub_void(cb_ptr.get<CV>(), &args[0], args.size());
-    });
+xs::lib::NativeCallbackDispatcher* panda::websocket::server::Server::disconnection_callback () {
+    const char* CLASS = "Panda::Lib::NativeCallbackDispatcher";
+
+    function<SV*(shared_ptr<panda::websocket::server::Server>)> server_caster = [](shared_ptr<panda::websocket::server::Server> s) {
+        return sv_2mortal(typemap_outcast<panda::websocket::server::Server*, const char* CLASS>(s, "Panda::WebSocket::Server"));
+    };
+    function<SV*(shared_ptr<panda::websocket::server::Connection>)> conn_caster = [](shared_ptr<panda::websocket::server::Connection> c) {
+        return sv_2mortal(typemap_outcast<panda::websocket::server::Connection*, const char* CLASS>(c, "Panda::WebSocket::Server::Connection"));
+    };
+
+    function<SV*(uint16_t)> code_caster = [](uint16_t code) {
+        return sv_2mortal(newSVuv(code));
+    };
+    function<SV*(string)> payload_caster = [](string payload) {
+        return sv_2mortal(newSVpvn(payload.data(), payload.size()));
+    };
+
+    RETVAL = NativeCallbackDispatcher::create(THIS->disconnection_callback,
+                                              std::make_tuple(server_caster, nullptr),
+                                              std::make_tuple(conn_caster, nullptr),
+                                              std::make_tuple(code_caster, nullptr),
+                                              std::make_tuple(payload_caster, nullptr));
 }
 
 void panda::websocket::server::Server::DESTROY () {}
