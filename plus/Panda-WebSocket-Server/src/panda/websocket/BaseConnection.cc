@@ -17,8 +17,11 @@ void BaseConnection::close(uint16_t code, string payload) {
         state = State::WS_DISCONNECTED;
     }
     if (state != State::DISCONNECTED) {
+        bool call = state >= State::WS_CONNECTED;
         close_tcp();
-        close_callback(this, code, payload);
+        if (call) {
+            close_callback(this, code, payload);
+        }
     }
 }
 

@@ -31,17 +31,18 @@ void Client::connect(ConnectRequestSP request, bool secure, uint16_t port) {
 
 void Client::close(uint16_t code, string payload) {
     if (state == State::CONNECTING) {
-        throw std::logic_error("can not close websocket when it is connecting, please wait for connect_callback");
+        on_stream_error(StreamError(panda::event::ERRNO_ECANCELED));
+    } else {
+        BaseConnection::close(code, payload);
     }
-    BaseConnection::close(code, payload);
 }
 
 void Client::on_stream_error(const event::StreamError& err) {
     if (state == State::CONNECTING) {
+        state = State::DISCONNECTED;
         ConnectResponseSP res = new ConnectResponse();
         res->error = err.what();
         on_connect(res);
-        state = State::WS_DISCONNECTED;
     }
     BaseConnection::on_stream_error(err);
 }

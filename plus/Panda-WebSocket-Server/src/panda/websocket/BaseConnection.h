@@ -68,7 +68,7 @@ protected:
     void close_tcp();
 
     enum class State {
-        DISCONNECTED,
+        DISCONNECTED = 0,
         CONNECTING,
         TCP_CONNECTED,
         WS_CONNECTED,
