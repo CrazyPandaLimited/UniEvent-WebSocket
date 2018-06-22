@@ -25,6 +25,18 @@ void panda::websocket::server::Server::stop () {
     });
 }
 
+void panda::websocket::server::Server::start_listening () {
+    PXS_TRY({
+        THIS->start_listening();
+    });
+}
+
+void panda::websocket::server::Server::stop_listening () {
+    PXS_TRY({
+        THIS->stop_listening();
+    });
+}
+
 xs::lib::NativeCallbackDispatcher* panda::websocket::server::Server::connection_callback () {
     const char* CLASS = "Panda::Lib::NativeCallbackDispatcher";
 

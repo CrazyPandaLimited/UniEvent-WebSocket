@@ -29,6 +29,9 @@ public:
     virtual void run  ();
     virtual void stop ();
 
+    void start_listening();
+    void stop_listening ();
+
     using ConnectionSP = shared_ptr<Connection>;
     void close_connection  (ConnectionSP conn, uint16_t code) { conn->close(code); }
     void close_connection  (ConnectionSP conn, int code)       { conn->close(code); }
@@ -43,9 +46,6 @@ protected:
     virtual ConnectionSP new_connection (uint64_t id);
     virtual void on_connection(ConnectionSP conn);
     virtual void on_remove_connection(ConnectionSP conn, uint16_t code = uint16_t(CloseCode::ABNORMALLY), string payload = "");
-
-    void start_listening();
-    void stop_listening ();
 
     template <class This, typename Config>
     void reconfigure(This* self, const Config& conf) {
