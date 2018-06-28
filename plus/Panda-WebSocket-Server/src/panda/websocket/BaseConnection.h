@@ -40,18 +40,32 @@ public:
     CallbackDispatcher<void(BaseConnectionSP, const string&)>      any_error_callback;
     CallbackDispatcher<void(BaseConnectionSP, uint16_t, string)>   close_callback;
 
-
-    template<typename... Args>
-    void send_message(Args&&... args) {
+    void send_message (string& payload, write_fn callback = {}) {
         assert(state == State::WS_CONNECTED);
-        auto all = parser->send_message(std::forward<Args>(args)..., Opcode::BINARY);
-        write(all.begin(), all.end());
+        auto all = parser->send_message(payload, Opcode::BINARY);
+        write(all.begin(), all.end(), callback);
     }
 
-    template<typename... Args>
-    void send_text(Args&&... args) {
-        auto all = parser->send_message(std::forward<Args>(args)..., Opcode::TEXT);
-        write(all.begin(), all.end());
+
+    template <class ContIt>
+    void send_message (ContIt begin, ContIt end, write_fn callback = {}) {
+        assert(state == State::WS_CONNECTED);
+        auto all = parser->send_message(begin, end, Opcode::BINARY);
+        write(all.begin(), all.end(), callback);
+    }
+
+    void send_text (string& payload, write_fn callback = {}) {
+        assert(state == State::WS_CONNECTED);
+        auto all = parser->send_message(payload, Opcode::TEXT);
+        write(all.begin(), all.end(), callback);
+    }
+
+
+    template <class ContIt>
+    void send_text (ContIt begin, ContIt end, write_fn callback = {}) {
+        assert(state == State::WS_CONNECTED);
+        auto all = parser->send_message(begin, end, Opcode::TEXT);
+        write(all.begin(), all.end(), callback);
     }
 
     virtual void close(uint16_t code = uint16_t(CloseCode::DONE), string payload = string());
