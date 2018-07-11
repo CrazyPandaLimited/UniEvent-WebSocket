@@ -94,5 +94,7 @@ private:
     Parser* parser;
 };
 
+std::ostream& operator <<(std::ostream& stream, const BaseConnection::Conf& conf);
+
 }
 }
