@@ -12,6 +12,8 @@ namespace panda { namespace websocket { namespace server {
 using panda::event::Stream;
 
 struct ServerConfig {
+    ServerConfig(const std::vector<Location>& locations_ = {}, const Connection::Conf& conn_conf_ = {}) : locations(locations_), conn_conf(conn_conf_) {}
+
     std::vector<Location> locations;
     Connection::Conf conn_conf;
 };
