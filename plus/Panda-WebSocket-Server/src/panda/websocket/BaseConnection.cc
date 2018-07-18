@@ -71,6 +71,11 @@ void BaseConnection::on_eof() {
     TCP::on_eof();
 }
 
+void BaseConnection::on_write(const event::StreamError& err, event::WriteRequest* req) {
+    TCP::on_write(err, req);
+    if (err) on_any_error(err.what());
+}
+
 void BaseConnection::close_tcp() {
     shutdown();
     disconnect();

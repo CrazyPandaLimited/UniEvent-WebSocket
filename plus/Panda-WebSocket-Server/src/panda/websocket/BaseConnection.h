@@ -78,6 +78,7 @@ protected:
     virtual void on_any_error    (const string& err);
     
     virtual void on_eof () override;
+    virtual void on_write(const event::StreamError& err, event::WriteRequest* req) override;
 
     void close_tcp();
 
