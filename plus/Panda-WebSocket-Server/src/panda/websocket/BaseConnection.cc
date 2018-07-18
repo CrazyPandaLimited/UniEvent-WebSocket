@@ -77,5 +77,12 @@ void BaseConnection::close_tcp() {
     state = State::DISCONNECTED;
 }
 
+std::ostream& operator <<(std::ostream& stream, const BaseConnection::Conf& conf) {
+    stream << "WebSocket::BaseConf{max_frame_size:" << conf.max_frame_size
+           << ", max_message_size:" << conf.max_message_size
+           << "}";
+    return stream;
+}
+
 
 }}

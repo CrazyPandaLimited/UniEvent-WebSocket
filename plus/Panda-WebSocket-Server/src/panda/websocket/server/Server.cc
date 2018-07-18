@@ -31,7 +31,7 @@ void Server::reconfigure(const ServerConfig& conf) {
 void Server::run () {
     if (running) throw std::logic_error("already running");
     running = true;
-    panda_log_info("websocket::Server::run");
+    panda_log_info("websocket::Server::run with conn_conf:" << conn_conf);
 
     start_listening();
 }

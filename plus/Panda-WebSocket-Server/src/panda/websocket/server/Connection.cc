@@ -98,4 +98,9 @@ void Connection::configure(Connection::Conf conf) {
     _parser.max_handshake_size = conf.max_handshake_size;
 }
 
+std::ostream& operator <<(std::ostream& stream, const Connection::Conf& conf) {
+    stream << "Connection::Conf{ base:" << conf.base << ", max_handshake_size:" << conf.max_handshake_size << "}";
+    return stream;
+}
+
 }}}

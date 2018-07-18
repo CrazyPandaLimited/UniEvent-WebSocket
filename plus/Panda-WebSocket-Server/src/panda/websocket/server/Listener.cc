@@ -13,7 +13,8 @@ Listener::Listener (Loop* loop, const Location& loc) : TCP(loop, AF_INET), _loca
 
 void Listener::run () {
 
-    panda_log_info("Listener[run]: listening " << (_location.secure ? "wss://" : "ws://") << _location.host << ":" << _location.port);
+    panda_log_info("Listener[run]: listening " << (_location.secure ? "wss://" : "ws://") << _location.host << ":" << _location.port
+                   << ", backlog:" << _location.backlog);
     if (_location.reuse_port) {
         int on = 1;
         setsockopt(SOL_SOCKET, SO_REUSEPORT, &on, sizeof(on));

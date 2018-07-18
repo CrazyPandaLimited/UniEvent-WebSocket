@@ -51,4 +51,6 @@ private:
 
 typedef shared_ptr<Connection> ConnectionSP;
 
+std::ostream& operator <<(std::ostream& stream, const Connection::Conf& conf);
+
 }}}
