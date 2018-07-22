@@ -10,7 +10,7 @@ void BaseConnection::configure(BaseConnection::Conf conf) {
 }
 
 void BaseConnection::close(uint16_t code, string payload) {
-    panda_log_info("BaseConnection[close]: code=" << code << ", payload:" << payload);
+    panda_log_info("BaseConnection[close]: state=" << (int)state << " code=" << code << ", payload:" << payload);
     if (state == State::WS_CONNECTED) {
         auto data = parser->send_close(code, payload);
         write(data.begin(), data.end());
@@ -22,7 +22,7 @@ void BaseConnection::close(uint16_t code, string payload) {
         if (call) {
             close_callback(this, code, payload);
         }
-    }
+    } 
 }
 
 bool BaseConnection::connected() {
@@ -55,6 +55,7 @@ void BaseConnection::on_stream_error(const event::StreamError& err) {
     panda_log_info("websocket on_stream_error: " << err.what());
     stream_error_callback(this, err);
     on_any_error(err.what());
+    close_reinit(true);
 }
 
 void BaseConnection::on_any_error(const string& err) {
