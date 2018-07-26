@@ -82,6 +82,7 @@ protected:
 
     void close_tcp();
 
+    // keep the order
     enum class State {
         DISCONNECTED = 0,
         CONNECTING,
