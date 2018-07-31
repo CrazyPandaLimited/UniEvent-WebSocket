@@ -3,6 +3,7 @@ PROTOTYPES: DISABLE
 
 BOOT {
     xs::register_package(aTHX_ "Panda::WebSocket::Server::Connection", "Panda::WebSocket::Server");
+    xs::inherit_package(aTHX_ "Panda::WebSocket::Server::Connection", "Panda::Event::TCP");
 }
 
 panda::websocket::server::Connection* panda::websocket::server::Connection::new(panda::websocket::server::Server* server) {

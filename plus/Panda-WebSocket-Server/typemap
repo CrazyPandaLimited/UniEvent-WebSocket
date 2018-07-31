@@ -11,16 +11,16 @@ OUTPUT
 
 XT_PWS_SERVER : T_OEXT(basetype=panda::websocket::server::Server*, refcnt, backref)
 
-XT_PWS_CONNECTION : T_OEXT(basetype=panda::websocket::server::Connection*, refcnt, backref)
+XT_PWS_CONNECTION : T_OEXT(basetype=panda::event::Handle*, refcnt, backref)
 
-XT_PWS_CLIENT : T_OEXT(basetype=panda::websocket::Client*, refcnt)
+XT_PWS_CLIENT : T_OEXT(basetype=panda::event::Handle*, refcnt)
 
 ######################################################################
 INPUT
 
 XT_PWS_SERVER : T_OEXT(basetype=panda::websocket::server::Server*, refcnt, backref)
 
-XT_PWS_CONNECTION : T_OEXT(basetype=panda::websocket::server::Connection*, refcnt, backref)
+XT_PWS_CONNECTION : T_OEXT(basetype=panda::event::Handle*, refcnt, backref)
 
-XT_PWS_CLIENT : T_OEXT(basetype=panda::websocket::Client*, refcnt)
+XT_PWS_CLIENT : T_OEXT(basetype=panda::event::Handle*, refcnt)
 
