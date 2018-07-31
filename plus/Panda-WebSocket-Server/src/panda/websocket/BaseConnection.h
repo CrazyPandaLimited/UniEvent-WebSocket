@@ -20,7 +20,7 @@ public:
         , state(State::DISCONNECTED)
         , parser(nullptr)
     {}
-    virtual ~BaseConnection() {panda_log_debug("~BaseConnection");}
+    virtual ~BaseConnection() {}
 
     void init(Parser& parser) {
         this->parser = &parser;

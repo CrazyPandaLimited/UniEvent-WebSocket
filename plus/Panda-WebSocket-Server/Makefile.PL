@@ -1,7 +1,7 @@
 use 5.020;
 use Panda::Install;
 
-write_makefile(
+my %params = (
     NAME          => 'Panda::WebSocket::Server',
     VERSION_FROM  => 'lib/Panda/WebSocket/Server.pm',
     ABSTRACT_FROM => 'lib/Panda/WebSocket/Server.pod',
@@ -20,3 +20,11 @@ write_makefile(
     OPTIMIZE => '-O2 -g',
     #CC => 'clang++',
 );
+
+if ($ENV{TEST_FULL}) {
+    ($params{DEFINE}||='') .= ' -DTEST_FULL';
+    $params{LIBS}[0] .= ' -lubsan';
+    ($params{CCFLAGS}||='') .= ' -fsanitize=undefined';
+}
+
+write_makefile(%params);
