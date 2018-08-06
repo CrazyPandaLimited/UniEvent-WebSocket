@@ -5,22 +5,19 @@
 #include <panda/CallbackDispatcher.h>
 #include <panda/log.h>
 
-namespace panda {
-namespace websocket {
+namespace panda { namespace websocket {
 
 using panda::event::TCP;
 using panda::event::StreamError;
 using panda::CallbackDispatcher;
 using panda::event::Loop;
 
-class BaseConnection : public TCP {
-public:
+struct BaseConnection : TCP {
     BaseConnection(Loop* loop = Loop::default_loop())
         : TCP(loop)
         , state(State::DISCONNECTED)
         , parser(nullptr)
     {}
-    virtual ~BaseConnection() {}
 
     void init(Parser& parser) {
         this->parser = &parser;
@@ -33,7 +30,7 @@ public:
 
     void configure(Conf conf);
 
-    using BaseConnectionSP = shared_ptr<BaseConnection, true>;
+    using BaseConnectionSP = iptr<BaseConnection>;
     CallbackDispatcher<void(BaseConnectionSP, FrameSP)>            frame_callback;
     CallbackDispatcher<void(BaseConnectionSP, MessageSP)>          message_callback;
     CallbackDispatcher<void(BaseConnectionSP, const StreamError&)> stream_error_callback;
@@ -90,11 +87,14 @@ protected:
     };
     State state;
 
+    virtual ~BaseConnection() {}
+
 private:
     Parser* parser;
 };
 
+using BaseConnectionSP = iptr<BaseConnection>;
+
 std::ostream& operator <<(std::ostream& stream, const BaseConnection::Conf& conf);
 
-}
-}
+}}

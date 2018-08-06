@@ -2,66 +2,44 @@ MODULE = Panda::WebSocket::Server                PACKAGE = Panda::WebSocket::Ser
 PROTOTYPES: DISABLE
 
 BOOT {
-    xs::register_package(aTHX_ "Panda::WebSocket::Server::Connection", "Panda::WebSocket::Server");
-    xs::inherit_package(aTHX_ "Panda::WebSocket::Server::Connection", "Panda::Event::TCP");
+    Stash connection_stash("Panda::WebSocket::Server::Connection");
+    connection_stash.mark_as_loaded(main_stash);
+    connection_stash.inherit(base_connection_stash);
 }
 
-panda::websocket::server::Connection* panda::websocket::server::Connection::new(panda::websocket::server::Server* server) {
-    RETVAL = new panda::websocket::server::Connection(server, 0);
+Connection* new (SV* CLASS, Server* server) {
+    RETVAL = new Connection(server, 0);
+    PROTO = Stash::from_name(CLASS).bless();
 }
 
-uint64_t panda::websocket::server::Connection::id()
+uint64_t Connection::id ()
 
-void panda::websocket::server::Connection::send_message(string payload)
-
-void panda::websocket::server::Connection::send_text(string payload)
-
-xs::lib::NativeCallbackDispatcher* panda::websocket::server::Connection::accept_callback() {
-    const char* CLASS = "Panda::Lib::NativeCallbackDispatcher";
-
-    function<SV*(shared_ptr<panda::websocket::server::Connection>)> conn_caster = [](shared_ptr<panda::websocket::server::Connection> c) {
-        return sv_2mortal(typemap_outcast<panda::websocket::server::Connection*, const char* CLASS>(c, "Panda::WebSocket::Server::Connection"));
-    };
-    function<SV*(panda::websocket::ConnectRequestSP)> req_caster = [](panda::websocket::ConnectRequestSP req) {
-        return sv_2mortal(typemap_outcast<panda::websocket::ConnectRequestSP, const char* CLASS>(req, "Panda::WebSocket::ConnectRequest"));
-    };
-
+NativeCallbackDispatcher* Connection::accept_callback () {
+    function<SvIPtr(ConnectionSP)>     conn_caster = [](ConnectionSP c)       { return xs::out(c.get()); };
+    function<SvIPtr(ConnectRequestSP)> req_caster  = [](ConnectRequestSP req) { return xs::out(req); };
     RETVAL = NativeCallbackDispatcher::create(THIS->accept_callback,
                                               std::make_tuple(conn_caster, nullptr),
                                               std::make_tuple(req_caster, nullptr));
 }
 
-xs::lib::NativeCallbackDispatcher*  panda::websocket::server::Connection::message_callback() {
-    const char* CLASS = "Panda::Lib::NativeCallbackDispatcher";
-
-    function<SV*(shared_ptr<panda::websocket::BaseConnection>)> conn_caster = [](shared_ptr<panda::websocket::BaseConnection> base) {
-        auto c = panda::dynamic_pointer_cast<panda::websocket::server::Connection>(base);
-        return sv_2mortal(typemap_outcast<panda::websocket::server::Connection*, const char* CLASS>(c, "Panda::WebSocket::Server::Connection"));
+NativeCallbackDispatcher*  Connection::message_callback () {
+    function<SvIPtr(BaseConnectionSP)> conn_caster = [](BaseConnectionSP base) {
+        auto c = panda::dynamic_pointer_cast<Connection>(base);
+        return xs::out(c.get());
     };
-    function<SV*(panda::websocket::MessageSP)> msg_caster = [](panda::websocket::MessageSP msg) {
-        return sv_2mortal(typemap_outcast<panda::websocket::MessageSP, const char* CLASS>(msg, "Panda::WebSocket::Message"));
-    };
-
+    function<SvIPtr(MessageSP)> msg_caster = [](MessageSP msg) { return xs::out(msg); };
     RETVAL = NativeCallbackDispatcher::create(THIS->message_callback,
                                               std::make_tuple(conn_caster, nullptr),
                                               std::make_tuple(msg_caster, nullptr));
 }
 
-xs::lib::NativeCallbackDispatcher*  panda::websocket::server::Connection::stream_error_callback() {
-    const char* CLASS = "Panda::Lib::NativeCallbackDispatcher";
-
-    function<SV*(shared_ptr<panda::websocket::BaseConnection>)> conn_caster = [](shared_ptr<panda::websocket::BaseConnection> base) {
-        auto c = panda::dynamic_pointer_cast<panda::websocket::server::Connection>(base);
-        return sv_2mortal(typemap_outcast<panda::websocket::server::Connection*, const char* CLASS>(c, "Panda::WebSocket::Server::Connection"));
+NativeCallbackDispatcher*  Connection::stream_error_callback () {
+    function<SvIPtr(BaseConnectionSP)> conn_caster = [](BaseConnectionSP base) {
+        auto c = panda::dynamic_pointer_cast<Connection>(base);
+        return xs::out(c.get());
     };
-    function<SV*(const panda::event::StreamError&)> err_caster = [](const panda::event::StreamError& err) {
-        return sv_2mortal(error_sv(err));
-    };
-
+    function<SvIPtr(const StreamError&)> err_caster = [](const StreamError& err) { return error_sv(err); };
     RETVAL = NativeCallbackDispatcher::create(THIS->stream_error_callback,
                                               std::make_tuple(conn_caster, nullptr),
                                               std::make_tuple(err_caster, nullptr));
 }
-
-
-void panda::websocket::server::Connection::DESTROY () {}

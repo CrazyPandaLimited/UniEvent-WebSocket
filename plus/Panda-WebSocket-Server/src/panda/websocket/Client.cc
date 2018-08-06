@@ -10,9 +10,6 @@ Client::Client(event::Loop* loop)
     init(parser);
 }
 
-Client::~Client()
-{}
-
 void Client::connect(ConnectRequestSP request, bool secure, uint16_t port) {
     parser.reset();
     if (!port) {

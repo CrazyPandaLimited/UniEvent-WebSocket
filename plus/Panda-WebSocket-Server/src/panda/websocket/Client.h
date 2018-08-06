@@ -5,18 +5,14 @@
 #include <panda/websocket/BaseConnection.h>
 
 
-namespace panda {
-namespace websocket {
+namespace panda { namespace websocket {
 
 using panda::websocket::ClientParser;
 
-class Client : public virtual BaseConnection
-{
-public:
+struct Client : virtual BaseConnection {
     Client(Loop* loop = Loop::default_loop());
-    virtual ~Client();
 
-    CallbackDispatcher<void(shared_ptr<Client, true>, ConnectResponseSP)>  connect_callback;
+    CallbackDispatcher<void(iptr<Client>, ConnectResponseSP)>  connect_callback;
 
     /** @param port default value is 443 for secure and 80 for usual     */
     void connect(ConnectRequestSP request, bool secure = false, uint16_t port = 0);
@@ -24,10 +20,12 @@ public:
     virtual void close(uint16_t code = uint16_t(CloseCode::DONE), string = string()) override;
 
 protected:
-    virtual void on_stream_error (const StreamError& err);
+    virtual void on_stream_error (const StreamError& err) override;
     virtual void on_connect      (ConnectResponseSP response);
 
     using TCP::connect;
+
+    virtual ~Client() {}
 
 private:
     virtual void on_connect (const StreamError& err, event::ConnectRequest* req) override;
@@ -36,5 +34,6 @@ private:
     ClientParser parser;
 };
 
-}
-}
+using ClientSP = iptr<Client>;
+
+}}

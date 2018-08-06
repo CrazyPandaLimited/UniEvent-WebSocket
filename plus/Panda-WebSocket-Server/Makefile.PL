@@ -11,14 +11,11 @@ my %params = (
     TEST_REQUIRES => {'Panda::Lib' => '1.3.7'},
     SRC           => 'src',
     INC           => '-Isrc',
-    TYPEMAPS      => 'typemap',
     BIN_SHARE => {
         CPLUS    => 11,
         INCLUDE  => {'src' => '/'},
-        TYPEMAPS => {'typemap' => ''},
     },
-    OPTIMIZE => '-O2 -g',
-    #CC => 'clang++',
+    OPTIMIZE => '-O2',
 );
 
 if ($ENV{TEST_FULL}) {

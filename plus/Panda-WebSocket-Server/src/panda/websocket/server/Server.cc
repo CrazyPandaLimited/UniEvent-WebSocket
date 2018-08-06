@@ -36,7 +36,7 @@ void Server::run () {
     start_listening();
 }
 
-Server::ConnectionSP Server::new_connection(uint64_t id) {
+ConnectionSP Server::new_connection(uint64_t id) {
     auto res = new Connection(this, id);
     res->configure(conn_conf);
     return res;

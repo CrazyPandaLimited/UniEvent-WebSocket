@@ -1,18 +1,13 @@
 use 5.020;
 use warnings;
-
-
 use Test::More;
 use Panda::WebSocket::Server;
-use Panda::WebSocket;
-use Panda::WebSocket::Server::Connection;
-use Panda::Event;
 use lib 't/lib'; use WSTest;
 
-package Flogs::GetLogs::Connection;
-use parent 'Panda::WebSocket::Server::Connection';
-
-package main;
+{
+    package Flogs::GetLogs::Connection;
+    use parent 'Panda::WebSocket::Server::Connection';
+}
 
 my $loop = Panda::Event::Loop->default_loop;
 my $state = 0;

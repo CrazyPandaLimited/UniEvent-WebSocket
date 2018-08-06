@@ -17,19 +17,17 @@ struct Location {
     SSL_CTX* ssl_ctx;    // config with sertificate for server
 };
 
-class Listener : public TCP {
-    Location _location;
-
-public:
+struct Listener : TCP {
     Listener (Loop* loop, const Location& loc);
 
     const Location& location () const { return _location; }
 
     void run ();
-    
+private:
+    Location _location;
 };
 
-typedef shared_ptr<Listener> ListenerSP;
+using ListenerSP = iptr<Listener>;
 
 template <typename Stream>
 Stream& operator << (Stream& stream, const panda::websocket::server::Location& loc) {

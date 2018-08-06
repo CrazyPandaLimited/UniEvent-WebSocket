@@ -10,7 +10,7 @@ Panda::WebSocket::Server - WebSocket Server written in C.
 
 =head1 AUTHOR
 
-Pronin Oleg <syber@cpan.org>, Crazy Panda, CP Decision LTD
+Pronin Oleg <syber@cpan.org>, Crazy Panda LTD
 
 =head1 LICENSE
 

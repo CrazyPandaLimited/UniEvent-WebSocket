@@ -1,10 +1,7 @@
 use 5.020;
 use warnings;
-
 use Test::More;
 use Panda::WebSocket::Server;
-use Panda::WebSocket;
-use Panda::Event;
 use lib 't/lib'; use WSTest;
 
 my $loop = Panda::Event::Loop->default_loop;

@@ -12,9 +12,8 @@ using panda::CallbackDispatcher;
 
 class Server;
 
-class Connection : public virtual BaseConnection {
-public:
-    CallbackDispatcher<void(shared_ptr<Connection, true>, ConnectRequestSP)>   accept_callback;
+struct Connection : virtual BaseConnection {
+    CallbackDispatcher<void(iptr<Connection>, ConnectRequestSP)> accept_callback;
 
     Connection (Server* server, uint64_t id);
     
@@ -28,8 +27,6 @@ public:
     using BaseConnection::close;
     virtual void close(uint16_t code = uint16_t(CloseCode::DONE), string payload = string()) override;
 
-    virtual ~Connection ();
-
     struct Conf {
         BaseConnection::Conf base;
         size_t max_handshake_size = 0;
@@ -40,6 +37,10 @@ public:
 protected:
     virtual void on_accept       (ConnectRequestSP request);
 
+    virtual ~Connection () {
+        panda_log_debug("connection destroy");
+    }
+
 private:
     uint64_t     _id;
     Server*      _server;
@@ -49,7 +50,7 @@ private:
     void on_read (const string& buf, const StreamError& err) override;
 };
 
-typedef shared_ptr<Connection> ConnectionSP;
+using ConnectionSP = iptr<Connection>;
 
 std::ostream& operator <<(std::ostream& stream, const Connection::Conf& conf);
 

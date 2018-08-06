@@ -10,6 +10,7 @@
 namespace panda { namespace websocket { namespace server {
 
 using panda::event::Stream;
+using panda::event::LoopSP;
 
 struct ServerConfig {
     ServerConfig(const std::vector<Location>& locations_ = {}, const Connection::Conf& conn_conf_ = {}) : locations(locations_), conn_conf(conn_conf_) {}
@@ -18,9 +19,7 @@ struct ServerConfig {
     Connection::Conf conn_conf;
 };
 
-class Server : public virtual RefCounted {
-public:
-
+struct Server : virtual Refcnt {
     Server (Loop* loop = Loop::default_loop());
 
     void init (ServerConfig config);
@@ -34,15 +33,14 @@ public:
     void start_listening();
     void stop_listening ();
 
-    using ConnectionSP = shared_ptr<Connection>;
     void close_connection  (ConnectionSP conn, uint16_t code) { conn->close(code); }
     void close_connection  (ConnectionSP conn, int code)       { conn->close(code); }
     void remove_connection (ConnectionSP conn, uint16_t code = uint16_t(CloseCode::ABNORMALLY), string payload = "");
 
     virtual ~Server ();
 
-    CallbackDispatcher<void (shared_ptr<Server, true>, ConnectionSP)> connection_callback;
-    CallbackDispatcher<void (shared_ptr<Server, true>, ConnectionSP, uint16_t, string)> disconnection_callback;
+    CallbackDispatcher<void (iptr<Server>, ConnectionSP)> connection_callback;
+    CallbackDispatcher<void (iptr<Server>, ConnectionSP, uint16_t, string)> disconnection_callback;
 
 protected:
     virtual ConnectionSP new_connection (uint64_t id);
@@ -61,7 +59,7 @@ protected:
     }
 
     template <class Conn = Connection>
-    shared_ptr<Conn> get_connection(uint64_t id) {
+    iptr<Conn> get_connection(uint64_t id) {
         auto iter = connections.find(id);
         if (iter == connections.end()) {
             return nullptr;
@@ -77,7 +75,7 @@ protected:
 private:
     static std::atomic<uint64_t> lastid;
 
-    shared_ptr<Loop>        _loop;
+    LoopSP                  _loop;
     std::vector<Location>   locations;
     Connection::Conf        conn_conf;
     std::vector<ListenerSP> listeners;
@@ -87,13 +85,14 @@ private:
 
 };
 
+using ServerSP = iptr<Server>;
+
 template <typename Stream>
-Stream& operator <<(Stream& stream, const panda::websocket::server::ServerConfig& conf) {
+Stream& operator <<(Stream& stream, const ServerConfig& conf) {
     stream << "ServerConfig{ locations:[";
-    for (auto loc : conf.locations) {
-        stream << loc << ",";
-    }
+    for (auto loc : conf.locations) stream << loc << ",";
     stream << "]};";
     return stream;
 }
+
 }}}

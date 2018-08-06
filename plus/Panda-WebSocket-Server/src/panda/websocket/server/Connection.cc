@@ -89,10 +89,6 @@ void Connection::close(uint16_t code, string payload) {
     }
 }
 
-Connection::~Connection () {
-    panda_log_debug("connection destroy");
-}
-
 void Connection::configure(Connection::Conf conf) {
     BaseConnection::configure(conf.base);
     _parser.max_handshake_size = conf.max_handshake_size;
