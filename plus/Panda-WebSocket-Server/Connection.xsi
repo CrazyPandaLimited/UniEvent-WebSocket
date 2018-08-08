@@ -19,11 +19,11 @@ void panda::websocket::server::Connection::send_text(string payload)
 xs::lib::NativeCallbackDispatcher* panda::websocket::server::Connection::accept_callback() {
     const char* CLASS = "Panda::Lib::NativeCallbackDispatcher";
 
-    function<SV*(shared_ptr<panda::websocket::server::Connection>)> conn_caster = [](shared_ptr<panda::websocket::server::Connection> c) {
-        return sv_2mortal(typemap_outcast<panda::websocket::server::Connection*, const char* CLASS>(c, "Panda::WebSocket::Server::Connection"));
+    function<SvIntrPtr(shared_ptr<panda::websocket::server::Connection>)> conn_caster = [](shared_ptr<panda::websocket::server::Connection> c) {
+        return SvMortalPtr(typemap_outcast<panda::websocket::server::Connection*, const char* CLASS>(c, "Panda::WebSocket::Server::Connection"));
     };
-    function<SV*(panda::websocket::ConnectRequestSP)> req_caster = [](panda::websocket::ConnectRequestSP req) {
-        return sv_2mortal(typemap_outcast<panda::websocket::ConnectRequestSP, const char* CLASS>(req, "Panda::WebSocket::ConnectRequest"));
+    function<SvIntrPtr(panda::websocket::ConnectRequestSP)> req_caster = [](panda::websocket::ConnectRequestSP req) {
+        return SvMortalPtr(typemap_outcast<panda::websocket::ConnectRequestSP, const char* CLASS>(req, "Panda::WebSocket::ConnectRequest"));
     };
 
     RETVAL = NativeCallbackDispatcher::create(THIS->accept_callback,
@@ -34,12 +34,12 @@ xs::lib::NativeCallbackDispatcher* panda::websocket::server::Connection::accept_
 xs::lib::NativeCallbackDispatcher*  panda::websocket::server::Connection::message_callback() {
     const char* CLASS = "Panda::Lib::NativeCallbackDispatcher";
 
-    function<SV*(shared_ptr<panda::websocket::BaseConnection>)> conn_caster = [](shared_ptr<panda::websocket::BaseConnection> base) {
+    function<SvIntrPtr(shared_ptr<panda::websocket::BaseConnection>)> conn_caster = [](shared_ptr<panda::websocket::BaseConnection> base) {
         auto c = panda::dynamic_pointer_cast<panda::websocket::server::Connection>(base);
-        return sv_2mortal(typemap_outcast<panda::websocket::server::Connection*, const char* CLASS>(c, "Panda::WebSocket::Server::Connection"));
+        return SvMortalPtr(typemap_outcast<panda::websocket::server::Connection*, const char* CLASS>(c, "Panda::WebSocket::Server::Connection"));
     };
-    function<SV*(panda::websocket::MessageSP)> msg_caster = [](panda::websocket::MessageSP msg) {
-        return sv_2mortal(typemap_outcast<panda::websocket::MessageSP, const char* CLASS>(msg, "Panda::WebSocket::Message"));
+    function<SvIntrPtr(panda::websocket::MessageSP)> msg_caster = [](panda::websocket::MessageSP msg) {
+        return SvMortalPtr(typemap_outcast<panda::websocket::MessageSP, const char* CLASS>(msg, "Panda::WebSocket::Message"));
     };
 
     RETVAL = NativeCallbackDispatcher::create(THIS->message_callback,
@@ -50,12 +50,12 @@ xs::lib::NativeCallbackDispatcher*  panda::websocket::server::Connection::messag
 xs::lib::NativeCallbackDispatcher*  panda::websocket::server::Connection::stream_error_callback() {
     const char* CLASS = "Panda::Lib::NativeCallbackDispatcher";
 
-    function<SV*(shared_ptr<panda::websocket::BaseConnection>)> conn_caster = [](shared_ptr<panda::websocket::BaseConnection> base) {
+    function<SvIntrPtr(shared_ptr<panda::websocket::BaseConnection>)> conn_caster = [](shared_ptr<panda::websocket::BaseConnection> base) {
         auto c = panda::dynamic_pointer_cast<panda::websocket::server::Connection>(base);
-        return sv_2mortal(typemap_outcast<panda::websocket::server::Connection*, const char* CLASS>(c, "Panda::WebSocket::Server::Connection"));
+        return SvMortalPtr(typemap_outcast<panda::websocket::server::Connection*, const char* CLASS>(c, "Panda::WebSocket::Server::Connection"));
     };
-    function<SV*(const panda::event::StreamError&)> err_caster = [](const panda::event::StreamError& err) {
-        return sv_2mortal(error_sv(err));
+    function<SvIntrPtr(const panda::event::StreamError&)> err_caster = [](const panda::event::StreamError& err) {
+        return SvMortalPtr(error_sv(err));
     };
 
     RETVAL = NativeCallbackDispatcher::create(THIS->stream_error_callback,

@@ -13,6 +13,8 @@ using namespace xs::websocket::server;
 using namespace xs::websocket;
 using panda::event::Loop;
 using xs::event::error_sv;
+using xs::SvIntrPtr;
+using xs::SvMortalPtr;
 using panda::websocket::Client;
 using xs::lib::NativeCallbackDispatcher;
 using panda::function;
