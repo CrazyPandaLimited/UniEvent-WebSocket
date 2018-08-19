@@ -1,4 +1,3 @@
-#include <xs/xs.h>
 #include <xs/websocket/server.h>
 #include <xs/lib/NativeCallbackDispatcher.h>
 #include <iostream>

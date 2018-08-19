@@ -15,30 +15,30 @@ Connection* new (SV* CLASS, Server* server) {
 uint64_t Connection::id ()
 
 NativeCallbackDispatcher* Connection::accept_callback () {
-    function<SvIPtr(ConnectionSP)>     conn_caster = [](ConnectionSP c)       { return xs::out(c.get()); };
-    function<SvIPtr(ConnectRequestSP)> req_caster  = [](ConnectRequestSP req) { return xs::out(req); };
+    function<Sv(ConnectionSP)>     conn_caster = [](ConnectionSP c)       { return xs::out(c.get()); };
+    function<Sv(ConnectRequestSP)> req_caster  = [](ConnectRequestSP req) { return xs::out(req); };
     RETVAL = NativeCallbackDispatcher::create(THIS->accept_callback,
                                               std::make_tuple(conn_caster, nullptr),
                                               std::make_tuple(req_caster, nullptr));
 }
 
 NativeCallbackDispatcher*  Connection::message_callback () {
-    function<SvIPtr(BaseConnectionSP)> conn_caster = [](BaseConnectionSP base) {
+    function<Sv(BaseConnectionSP)> conn_caster = [](BaseConnectionSP base) {
         auto c = panda::dynamic_pointer_cast<Connection>(base);
         return xs::out(c.get());
     };
-    function<SvIPtr(MessageSP)> msg_caster = [](MessageSP msg) { return xs::out(msg); };
+    function<Sv(MessageSP)> msg_caster = [](MessageSP msg) { return xs::out(msg); };
     RETVAL = NativeCallbackDispatcher::create(THIS->message_callback,
                                               std::make_tuple(conn_caster, nullptr),
                                               std::make_tuple(msg_caster, nullptr));
 }
 
 NativeCallbackDispatcher*  Connection::stream_error_callback () {
-    function<SvIPtr(BaseConnectionSP)> conn_caster = [](BaseConnectionSP base) {
+    function<Sv(BaseConnectionSP)> conn_caster = [](BaseConnectionSP base) {
         auto c = panda::dynamic_pointer_cast<Connection>(base);
         return xs::out(c.get());
     };
-    function<SvIPtr(const StreamError&)> err_caster = [](const StreamError& err) { return error_sv(err); };
+    function<Sv(const StreamError&)> err_caster = [](const StreamError& err) { return error_sv(err); };
     RETVAL = NativeCallbackDispatcher::create(THIS->stream_error_callback,
                                               std::make_tuple(conn_caster, nullptr),
                                               std::make_tuple(err_caster, nullptr));

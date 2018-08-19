@@ -1,9 +1,8 @@
 use 5.020;
-use Panda::Install;
+use XS::Install;
 
 my %params = (
     NAME          => 'Panda::WebSocket::Server',
-    VERSION_FROM  => 'lib/Panda/WebSocket/Server.pm',
     ABSTRACT_FROM => 'lib/Panda/WebSocket/Server.pod',
     CPLUS         => 11,
     DEFINE        => $ENV{DEBUG} ? '-DDEBUG' : '',

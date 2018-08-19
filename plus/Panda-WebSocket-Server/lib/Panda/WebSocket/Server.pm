@@ -7,7 +7,6 @@ use Panda::WebSocket::Server::Error;
 
 our $VERSION = '0.1.0';
 
-require Panda::XSLoader;
-Panda::XSLoader::load();
+XS::Loader::load();
 
 1;

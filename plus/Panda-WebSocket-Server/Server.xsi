@@ -20,18 +20,18 @@ void Server::start_listening ()
 void Server::stop_listening ()
 
 NativeCallbackDispatcher* Server::connection_callback () {
-    function<SvIPtr(ServerSP)>     serv_caster = [](ServerSP     s) { return xs::out(s.get()); };
-    function<SvIPtr(ConnectionSP)> conn_caster = [](ConnectionSP c) { return xs::out(c.get()); };
+    function<Sv(ServerSP)>     serv_caster = [](ServerSP     s) { return xs::out(s.get()); };
+    function<Sv(ConnectionSP)> conn_caster = [](ConnectionSP c) { return xs::out(c.get()); };
     RETVAL = NativeCallbackDispatcher::create(THIS->connection_callback,
                                               std::make_tuple(serv_caster, nullptr),
                                               std::make_tuple(conn_caster, nullptr));
 }
 
 NativeCallbackDispatcher* Server::disconnection_callback () {
-    function<SvIPtr(ServerSP)>     server_caster  = [](ServerSP s)     { return xs::out(s.get()); };
-    function<SvIPtr(ConnectionSP)> conn_caster    = [](ConnectionSP c) { return xs::out(c.get()); };
-    function<SvIPtr(uint16_t)>     code_caster    = [](uint16_t code)  { return Simple(code); };
-    function<SvIPtr(string)>       payload_caster = [](string payload) { return Simple(string_view(payload.data(), payload.size())); };
+    function<Sv(ServerSP)>     server_caster  = [](ServerSP s)     { return xs::out(s.get()); };
+    function<Sv(ConnectionSP)> conn_caster    = [](ConnectionSP c) { return xs::out(c.get()); };
+    function<Sv(uint16_t)>     code_caster    = [](uint16_t code)  { return Simple(code); };
+    function<Sv(string)>       payload_caster = [](string payload) { return Simple(string_view(payload.data(), payload.size())); };
     RETVAL = NativeCallbackDispatcher::create(THIS->disconnection_callback,
                                               std::make_tuple(server_caster, nullptr),
                                               std::make_tuple(conn_caster, nullptr),

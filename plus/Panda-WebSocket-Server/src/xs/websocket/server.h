@@ -1,5 +1,5 @@
 #pragma once
-#include <xs/xs.h>
+#include <xs.h>
 #include <xs/event.h>
 #include <xs/websocket.h>
 #include <panda/websocket/server.h>
