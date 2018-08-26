@@ -2,7 +2,7 @@
 #include <panda/log.h>
 #include <panda/encode/base16.h>
 
-using namespace panda::unievent::websocket;
+namespace panda { namespace unievent { namespace websocket {
 
 void Connection::configure (Connection::Conf conf) {
     parser->max_frame_size = conf.max_frame_size;
@@ -89,3 +89,5 @@ std::ostream& operator<< (std::ostream& stream, const Connection::Conf& conf) {
            << "}";
     return stream;
 }
+
+}}}

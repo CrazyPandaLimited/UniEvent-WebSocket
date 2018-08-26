@@ -5,7 +5,8 @@
 
 using std::endl;
 using namespace std::placeholders;
-using namespace panda::unievent::websocket;
+
+namespace panda { namespace unievent { namespace websocket {
 
 ServerConnection::ServerConnection (Server* server, uint64_t id) : Connection(server->loop()), _id(id), _server(server), _alive(true) {
     panda_log_info("Connection[new]: id = " << _id);
@@ -90,3 +91,5 @@ std::ostream& operator<< (std::ostream& stream, const ServerConnection::Conf& co
     stream << "ServerConnection::Conf{ base:" << conf.base << ", max_handshake_size:" << conf.max_handshake_size << "}";
     return stream;
 }
+
+}}}

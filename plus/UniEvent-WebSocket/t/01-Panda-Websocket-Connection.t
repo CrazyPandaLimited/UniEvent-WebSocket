@@ -9,7 +9,7 @@ use WSTest;
     use parent 'UniEvent::WebSocket::ServerConnection';
 }
 
-my $loop = Panda::Event::Loop->default_loop;
+my $loop = UE::Loop->default_loop;
 my $state = 0;
 my ($server, $port) = make_server();
 

@@ -32,10 +32,10 @@ sub make_client {
 	my ($port) = @_;
 	my $client = new UniEvent::WebSocket::Client();
 	
-	$client->connect(new Protocol::WebSocket::XS::ConnectRequest({
+	$client->connect({
 			uri           => "ws://localhost",
 			ws_key        => "dGhlIHNhbXBsZSBub25jZQ==",
-		}), 0, $port
+		}, 0, $port
 	);
 	
 	return $client;
