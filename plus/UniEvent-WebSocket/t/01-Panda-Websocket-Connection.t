@@ -33,6 +33,7 @@ $server->disconnection_callback->add(sub {
 
     $client->message_callback->add(sub {
         my ($client, $msg) = @_;
+        is ref($client), "UniEvent::WebSocket::Client";
         $state++;
         ok ($msg->payload eq 'Hey!');
         $client->close(1001);
