@@ -43,7 +43,8 @@ template <class TYPE> struct Typemap<panda::unievent::websocket::Server*, TYPE> 
 };
 
 template <class TYPE> struct Typemap<panda::unievent::websocket::Connection*, TYPE> : Typemap<panda::unievent::TCP*, TYPE> {
-    std::string package () = delete;
+    //std::string package () = delete;
+    std::string package () { return "UniEvent::WebSocket::Connection"; }
 };
 
 template <class TYPE> struct Typemap<panda::unievent::websocket::ServerConnection*, TYPE> : Typemap<panda::unievent::websocket::Connection*, TYPE> {
