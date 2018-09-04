@@ -82,7 +82,7 @@ private:
     Connection::Conf        conn_conf;
     std::vector<ListenerSP> listeners;
 
-    void on_connect        (Stream* handle, const StreamError& err);
+    void on_connect        (Stream* parent, Stream* handle, const StreamError& err);
     void on_disconnect     (Stream* handle);
 
 };

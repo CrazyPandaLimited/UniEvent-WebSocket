@@ -53,7 +53,7 @@ void Server::on_remove_connection(ConnectionSP conn, uint16_t code, string paylo
 void Server::start_listening() {
     for (auto& location : locations) {
         auto l = new Listener(_loop, location);
-        l->connection_event.add(std::bind(&Server::on_connect, this, _1, _2));
+        l->connection_event.add(std::bind(&Server::on_connect, this, _1, _2, _3));
         l->run();
         listeners.push_back(l);
     }
@@ -63,7 +63,7 @@ void Server::stop_listening() {
     listeners.clear();
 }
 
-void Server::on_connect (Stream* listener, const StreamError& err) {
+void Server::on_connect (Stream* parent, Stream* listener, const StreamError& err) {
     if (err) {
         panda_log_info("Server[on_connect]: error: " << err.what());
         return;

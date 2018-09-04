@@ -64,12 +64,12 @@ void BaseConnection::on_any_error(const string& err) {
     close(CloseCode::ABNORMALLY);
 }
 
-void BaseConnection::on_eof() {
+void BaseConnection::on_eof(const event::StreamError& err) {
     panda_log_info("websocket on_eof");
     if (state == State::WS_CONNECTED) {
         close(CloseCode::ABNORMALLY);
     }
-    TCP::on_eof();
+    TCP::on_eof(0);
 }
 
 void BaseConnection::on_write(const event::StreamError& err, event::WriteRequest* req) {
