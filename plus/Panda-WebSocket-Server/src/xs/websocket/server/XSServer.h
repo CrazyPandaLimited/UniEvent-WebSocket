@@ -1,6 +1,7 @@
 #pragma once
 
 #include <panda/websocket/server.h>
+#include <panda/refcnt.h>
 #include <xs/xs.h>
 
 namespace xs { namespace websocket { namespace server {
@@ -14,7 +15,7 @@ class XSServer : public Server, public xs::XSBackref {
 public:
     using Server::Server;
 
-    ConnectionSP new_connection(uint64_t id) override;
+    panda::iptr<Connection> new_connection(uint64_t id) override;
 
     static Location make_location(HV* hvloc);
     static ServerConfig make_server_config(HV* hvcfg);

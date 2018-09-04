@@ -36,7 +36,7 @@ void Server::run () {
     start_listening();
 }
 
-Server::ConnectionSP Server::new_connection(uint64_t id) {
+iptr<Connection> Server::new_connection(uint64_t id) {
     auto res = new Connection(this, id);
     res->configure(conn_conf);
     return res;
@@ -54,6 +54,7 @@ void Server::start_listening() {
     for (auto& location : locations) {
         auto l = new Listener(_loop, location);
         l->connection_event.add(std::bind(&Server::on_connect, this, _1, _2, _3));
+        l->connection_factory = [this]() { return new_connection(++lastid); };
         l->run();
         listeners.push_back(l);
     }
@@ -63,21 +64,23 @@ void Server::stop_listening() {
     listeners.clear();
 }
 
-void Server::on_connect (Stream* parent, Stream* listener, const StreamError& err) {
+void Server::on_connect (Stream* parent, Stream* stream, const StreamError& err) {
     if (err) {
         panda_log_info("Server[on_connect]: error: " << err.what());
         return;
     }
-    if (auto l = dyn_cast<Listener*>(listener)) {
-        panda_log_info("Server[on_connect]: somebody connected to " << l->location());
+
+    if (auto listener = dyn_cast<Listener*>(parent)) {
+        panda_log_info("Server[on_connect]: somebody connected to " << listener->location());
     }
 
-    auto conn = new_connection(++lastid);
-    connections[conn->id()] = conn;
-    conn->eof_event.add(std::bind(&Server::on_disconnect, this, _1));
-    conn->run(listener);
+    auto connection = dyn_cast<Connection*>(stream);
 
-    on_connection(conn);
+    connections[connection->id()] = connection;
+    connection->eof_event.add(std::bind(&Server::on_disconnect, this, _1));
+    connection->run(parent);
+
+    on_connection(connection);
 
     panda_log_info("Server[on_connect]: now i have " << connections.size() << " connections");
 }
@@ -112,4 +115,3 @@ Server::~Server () {
 }
 
 }}}
-

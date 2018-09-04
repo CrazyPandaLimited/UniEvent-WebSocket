@@ -19,7 +19,6 @@ Connection::Connection (Server* server, uint64_t id)
 }
 
 void Connection::run (Stream* listener) {
-    listener->accept(this); // TODO: concurrent non-blocking accept in multi-thread may result in not accepting (err from libuv?)
     state = State::TCP_CONNECTED;
     read_start();
 }

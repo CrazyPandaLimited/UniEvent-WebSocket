@@ -45,7 +45,7 @@ public:
     CallbackDispatcher<void (shared_ptr<Server, true>, ConnectionSP, uint16_t, string)> disconnection_callback;
 
 protected:
-    virtual ConnectionSP new_connection (uint64_t id);
+    virtual iptr<Connection> new_connection(uint64_t id);
     virtual void on_connection(ConnectionSP conn);
     virtual void on_remove_connection(ConnectionSP conn, uint16_t code = uint16_t(CloseCode::ABNORMALLY), string payload = "");
 
@@ -82,9 +82,8 @@ private:
     Connection::Conf        conn_conf;
     std::vector<ListenerSP> listeners;
 
-    void on_connect        (Stream* parent, Stream* handle, const StreamError& err);
-    void on_disconnect     (Stream* handle);
-
+    void on_connect(Stream* parent, Stream* handle, const StreamError& err);
+    void on_disconnect(Stream* handle);
 };
 
 template <typename Stream>
