@@ -48,20 +48,15 @@ void Connection::on_message (MessageSP msg) {
             logger << encode::encode_base16(str);
         }
     }
-    message_callback(this, msg);
+    const ConnectionSP& suka = this;
+    message_callback(suka, msg);
 }
 
-void Connection::on_stream_error (const StreamError& err) {
-    panda_log_info("websocket on_stream_error: " << err.what());
-    stream_error_callback(this, err);
-    on_any_error(err.what());
-    close_reinit(true);
-}
-
-void Connection::on_any_error (const string& err) {
-    panda_log_warn(err);
-    any_error_callback(this, err);
+void Connection::on_error (const Error& err) {
+    panda_log_info("websocket on_error: " << err.whats());
+    error_callback(this, err);
     close(CloseCode::ABNORMALLY);
+    close_reinit(true);
 }
 
 void Connection::on_eof () {
@@ -72,9 +67,9 @@ void Connection::on_eof () {
     TCP::on_eof();
 }
 
-void Connection::on_write (const StreamError& err, WriteRequest* req) {
+void Connection::on_write (const CodeError* err, WriteRequest* req) {
     TCP::on_write(err, req);
-    if (err) on_any_error(err.what());
+    if (err) on_error(*err);
 }
 
 void Connection::close_tcp () {

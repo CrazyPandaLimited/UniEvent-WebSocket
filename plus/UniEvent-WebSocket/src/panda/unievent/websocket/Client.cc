@@ -22,39 +22,33 @@ void Client::connect (ConnectRequestSP request, bool secure, uint16_t port) {
 
 void Client::close (uint16_t code, string payload) {
     if (state == State::CONNECTING) {
-        on_stream_error(StreamError(ERRNO_ECANCELED));
+        on_error(CodeError(ERRNO_ECANCELED));
     } else {
         Connection::close(code, payload);
     }
 }
 
-void Client::on_stream_error (const StreamError& err) {
+void Client::on_error (const Error& err) {
     if (state == State::CONNECTING) {
         state = State::DISCONNECTED;
         ConnectResponseSP res = new ConnectResponse();
-        res->error = err.what();
+        res->error = err.whats();
         on_connect(res);
     }
-    Connection::on_stream_error(err);
+    Connection::on_error(err);
 }
 
 void Client::on_connect (ConnectResponseSP response) {
     connect_callback(this, response);
 }
 
-void Client::on_connect (const StreamError& err, ConnectRequest* req) {
-    if (err) {
-        on_stream_error(err);
-        return;
-    }
+void Client::on_connect (const CodeError* err, ConnectRequest* req) {
+    if (err) return on_error(*err);
     state = State::TCP_CONNECTED;
 }
 
-void Client::on_read (const string& buf, const StreamError& err) {
-    if (err) {
-        on_stream_error(err);
-        return;
-    }
+void Client::on_read (const string& buf, const CodeError* err) {
+    if (err) return on_error(*err);
 
     string chunk = buf;
     if (state == State::TCP_CONNECTED) {

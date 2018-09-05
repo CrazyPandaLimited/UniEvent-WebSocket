@@ -73,7 +73,7 @@ private:
     ServerConnection::Conf  conn_conf;
     std::vector<ListenerSP> listeners;
 
-    void on_connect    (Stream* handle, const StreamError& err);
+    void on_connect    (Stream* handle, const CodeError* err);
     void on_disconnect (Stream* handle);
 };
 

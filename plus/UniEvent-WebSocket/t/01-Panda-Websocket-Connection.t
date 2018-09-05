@@ -30,7 +30,7 @@ $server->disconnection_callback->add(sub {
 
 {
     my $client = make_client($port);
-
+    
     $client->message_callback->add(sub {
         my ($client, $msg) = @_;
         is ref($client), "UniEvent::WebSocket::Client";

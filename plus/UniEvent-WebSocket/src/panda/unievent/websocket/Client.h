@@ -21,16 +21,16 @@ struct Client : virtual Connection {
     virtual void close (uint16_t code = uint16_t(CloseCode::DONE), string = string()) override;
 
 protected:
-    virtual void on_stream_error (const StreamError& err) override;
-    virtual void on_connect      (ConnectResponseSP response);
+    virtual void on_error   (const Error& err) override;
+    virtual void on_connect (ConnectResponseSP response);
 
     using TCP::connect;
 
     virtual ~Client() {}
 
 private:
-    virtual void on_connect (const StreamError& err, ConnectRequest* req) override;
-    virtual void on_read    (const string& buf, const StreamError& err) override;
+    virtual void on_connect (const CodeError* err, ConnectRequest* req) override;
+    virtual void on_read    (const string& buf, const CodeError* err) override;
 
     ClientParser parser;
 };

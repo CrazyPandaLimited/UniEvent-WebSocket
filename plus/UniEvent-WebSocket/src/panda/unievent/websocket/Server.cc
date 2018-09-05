@@ -62,9 +62,9 @@ void Server::stop_listening () {
     listeners.clear();
 }
 
-void Server::on_connect (Stream* listener, const StreamError& err) {
+void Server::on_connect (Stream* listener, const CodeError* err) {
     if (err) {
-        panda_log_info("Server[on_connect]: error: " << err.what());
+        panda_log_info("Server[on_connect]: error: " << err->whats());
         return;
     }
     if (auto l = dyn_cast<Listener*>(listener)) {

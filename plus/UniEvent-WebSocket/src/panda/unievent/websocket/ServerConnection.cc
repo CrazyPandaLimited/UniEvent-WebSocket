@@ -19,8 +19,8 @@ void ServerConnection::run (Stream* listener) {
     read_start();
 }
 
-void ServerConnection::on_read (const string& buf, const StreamError& err) {
-    if (err) return on_stream_error(err);
+void ServerConnection::on_read (const string& buf, const CodeError* err) {
+    if (err) return on_error(*err);
 
     string chunk = buf;
 

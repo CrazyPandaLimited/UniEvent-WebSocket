@@ -47,7 +47,7 @@ private:
     ServerParser _parser;
     bool         _alive;
     
-    void on_read (const string& buf, const StreamError& err) override;
+    void on_read (const string& buf, const CodeError* err) override;
 };
 
 using ServerConnectionSP = ServerConnection::ServerConnectionSP;
