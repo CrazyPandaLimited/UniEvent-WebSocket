@@ -6,7 +6,7 @@ use WSTest;
 
 {
     package Flogs::GetLogs::Connection;
-    use parent 'UniEvent::WebSocket::ServerConnection';
+    use parent 'UniEvent::WebSocket::Server::Connection';
 }
 
 my $loop = UE::Loop->default_loop;

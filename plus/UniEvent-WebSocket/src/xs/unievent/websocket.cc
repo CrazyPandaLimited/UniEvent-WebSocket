@@ -1,7 +1,7 @@
 #include "websocket.h"
 
 using namespace xs::unievent::websocket;
-
+using server::Location;
 using panda::string;
 
 Location XSServer::make_location (const Hash& hvloc) {
@@ -16,9 +16,9 @@ Location XSServer::make_location (const Hash& hvloc) {
     return loc;
 }
 
-ServerConfig XSServer::make_server_config (const Hash& hvcfg) {
+Server::Config XSServer::make_server_config (const Hash& hvcfg) {
     Scalar val;
-    ServerConfig config;
+    Server::Config config;
 
     auto locs_av = xs::in<Array>(hvcfg.fetch("locations"));
     if (locs_av) {

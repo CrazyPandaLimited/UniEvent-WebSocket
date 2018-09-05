@@ -1,5 +1,5 @@
 #pragma once
-#include "Connection.h"
+#include "ConnectionBase.h"
 #include <panda/CallbackDispatcher.h>
 #include <panda/protocol/websocket/ClientParser.h>
 
@@ -8,12 +8,12 @@ namespace panda { namespace unievent { namespace websocket {
 using namespace panda::protocol::websocket;
 using panda::protocol::websocket::ConnectRequestSP;
 
-struct Client : virtual Connection {
-    using ClientSP = iptr<Client>;
+struct Client : virtual ConnectionBase {
+    using SP = iptr<Client>;
 
     Client (Loop* loop = Loop::default_loop());
 
-    CallbackDispatcher<void(ClientSP, ConnectResponseSP)>  connect_callback;
+    CallbackDispatcher<void(SP, ConnectResponseSP)> connect_callback;
 
     /** @param port default value is 443 for secure and 80 for usual     */
     void connect (ConnectRequestSP request, bool secure = false, uint16_t port = 0);
@@ -26,7 +26,7 @@ protected:
 
     using TCP::connect;
 
-    virtual ~Client() {}
+    virtual ~Client () {}
 
 private:
     virtual void on_connect (const CodeError* err, ConnectRequest* req) override;
@@ -35,6 +35,6 @@ private:
     ClientParser parser;
 };
 
-using ClientSP = Client::ClientSP;
+using ClientSP = Client::SP;
 
 }}}

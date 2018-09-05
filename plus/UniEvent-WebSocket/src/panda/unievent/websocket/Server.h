@@ -4,25 +4,29 @@
 #include <atomic>
 #include <panda/refcnt.h>
 #include <panda/CallbackDispatcher.h>
-#include <panda/unievent/websocket/Listener.h>
-#include <panda/unievent/websocket/ServerConnection.h>
+#include "server/Listener.h"
+#include "server/Connection.h"
 
 namespace panda { namespace unievent { namespace websocket {
 
-struct ServerConfig {
-    ServerConfig (const std::vector<Location>& locations_ = {}, const ServerConnection::Conf& conn_conf_ = {}) : locations(locations_), conn_conf(conn_conf_) {}
-
-    std::vector<Location>  locations;
-    ServerConnection::Conf conn_conf;
-};
-
 struct Server : virtual Refcnt {
-    using ServerSP = iptr<Server>;
+    using SP           = iptr<Server>;
+    using Location     = server::Location;
+    using ListenerSP   = server::ListenerSP;
+    using Connection   = server::Connection;
+    using ConnectionSP = server::ConnectionSP;
+
+    struct Config {
+        Config (const std::vector<Location>& locations = {}, const Connection::Config& conn_conf = {}) : locations(locations), conn_conf(conn_conf) {}
+
+        std::vector<Location> locations;
+        Connection::Config    conn_conf;
+    };
 
     Server (Loop* loop = Loop::default_loop());
 
-    void init        (ServerConfig config);
-    void reconfigure (const ServerConfig& conf);
+    void init        (const Config&);
+    void reconfigure (const Config&);
     
     Loop* loop () const { return _loop; }
     
@@ -32,20 +36,20 @@ struct Server : virtual Refcnt {
     void start_listening ();
     void stop_listening  ();
 
-    void close_connection  (ServerConnectionSP conn, uint16_t code)  { conn->close(code); }
-    void close_connection  (ServerConnectionSP conn, int code)       { conn->close(code); }
-    void remove_connection (ServerConnectionSP conn, uint16_t code = uint16_t(CloseCode::ABNORMALLY), string payload = "");
+    void close_connection  (ConnectionSP conn, uint16_t code)  { conn->close(code); }
+    void close_connection  (ConnectionSP conn, int code)       { conn->close(code); }
+    void remove_connection (ConnectionSP conn, uint16_t code = uint16_t(CloseCode::ABNORMALLY), string payload = "");
 
     virtual ~Server ();
 
-    CallbackDispatcher<void (ServerSP, ServerConnectionSP)>                   connection_callback;
-    CallbackDispatcher<void (ServerSP, ServerConnectionSP, uint16_t, string)> disconnection_callback;
+    CallbackDispatcher<void (SP, ConnectionSP)>                   connection_callback;
+    CallbackDispatcher<void (SP, ConnectionSP, uint16_t, string)> disconnection_callback;
 
 protected:
-    virtual ServerConnectionSP new_connection (uint64_t id);
+    virtual ConnectionSP new_connection (uint64_t id);
 
-    virtual void on_connection        (ServerConnectionSP conn);
-    virtual void on_remove_connection (ServerConnectionSP conn, uint16_t code = uint16_t(CloseCode::ABNORMALLY), string payload = "");
+    virtual void on_connection        (ConnectionSP conn);
+    virtual void on_remove_connection (ConnectionSP conn, uint16_t code = uint16_t(CloseCode::ABNORMALLY), string payload = "");
 
     template <class This, typename Config>
     void reconfigure (This* self, const Config& conf) {
@@ -55,33 +59,33 @@ protected:
         self->start_listening();
     }
 
-    template <class Conn = ServerConnection>
+    template <class Conn = Connection>
     iptr<Conn> get_connection (uint64_t id) {
         auto iter = connections.find(id);
-        if (iter == connections.end()) return nullptr;
+        if (iter == connections.end()) return {};
         else return dynamic_pointer_cast<Conn>(iter->second);
     }
 
-    bool                                   running;
-    std::map<uint64_t, ServerConnectionSP> connections;
+    bool running;
+    std::map<uint64_t, ConnectionSP> connections;
 
 private:
     static std::atomic<uint64_t> lastid;
 
     LoopSP                  _loop;
     std::vector<Location>   locations;
-    ServerConnection::Conf  conn_conf;
+    Connection::Config      conn_conf;
     std::vector<ListenerSP> listeners;
 
     void on_connect    (Stream* handle, const CodeError* err);
     void on_disconnect (Stream* handle);
 };
 
-using ServerSP = Server::ServerSP;
+using ServerSP = Server::SP;
 
 template <typename Stream>
-Stream& operator<< (Stream& stream, const ServerConfig& conf) {
-    stream << "ServerConfig{ locations:[";
+Stream& operator<< (Stream& stream, const Server::Config& conf) {
+    stream << "Server::Config{ locations:[";
     for (auto loc : conf.locations) stream << loc << ",";
     stream << "]};";
     return stream;

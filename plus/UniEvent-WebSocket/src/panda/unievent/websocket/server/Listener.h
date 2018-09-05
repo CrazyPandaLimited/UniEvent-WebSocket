@@ -2,7 +2,7 @@
 #include <panda/string.h>
 #include <panda/unievent/TCP.h>
 
-namespace panda { namespace unievent { namespace websocket {
+namespace panda { namespace unievent { namespace websocket { namespace server {
 
 using panda::string;
 
@@ -39,5 +39,4 @@ Stream& operator<< (Stream& stream, const Location& loc) {
     return stream;
 }
 
-}}}
-
+}}}}

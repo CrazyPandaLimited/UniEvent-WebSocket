@@ -1,7 +1,7 @@
 #include "Listener.h"
 #include <panda/log.h>
 
-using namespace panda::unievent::websocket;
+using namespace panda::unievent::websocket::server;
 
 // initializing TCP with two params ctor: this way it will pre-create socket so we could set its options in run()
 Listener::Listener (Loop* loop, const Location& loc) : TCP(loop, AF_INET), _location(loc) {

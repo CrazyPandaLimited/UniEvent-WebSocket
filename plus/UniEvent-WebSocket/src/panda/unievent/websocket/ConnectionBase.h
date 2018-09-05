@@ -9,26 +9,26 @@ namespace panda { namespace unievent { namespace websocket {
 using panda::CallbackDispatcher;
 using namespace panda::protocol::websocket;
 
-struct Connection : TCP {
-    struct Conf {
+struct ConnectionBase : TCP {
+    struct Config {
         size_t max_frame_size = 0;
         size_t max_message_size = 0;
     };
 
-    using ConnectionSP = iptr<Connection>;
+    using SP = iptr<ConnectionBase>;
 
-    Connection (Loop* loop = Loop::default_loop()) : TCP(loop), state(State::DISCONNECTED), parser(nullptr) {}
+    ConnectionBase (Loop* loop = Loop::default_loop()) : TCP(loop), state(State::DISCONNECTED), parser(nullptr) {}
 
     void init (Parser& parser) {
         this->parser = &parser;
     }
 
-    void configure (Conf conf);
+    void configure (const Config& conf);
 
-    CallbackDispatcher<void(ConnectionSP, FrameSP)>          frame_callback;
-    CallbackDispatcher<void(ConnectionSP, MessageSP)>        message_callback;
-    CallbackDispatcher<void(ConnectionSP, const Error&)>     error_callback;
-    CallbackDispatcher<void(ConnectionSP, uint16_t, string)> close_callback;
+    CallbackDispatcher<void(SP, FrameSP)>          frame_callback;
+    CallbackDispatcher<void(SP, MessageSP)>        message_callback;
+    CallbackDispatcher<void(SP, const Error&)>     error_callback;
+    CallbackDispatcher<void(SP, uint16_t, string)> close_callback;
 
     void send_message (string& payload, write_fn callback = {}) {
         assert(state == State::WS_CONNECTED);
@@ -81,14 +81,16 @@ protected:
     };
     State state;
 
-    virtual ~Connection () {}
+    virtual ~ConnectionBase () = 0;
 
 private:
     Parser* parser;
 };
 
-using ConnectionSP = Connection::ConnectionSP;
+inline ConnectionBase::~ConnectionBase () {}
 
-std::ostream& operator<< (std::ostream& stream, const Connection::Conf& conf);
+using ConnectionBaseSP = ConnectionBase::SP;
+
+std::ostream& operator<< (std::ostream& stream, const ConnectionBase::Config& conf);
 
 }}}

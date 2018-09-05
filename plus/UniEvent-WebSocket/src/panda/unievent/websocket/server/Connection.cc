@@ -1,25 +1,25 @@
-#include "ServerConnection.h"
-#include "Server.h"
+#include "Connection.h"
+#include "../Server.h"
 #include <panda/log.h>
 #include <panda/encode/base16.h>
 
 using std::endl;
 using namespace std::placeholders;
 
-namespace panda { namespace unievent { namespace websocket {
+namespace panda { namespace unievent { namespace websocket { namespace server {
 
-ServerConnection::ServerConnection (Server* server, uint64_t id) : Connection(server->loop()), _id(id), _server(server), _alive(true) {
+Connection::Connection (Server* server, uint64_t id) : ConnectionBase(server->loop()), _id(id), _server(server), _alive(true) {
     panda_log_info("Connection[new]: id = " << _id);
     init(_parser);
 }
 
-void ServerConnection::run (Stream* listener) {
+void Connection::run (Stream* listener) {
     listener->accept(this); // TODO: concurrent non-blocking accept in multi-thread may result in not accepting (err from libuv?)
     state = State::TCP_CONNECTED;
     read_start();
 }
 
-void ServerConnection::on_read (const string& buf, const CodeError* err) {
+void Connection::on_read (const string& buf, const CodeError* err) {
     if (err) return on_error(*err);
 
     string chunk = buf;
@@ -59,37 +59,37 @@ void ServerConnection::on_read (const string& buf, const CodeError* err) {
     }
 }
 
-void ServerConnection::on_accept (ConnectRequestSP req) {
+void Connection::on_accept (ConnectRequestSP req) {
     ConnectResponse res;
     send_accept_response(&res);
     accept_callback(this, req);
 }
 
-void ServerConnection::send_accept_error (HTTPResponse* res) {
+void Connection::send_accept_error (HTTPResponse* res) {
     string data = _parser.accept_error(res);
     write(data);
 }
 
-void ServerConnection::send_accept_response (ConnectResponse* res) {
+void Connection::send_accept_response (ConnectResponse* res) {
     string data = _parser.accept_response(res);
     write(data);
 }
 
-void ServerConnection::close (uint16_t code, string payload) {
-    ServerConnectionSP sp = this; // keep self from destruction if user loses all references, that how panda::unievent::TCP works
+void Connection::close (uint16_t code, string payload) {
+    ConnectionSP sp = this; // keep self from destruction if user loses all references, that how panda::unievent::TCP works
     bool call = state != State::DISCONNECTED;
-    Connection::close(code, payload);
+    ConnectionBase::close(code, payload);
     if (call) _server->remove_connection(sp, code, payload);
 }
 
-void ServerConnection::configure (ServerConnection::Conf conf) {
-    Connection::configure(conf.base);
+void Connection::configure (const Config& conf) {
+    ConnectionBase::configure(conf.base);
     _parser.max_handshake_size = conf.max_handshake_size;
 }
 
-std::ostream& operator<< (std::ostream& stream, const ServerConnection::Conf& conf) {
-    stream << "ServerConnection::Conf{ base:" << conf.base << ", max_handshake_size:" << conf.max_handshake_size << "}";
+std::ostream& operator<< (std::ostream& stream, const Connection::Config& conf) {
+    stream << "server::Connection::Conf{ base:" << conf.base << ", max_handshake_size:" << conf.max_handshake_size << "}";
     return stream;
 }
 
-}}}
+}}}}

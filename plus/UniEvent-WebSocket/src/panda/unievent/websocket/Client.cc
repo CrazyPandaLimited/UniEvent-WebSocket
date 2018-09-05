@@ -4,7 +4,7 @@
 
 using namespace panda::unievent::websocket;
 
-Client::Client (Loop* loop) : Connection(loop) {
+Client::Client (Loop* loop) : ConnectionBase(loop) {
     init(parser);
 }
 
@@ -21,11 +21,8 @@ void Client::connect (ConnectRequestSP request, bool secure, uint16_t port) {
 }
 
 void Client::close (uint16_t code, string payload) {
-    if (state == State::CONNECTING) {
-        on_error(CodeError(ERRNO_ECANCELED));
-    } else {
-        Connection::close(code, payload);
-    }
+    if (state == State::CONNECTING) on_error(CodeError(ERRNO_ECANCELED));
+    else ConnectionBase::close(code, payload);
 }
 
 void Client::on_error (const Error& err) {
@@ -35,7 +32,7 @@ void Client::on_error (const Error& err) {
         res->error = err.whats();
         on_connect(res);
     }
-    Connection::on_error(err);
+    ConnectionBase::on_error(err);
 }
 
 void Client::on_connect (ConnectResponseSP response) {

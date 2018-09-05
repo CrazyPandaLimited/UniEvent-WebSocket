@@ -3,6 +3,7 @@
 
 using namespace std::placeholders;
 using namespace panda::unievent::websocket;
+using server::Listener;
 
 std::atomic<uint64_t> Server::lastid(0);
 
@@ -10,20 +11,21 @@ Server::Server (Loop* loop) : _loop(loop), running(false) {
     panda_log_info("Server(): loop is default = " << (_loop == Loop::default_loop()));
 }
 
-void Server::init (ServerConfig config) {
+void Server::init (const Config& config) {
     if (!config.locations.size()) throw std::invalid_argument("no locations to listen supplied");
 
     for (auto& loc : config.locations) {
-        if (!loc.host)    throw std::invalid_argument("empty host in one of locations");
-        if (!loc.port)    throw std::invalid_argument("zero port in one of locations");
-        if (!loc.backlog) loc.backlog = 4096;
+        if (!loc.host) throw std::invalid_argument("empty host in one of locations");
+        if (!loc.port) throw std::invalid_argument("zero port in one of locations");
     }
 
     locations = config.locations;
     conn_conf = config.conn_conf;
+
+    for (auto& loc : locations) if (!loc.backlog) loc.backlog = 4096;
 }
 
-void Server::reconfigure (const ServerConfig& conf) {
+void Server::reconfigure (const Config& conf) {
     reconfigure(this, conf);
 }
 
@@ -35,17 +37,17 @@ void Server::run () {
     start_listening();
 }
 
-ServerConnectionSP Server::new_connection (uint64_t id) {
-    auto res = new ServerConnection(this, id);
+server::ConnectionSP Server::new_connection (uint64_t id) {
+    auto res = new Connection(this, id);
     res->configure(conn_conf);
     return res;
 }
 
-void Server::on_connection (ServerConnectionSP conn) {
+void Server::on_connection (ConnectionSP conn) {
     connection_callback(this, conn);
 }
 
-void Server::on_remove_connection (ServerConnectionSP conn, uint16_t code, string payload) {
+void Server::on_remove_connection (ConnectionSP conn, uint16_t code, string payload) {
     disconnection_callback(this, conn, code, payload);
 }
 
@@ -82,12 +84,12 @@ void Server::on_connect (Stream* listener, const CodeError* err) {
 }
 
 void Server::on_disconnect (Stream* handle) {
-    auto conn = dyn_cast<ServerConnection*>(handle);
+    auto conn = dyn_cast<Connection*>(handle);
     panda_log_info("Server[on_disconnect]: disconnected id " << conn->id());
     remove_connection(conn);
 }
 
-void Server::remove_connection (ServerConnectionSP conn, uint16_t code, string payload) {
+void Server::remove_connection (ConnectionSP conn, uint16_t code, string payload) {
     auto erased = connections.erase(conn->id());
     if (!erased) return;
     on_remove_connection(conn, code, payload);
