@@ -1,5 +1,4 @@
 #include "Listener.h"
-#include "utils.h"
 #include <panda/log.h>
 
 using namespace panda::unievent::websocket;
