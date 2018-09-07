@@ -78,7 +78,7 @@ void ConnectionBase::close_tcp () {
 }
 
 std::ostream& operator<< (std::ostream& stream, const ConnectionBase::Config& conf) {
-    stream << "WebSocket::BaseConf{max_frame_size:" << conf.max_frame_size
+    stream << "ConnectionBase::Conf{max_frame_size:" << conf.max_frame_size
            << ", max_message_size:" << conf.max_message_size
            << "}";
     return stream;

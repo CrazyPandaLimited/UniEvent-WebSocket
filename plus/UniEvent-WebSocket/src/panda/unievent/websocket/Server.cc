@@ -20,7 +20,7 @@ void Server::init (const Config& config) {
     }
 
     locations = config.locations;
-    conn_conf = config.conn_conf;
+    conn_conf = config.connection;
 
     for (auto& loc : locations) if (!loc.backlog) loc.backlog = 4096;
 }

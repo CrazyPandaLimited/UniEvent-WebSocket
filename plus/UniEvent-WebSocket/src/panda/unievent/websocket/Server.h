@@ -17,10 +17,8 @@ struct Server : virtual Refcnt {
     using ConnectionSP = server::ConnectionSP;
 
     struct Config {
-        Config (const std::vector<Location>& locations = {}, const Connection::Config& conn_conf = {}) : locations(locations), conn_conf(conn_conf) {}
-
         std::vector<Location> locations;
-        Connection::Config    conn_conf;
+        Connection::Config    connection;
     };
 
     Server (Loop* loop = Loop::default_loop());

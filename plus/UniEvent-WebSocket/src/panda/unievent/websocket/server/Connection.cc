@@ -13,6 +13,11 @@ Connection::Connection (Server* server, uint64_t id) : ConnectionBase(server->lo
     init(_parser);
 }
 
+void Connection::configure (const Config& conf) {
+    ConnectionBase::configure(conf);
+    _parser.max_handshake_size = conf.max_handshake_size;
+}
+
 void Connection::run (Stream* listener) {
     listener->accept(this); // TODO: concurrent non-blocking accept in multi-thread may result in not accepting (err from libuv?)
     state = State::TCP_CONNECTED;
@@ -82,13 +87,9 @@ void Connection::close (uint16_t code, string payload) {
     if (call) _server->remove_connection(sp, code, payload);
 }
 
-void Connection::configure (const Config& conf) {
-    ConnectionBase::configure(conf.base);
-    _parser.max_handshake_size = conf.max_handshake_size;
-}
-
 std::ostream& operator<< (std::ostream& stream, const Connection::Config& conf) {
-    stream << "server::Connection::Conf{ base:" << conf.base << ", max_handshake_size:" << conf.max_handshake_size << "}";
+    stream << (ConnectionBase::Config)conf << " ";
+    stream << "server::Connection::Config{ max_handshake_size:" << conf.max_handshake_size << "}";
     return stream;
 }
 

@@ -15,8 +15,7 @@ namespace server {
     struct Connection : virtual ConnectionBase {
         using SP = iptr<Connection>;
 
-        struct Config {
-            ConnectionBase::Config base;
+        struct Config : ConnectionBase::Config {
             size_t max_handshake_size = 0;
         };
 

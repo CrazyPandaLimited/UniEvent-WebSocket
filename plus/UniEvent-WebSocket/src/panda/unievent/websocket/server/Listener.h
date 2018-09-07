@@ -8,11 +8,11 @@ using panda::string;
 
 struct Location {
     string   host;
-    uint16_t port;
-    bool     secure;     // WSS if true
-    bool     reuse_port; // several listeners(servers) can be bound to the same port if true, useful for threaded apps
-    int      backlog;    // max accept queue
-    SSL_CTX* ssl_ctx;    // config with sertificate for server
+    uint16_t port       = 0;
+    bool     secure     = false;   // wss:// if true
+    bool     reuse_port = true;    // several listeners(servers) can be bound to the same port if true, useful for threaded apps
+    int      backlog    = 4096;    // max accept queue
+    SSL_CTX* ssl_ctx    = nullptr; // config with sertificate for server
 };
 
 struct Listener : TCP {
