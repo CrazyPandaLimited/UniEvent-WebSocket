@@ -7,26 +7,31 @@ using server::Listener;
 
 std::atomic<uint64_t> Server::lastid(0);
 
-Server::Server (Loop* loop) : _loop(loop), running(false) {
+Server::Server (Loop* loop) : running(false), _loop(loop) {
     panda_log_info("Server(): loop is default = " << (_loop == Loop::default_loop()));
 }
 
-void Server::init (const Config& config) {
-    if (!config.locations.size()) throw std::invalid_argument("no locations to listen supplied");
-
-    for (auto& loc : config.locations) {
-        if (!loc.host) throw std::invalid_argument("empty host in one of locations");
-        if (!loc.port) throw std::invalid_argument("zero port in one of locations");
-    }
-
-    locations = config.locations;
-    conn_conf = config.connection;
-
-    for (auto& loc : locations) if (!loc.backlog) loc.backlog = 4096;
+void Server::configure (const Config& conf) {
+    config_validate(conf);
+    bool was_running = running;
+    if (was_running) stop_listening();
+    config_apply(conf);
+    if (was_running) start_listening();
 }
 
-void Server::reconfigure (const Config& conf) {
-    reconfigure(this, conf);
+void Server::config_validate (const Config& c) const {
+    if (!c.locations.size()) throw std::invalid_argument("no locations to listen supplied");
+
+    for (auto& loc : c.locations) {
+        if (!loc.host)    throw std::invalid_argument("empty host in one of locations");
+        if (!loc.port)    throw std::invalid_argument("zero port in one of locations");
+        if (!loc.backlog) throw std::invalid_argument("zero backlog in one of locations");
+    }
+}
+
+void Server::config_apply (const Config& conf) {
+    locations = conf.locations;
+    conn_conf = conf.connection;
 }
 
 void Server::run () {
@@ -38,9 +43,7 @@ void Server::run () {
 }
 
 server::ConnectionSP Server::new_connection (uint64_t id) {
-    auto res = new Connection(this, id);
-    res->configure(conn_conf);
-    return res;
+    return new Connection(this, id, conn_conf);
 }
 
 void Server::on_connection (ConnectionSP conn) {

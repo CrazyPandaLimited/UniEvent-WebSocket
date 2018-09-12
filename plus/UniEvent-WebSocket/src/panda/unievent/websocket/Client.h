@@ -10,8 +10,9 @@ using panda::protocol::websocket::ConnectRequestSP;
 
 struct Client : virtual ConnectionBase {
     using SP = iptr<Client>;
+    static Config default_config;
 
-    Client (Loop* loop = Loop::default_loop());
+    Client (Loop* loop = Loop::default_loop(), const Config& = default_config);
 
     CallbackDispatcher<void(SP, ConnectResponseSP)> connect_callback;
 

@@ -8,13 +8,13 @@ namespace xs { namespace unievent  { namespace websocket {
     using namespace panda::unievent::websocket;
 
     struct XSClient : Client, Backref {
-        XSClient (Loop* loop = Loop::default_loop()) : ConnectionBase(loop), Client(loop) {}
+        XSClient (Loop* loop, const Client::Config& config) : ConnectionBase(loop), Client(loop, config) {}
     private:
         ~XSClient () { Backref::dtor(); }
     };
 
     struct XSServerConnection : server::Connection, Backref {
-        XSServerConnection (Server* server, uint64_t id) : ConnectionBase(server->loop()), Connection(server, id) {}
+        XSServerConnection (Server* server, uint64_t id, const Config& conf) : ConnectionBase(server->loop()), Connection(server, id, conf) {}
     private:
         ~XSServerConnection () { Backref::dtor(); }
     };
@@ -22,7 +22,7 @@ namespace xs { namespace unievent  { namespace websocket {
     struct XSServer : Server, Backref {
         using Server::Server;
 
-        server::ConnectionSP new_connection (uint64_t id) override { return new XSServerConnection(this, id); }
+        server::ConnectionSP new_connection (uint64_t id) override { return new XSServerConnection(this, id, conn_conf); }
 
     private:
         ~XSServer () { Backref::dtor(); }

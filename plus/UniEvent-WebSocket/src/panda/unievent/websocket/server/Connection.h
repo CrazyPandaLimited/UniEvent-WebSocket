@@ -15,13 +15,13 @@ namespace server {
     struct Connection : virtual ConnectionBase {
         using SP = iptr<Connection>;
 
-        struct Config : ConnectionBase::Config {
+        struct Config : virtual ConnectionBase::Config {
             size_t max_handshake_size = 0;
         };
 
         CallbackDispatcher<void(SP, ConnectRequestSP)> accept_callback;
 
-        Connection (Server* server, uint64_t id);
+        Connection (Server* server, uint64_t id, const Config& conf);
 
         void configure (const Config& conf);
 

@@ -8,9 +8,10 @@ using namespace std::placeholders;
 
 namespace panda { namespace unievent { namespace websocket { namespace server {
 
-Connection::Connection (Server* server, uint64_t id) : ConnectionBase(server->loop()), _id(id), _server(server), _alive(true) {
+Connection::Connection (Server* server, uint64_t id, const Config& conf) : ConnectionBase(server->loop()), _id(id), _server(server), _alive(true) {
     panda_log_info("Connection[new]: id = " << _id);
     init(_parser);
+    configure(conf);
 }
 
 void Connection::configure (const Config& conf) {

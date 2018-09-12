@@ -17,11 +17,7 @@ struct ConnectionBase : TCP {
 
     using SP = iptr<ConnectionBase>;
 
-    ConnectionBase (Loop* loop = Loop::default_loop()) : TCP(loop), state(State::DISCONNECTED), parser(nullptr) {}
-
-    void init (Parser& parser) {
-        this->parser = &parser;
-    }
+    ConnectionBase (Loop* loop) : TCP(loop), state(State::DISCONNECTED), parser(nullptr) {}
 
     void configure (const Config& conf);
 
@@ -62,6 +58,8 @@ struct ConnectionBase : TCP {
     virtual bool connected ();
 
 protected:
+    void init (Parser& parser) { this->parser = &parser; }
+
     virtual void on_frame   (FrameSP frame);
     virtual void on_message (MessageSP msg);
     virtual void on_error   (const Error& err);
