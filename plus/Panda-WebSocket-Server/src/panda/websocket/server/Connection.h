@@ -37,6 +37,11 @@ public:
 
     void configure(Conf conf);
 
+    template <typename T = Server>
+    T* get_server() const {
+        return dyn_cast<T*>(_server);
+    }
+
 protected:
     virtual void on_accept       (ConnectRequestSP request);
 
