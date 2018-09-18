@@ -14,15 +14,14 @@ struct Client : virtual ConnectionBase {
 
     Client (Loop* loop = Loop::default_loop(), const Config& = default_config);
 
-    CallbackDispatcher<void(SP, ConnectResponseSP)> connect_callback;
+    CallbackDispatcher<void(SP, ConnectResponseSP)> connect_event;
 
     /** @param port default value is 443 for secure and 80 for usual     */
     void connect (ConnectRequestSP request, bool secure = false, uint16_t port = 0);
 
-    virtual void close (uint16_t code = uint16_t(CloseCode::DONE), string = string()) override;
+    virtual void close (uint16_t code = uint16_t(CloseCode::DONE), const string& = string()) override;
 
 protected:
-    virtual void on_error   (const Error& err) override;
     virtual void on_connect (ConnectResponseSP response);
 
     using TCP::connect;
@@ -31,7 +30,7 @@ protected:
 
 private:
     virtual void on_connect (const CodeError* err, ConnectRequest* req) override;
-    virtual void on_read    (const string& buf, const CodeError* err) override;
+    virtual void on_read    (string& buf, const CodeError* err) override;
 
     ClientParser parser;
 };

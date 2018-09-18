@@ -47,11 +47,11 @@ server::ConnectionSP Server::new_connection (uint64_t id) {
 }
 
 void Server::on_connection (ConnectionSP conn) {
-    connection_callback(this, conn);
+    connection_event(this, conn);
 }
 
 void Server::on_remove_connection (ConnectionSP conn, uint16_t code, string payload) {
-    disconnection_callback(this, conn, code, payload);
+    disconnection_event(this, conn, code, payload);
 }
 
 void Server::start_listening () {

@@ -1,8 +1,7 @@
 use 5.020;
 use warnings;
 use Test::More;
-use lib 't/lib';
-use WSTest;
+use lib 't'; use MyTest;
 
 my $loop = UniEvent::Loop->default_loop;
 my $state = 0;

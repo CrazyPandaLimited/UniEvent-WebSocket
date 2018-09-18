@@ -9,60 +9,90 @@ void ConnectionBase::configure (const Config& conf) {
     parser->max_message_size = conf.max_message_size;
 }
 
-void ConnectionBase::close (uint16_t code, string payload) {
-    panda_log_info("ConnectionBase[close]: state=" << (int)state << " code=" << code << ", payload:" << payload);
-    if (state == State::WS_CONNECTED) {
-        auto data = parser->send_close(code, payload);
-        write(data.begin(), data.end());
-        state = State::WS_DISCONNECTED;
-    }
-    if (state != State::DISCONNECTED) {
-        bool call = state >= State::WS_CONNECTED;
-        close_tcp();
-        if (call) {
-            close_callback(this, code, payload);
-        }
-    } 
-}
+bool ConnectionBase::connected () const { return parser->established() && !parser->send_closed(); }
 
-bool ConnectionBase::connected () {
-    return state == State::WS_CONNECTED;
+void ConnectionBase::on_read (string& buf, const CodeError* err) {
+    assert(parser->established());
+    if (err) return on_error(*err);
+    auto msg_range = parser->get_messages(buf);
+    for (const auto& msg : msg_range) {
+        if (msg->error) return close(CloseCode::PROTOCOL_ERROR);
+        switch (msg->opcode()) {
+            case Opcode::CLOSE:
+                panda_log_debug("connection closed by peer:" << msg->close_code());
+                return on_peer_close(msg);
+            case Opcode::PING:
+                on_ping(msg);
+                break;
+            case Opcode::PONG:
+                on_pong(msg);
+                break;
+            default:
+                on_message(msg);
+        }
+        if (!parser->established()) break;
+    }
 }
 
 void ConnectionBase::on_frame (FrameSP frame) {
     if (Log::should_log(logger::VERBOSE_DEBUG, _panda_code_point_)){
         Log logger = Log(_panda_code_point_, logger::VERBOSE_DEBUG);
-        logger << "websocket BaseConnection::on_frame: payload=\n";
-        for (const auto& str : frame->payload) {
-            logger << encode::encode_base16(str);
-        }
+        logger << "websocket ConnectionBase::on_frame: payload=\n";
+        for (const auto& str : frame->payload) logger << encode::encode_base16(str);
     }
-    frame_callback(this, frame);
+    frame_event(this, frame);
 }
 
 void ConnectionBase::on_message (MessageSP msg) {
     if (Log::should_log(logger::VERBOSE_DEBUG, _panda_code_point_)){
         Log logger = Log(_panda_code_point_, logger::VERBOSE_DEBUG);
-        logger << "websocket BaseConnection::on_message: payload=\n";
-        for (const auto& str : msg->payload) {
-            logger << encode::encode_base16(str);
-        }
+        logger << "websocket ConnectionBase::on_message: payload=\n";
+        for (const auto& str : msg->payload) logger << encode::encode_base16(str);
     }
-    message_callback(this, msg);
+    message_event(this, msg);
+}
+
+void ConnectionBase::send_ping (string& payload) {
+    auto all = parser->send_ping(payload);
+    write(all.begin(), all.end());
+}
+
+void ConnectionBase::send_pong (string& payload) {
+    auto all = parser->send_pong(payload);
+    write(all.begin(), all.end());
+}
+
+void ConnectionBase::on_peer_close (MessageSP msg) {
+    peer_close_event(this, msg);
+    close(msg->close_code(), msg->close_message());
+}
+
+void ConnectionBase::on_ping (MessageSP msg) {
+    ping_event(this, msg);
+    switch (msg->payload.size()) {
+        case 0: send_pong(); break;
+        case 1: send_pong(msg->payload.front()); break;
+        default:
+            string acc;
+            for (const auto& str : msg->payload) acc += str;
+            send_pong(acc);
+    }
+}
+
+void ConnectionBase::on_pong (MessageSP msg) {
+    pong_event(this, msg);
 }
 
 void ConnectionBase::on_error (const Error& err) {
     panda_log_info("websocket on_error: " << err.whats());
-    error_callback(this, err);
+    error_event(this, err);
     close(CloseCode::ABNORMALLY);
     close_reinit(true);
 }
 
 void ConnectionBase::on_eof () {
     panda_log_info("websocket on_eof");
-    if (state == State::WS_CONNECTED) {
-        close(CloseCode::ABNORMALLY);
-    }
+    if (parser->established()) close(CloseCode::ABNORMALLY);
     TCP::on_eof();
 }
 
@@ -71,10 +101,25 @@ void ConnectionBase::on_write (const CodeError* err, WriteRequest* req) {
     if (err) on_error(*err);
 }
 
+void ConnectionBase::close (uint16_t code, const string& payload) {
+    panda_log_info("ConnectionBase[close]: code=" << code << ", payload:" << payload);
+    bool established = parser->established();
+    if (established && !parser->send_closed()) {
+        auto data = parser->send_close(code, payload);
+        write(data.begin(), data.end());
+    }
+    parser->reset();
+    if (TCP::connecting() || TCP::connected()) close_tcp();
+    if (established) on_close(code, payload);
+}
+
+void ConnectionBase::on_close (uint16_t code, const string& payload) {
+    close_event(this, code, payload);
+}
+
 void ConnectionBase::close_tcp () {
     shutdown();
     disconnect();
-    state = State::DISCONNECTED;
 }
 
 std::ostream& operator<< (std::ostream& stream, const ConnectionBase::Config& conf) {

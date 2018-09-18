@@ -39,8 +39,8 @@ struct Server : virtual Refcnt {
 
     virtual ~Server ();
 
-    CallbackDispatcher<void (SP, ConnectionSP)>                   connection_callback;
-    CallbackDispatcher<void (SP, ConnectionSP, uint16_t, string)> disconnection_callback;
+    CallbackDispatcher<void (SP, ConnectionSP)>                   connection_event;
+    CallbackDispatcher<void (SP, ConnectionSP, uint16_t, string)> disconnection_event;
 
 protected:
     virtual void config_validate (const Config&) const;
