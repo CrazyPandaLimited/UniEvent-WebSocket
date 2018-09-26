@@ -11,8 +11,9 @@ using namespace panda::protocol::websocket;
 
 struct ConnectionBase : TCP {
     struct Config {
-        size_t max_frame_size   = 0;
-        size_t max_message_size = 0;
+        size_t max_handshake_size = 0;
+        size_t max_frame_size     = 0;
+        size_t max_message_size   = 0;
     };
 
     using SP = iptr<ConnectionBase>;

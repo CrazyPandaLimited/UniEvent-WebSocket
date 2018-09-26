@@ -23,7 +23,11 @@ void Client::connect (ConnectRequestSP request, bool secure, uint16_t port) {
 }
 
 void Client::close (uint16_t code, const string& payload) {
-    if (connecting()) on_error(CodeError(ERRNO_ECANCELED));
+    if ((TCP::connecting() || TCP::connected()) && !parser.established()) {
+        panda_log_info("Client::close: connect started but not completed");
+        TCP::reset();
+        on_connect(CodeError(ERRNO_ECANCELED), nullptr);
+    }
     else ConnectionBase::close(code, payload);
 }
 

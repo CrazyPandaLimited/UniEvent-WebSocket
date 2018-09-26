@@ -17,8 +17,8 @@ struct Server : virtual Refcnt {
     using ConnectionSP = server::ConnectionSP;
 
     struct Config {
-        std::vector<Location> locations;
-        Connection::Config    connection;
+        std::vector<Location>  locations;
+        ConnectionBase::Config connection;
     };
 
     Server (Loop* loop = Loop::default_loop());
@@ -49,7 +49,7 @@ protected:
     virtual ConnectionSP new_connection (uint64_t id);
 
     virtual void on_connection        (ConnectionSP conn);
-    virtual void on_remove_connection (ConnectionSP conn, uint16_t code = uint16_t(CloseCode::ABNORMALLY), string payload = "");
+    virtual void on_remove_connection (ConnectionSP conn, uint16_t code = uint16_t(CloseCode::ABNORMALLY), const string& payload = {});
 
     template <class Conn = Connection>
     iptr<Conn> get_connection (uint64_t id) {

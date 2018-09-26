@@ -71,19 +71,9 @@ template <class TYPE> struct Typemap<panda::unievent::websocket::ConnectionBase:
     TYPE in (pTHX_ SV* arg) {
         const Hash h = arg;
         TYPE cfg; Scalar val;
-        if ((val = h["max_frame_size"]))   cfg.max_frame_size = Simple(val);
-        if ((val = h["max_message_size"])) cfg.max_message_size = Simple(val);
-        return cfg;
-    }
-};
-
-template <class TYPE> struct Typemap<panda::unievent::websocket::server::Connection::Config, TYPE> : Typemap<panda::unievent::websocket::ConnectionBase::Config, TYPE> {
-    using Super = Typemap<panda::unievent::websocket::ConnectionBase::Config, TYPE>;
-    TYPE in (pTHX_ SV* arg) {
-        auto cfg = Super::in(aTHX_ arg);
-        Hash h = arg;
-        Scalar val;
         if ((val = h["max_handshake_size"])) cfg.max_handshake_size = Simple(val);
+        if ((val = h["max_frame_size"]))     cfg.max_frame_size     = Simple(val);
+        if ((val = h["max_message_size"]))   cfg.max_message_size   = Simple(val);
         return cfg;
     }
 };

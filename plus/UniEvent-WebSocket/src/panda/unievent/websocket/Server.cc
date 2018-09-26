@@ -50,7 +50,7 @@ void Server::on_connection (ConnectionSP conn) {
     connection_event(this, conn);
 }
 
-void Server::on_remove_connection (ConnectionSP conn, uint16_t code, string payload) {
+void Server::on_remove_connection (ConnectionSP conn, uint16_t code, const string& payload) {
     disconnection_event(this, conn, code, payload);
 }
 

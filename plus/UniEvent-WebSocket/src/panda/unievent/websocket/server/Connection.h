@@ -15,15 +15,9 @@ using panda::protocol::websocket::ConnectRequestSP;
 struct Connection : virtual ConnectionBase {
     using SP = iptr<Connection>;
 
-    struct Config : virtual ConnectionBase::Config {
-        size_t max_handshake_size = 0;
-    };
-
     CallbackDispatcher<void(SP, ConnectRequestSP)> accept_event;
 
     Connection (Server* server, uint64_t id, const Config& conf);
-
-    void configure (const Config& conf);
 
     uint64_t id () const { return _id; }
 
@@ -50,7 +44,5 @@ private:
 };
 
 using ConnectionSP = Connection::SP;
-
-std::ostream& operator<< (std::ostream& stream, const Connection::Config& conf);
 
 }}}}
