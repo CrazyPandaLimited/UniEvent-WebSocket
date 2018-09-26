@@ -9,16 +9,16 @@ namespace panda { namespace unievent { namespace websocket {
 using panda::CallbackDispatcher;
 using namespace panda::protocol::websocket;
 
-struct ConnectionBase : TCP {
+struct Connection : TCP {
     struct Config {
         size_t max_handshake_size = 0;
         size_t max_frame_size     = 0;
         size_t max_message_size   = 0;
     };
 
-    using SP = iptr<ConnectionBase>;
+    using SP = iptr<Connection>;
 
-    ConnectionBase (Loop* loop) : TCP(loop), parser(nullptr) {}
+    Connection (Loop* loop) : TCP(loop), parser(nullptr) {}
 
     void configure (const Config& conf);
 
@@ -79,16 +79,16 @@ protected:
 
     void close_tcp ();
 
-    virtual ~ConnectionBase () = 0;
+    virtual ~Connection () = 0;
 
 private:
     Parser* parser;
 };
 
-inline ConnectionBase::~ConnectionBase () {}
+inline Connection::~Connection () {}
 
-using ConnectionBaseSP = ConnectionBase::SP;
+using ConnectionSP = Connection::SP;
 
-std::ostream& operator<< (std::ostream& stream, const ConnectionBase::Config& conf);
+std::ostream& operator<< (std::ostream& stream, const Connection::Config& conf);
 
 }}}

@@ -5,7 +5,7 @@ use lib 't'; use MyTest;
 
 {
     package Flogs::GetLogs::Connection;
-    use parent 'UniEvent::WebSocket::Server::Connection';
+    use parent 'UniEvent::WebSocket::ServerConnection';
 }
 
 my $loop = UE::Loop->default_loop;

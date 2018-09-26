@@ -1,5 +1,5 @@
 #pragma once
-#include "../ConnectionBase.h"
+#include "Connection.h"
 #include <panda/CallbackDispatcher.h>
 #include <panda/protocol/websocket/ServerParser.h>
 
@@ -7,17 +7,15 @@ namespace panda { namespace unievent { namespace websocket {
 
 struct Server;
 
-namespace server {
-
 using panda::CallbackDispatcher;
 using panda::protocol::websocket::ConnectRequestSP;
 
-struct Connection : virtual ConnectionBase {
-    using SP = iptr<Connection>;
+struct ServerConnection : virtual Connection {
+    using SP = iptr<ServerConnection>;
 
     CallbackDispatcher<void(SP, ConnectRequestSP)> accept_event;
 
-    Connection (Server* server, uint64_t id, const Config& conf);
+    ServerConnection (Server* server, uint64_t id, const Config& conf);
 
     uint64_t id () const { return _id; }
 
@@ -31,7 +29,7 @@ struct Connection : virtual ConnectionBase {
 protected:
     virtual void on_accept (ConnectRequestSP request);
 
-    virtual ~Connection () {
+    virtual ~ServerConnection () {
         panda_log_debug("connection destroy");
     }
 
@@ -43,6 +41,6 @@ private:
     void on_read (string& buf, const CodeError* err) override;
 };
 
-using ConnectionSP = Connection::SP;
+using ServerConnectionSP = ServerConnection::SP;
 
-}}}}
+}}}

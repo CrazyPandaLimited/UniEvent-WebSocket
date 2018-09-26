@@ -1,5 +1,5 @@
 #pragma once
-#include "ConnectionBase.h"
+#include "Connection.h"
 #include <panda/CallbackDispatcher.h>
 #include <panda/protocol/websocket/ClientParser.h>
 
@@ -8,7 +8,7 @@ namespace panda { namespace unievent { namespace websocket {
 using namespace panda::protocol::websocket;
 using panda::protocol::websocket::ConnectRequestSP;
 
-struct Client : virtual ConnectionBase {
+struct Client : virtual Connection {
     using SP = iptr<Client>;
     static Config default_config;
 

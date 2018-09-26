@@ -4,9 +4,9 @@
 
 using namespace panda::unievent::websocket;
 
-ConnectionBase::Config Client::default_config;
+Connection::Config Client::default_config;
 
-Client::Client (Loop* loop, const ConnectionBase::Config& conf) : ConnectionBase(loop) {
+Client::Client (Loop* loop, const Connection::Config& conf) : Connection(loop) {
     init(parser);
     configure(conf);
 }
@@ -28,7 +28,7 @@ void Client::close (uint16_t code, const string& payload) {
         TCP::reset();
         on_connect(CodeError(ERRNO_ECANCELED), nullptr);
     }
-    else ConnectionBase::close(code, payload);
+    else Connection::close(code, payload);
 }
 
 void Client::on_connect (ConnectResponseSP response) {
@@ -45,12 +45,12 @@ void Client::on_connect (const CodeError* err, ConnectRequest*) {
 }
 
 void Client::on_read (string& buf, const CodeError* err) {
-    if (parser.established()) return ConnectionBase::on_read(buf, err);
+    if (parser.established()) return Connection::on_read(buf, err);
     if (err) return on_error(*err);
 
     auto req = parser.connect(buf);
     if (!req) return;
     on_connect(req);
 
-    if (parser.established() && buf.length()) ConnectionBase::on_read(buf, err);
+    if (parser.established() && buf.length()) Connection::on_read(buf, err);
 }

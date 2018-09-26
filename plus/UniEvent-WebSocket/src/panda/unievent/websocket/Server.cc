@@ -3,7 +3,6 @@
 
 using namespace std::placeholders;
 using namespace panda::unievent::websocket;
-using server::Listener;
 
 std::atomic<uint64_t> Server::lastid(0);
 
@@ -42,15 +41,15 @@ void Server::run () {
     start_listening();
 }
 
-server::ConnectionSP Server::new_connection (uint64_t id) {
-    return new Connection(this, id, conn_conf);
+ServerConnectionSP Server::new_connection (uint64_t id) {
+    return new ServerConnection(this, id, conn_conf);
 }
 
-void Server::on_connection (ConnectionSP conn) {
+void Server::on_connection (ServerConnectionSP conn) {
     connection_event(this, conn);
 }
 
-void Server::on_remove_connection (ConnectionSP conn, uint16_t code, const string& payload) {
+void Server::on_remove_connection (ServerConnectionSP conn, uint16_t code, const string& payload) {
     disconnection_event(this, conn, code, payload);
 }
 
@@ -87,12 +86,12 @@ void Server::on_connect (Stream* listener, const CodeError* err) {
 }
 
 void Server::on_disconnect (Stream* handle) {
-    auto conn = dyn_cast<Connection*>(handle);
+    auto conn = dyn_cast<ServerConnection*>(handle);
     panda_log_info("Server[on_disconnect]: disconnected id " << conn->id());
     remove_connection(conn);
 }
 
-void Server::remove_connection (ConnectionSP conn, uint16_t code, string payload) {
+void Server::remove_connection (ServerConnectionSP conn, uint16_t code, string payload) {
     auto erased = connections.erase(conn->id());
     if (!erased) return;
     on_remove_connection(conn, code, payload);

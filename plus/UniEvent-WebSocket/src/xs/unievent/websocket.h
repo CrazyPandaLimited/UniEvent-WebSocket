@@ -8,13 +8,13 @@ namespace xs { namespace unievent  { namespace websocket {
     using namespace panda::unievent::websocket;
 
     struct XSClient : Client, Backref {
-        XSClient (Loop* loop, const Client::Config& config) : ConnectionBase(loop), Client(loop, config) {}
+        XSClient (Loop* loop, const Client::Config& config) : Connection(loop), Client(loop, config) {}
     private:
         ~XSClient () { Backref::dtor(); }
     };
 
-    struct XSServerConnection : server::Connection, Backref {
-        XSServerConnection (Server* server, uint64_t id, const Config& conf) : ConnectionBase(server->loop()), Connection(server, id, conf) {}
+    struct XSServerConnection : ServerConnection, Backref {
+        XSServerConnection (Server* server, uint64_t id, const Config& conf) : Connection(server->loop()), ServerConnection(server, id, conf) {}
     private:
         ~XSServerConnection () { Backref::dtor(); }
     };
@@ -22,7 +22,7 @@ namespace xs { namespace unievent  { namespace websocket {
     struct XSServer : Server, Backref {
         using Server::Server;
 
-        server::ConnectionSP new_connection (uint64_t id) override { return new XSServerConnection(this, id, conn_conf); }
+        ServerConnectionSP new_connection (uint64_t id) override { return new XSServerConnection(this, id, conn_conf); }
 
     private:
         ~XSServer () { Backref::dtor(); }
@@ -38,21 +38,20 @@ template <class TYPE> struct Typemap<panda::unievent::websocket::Server*, TYPE> 
     std::string package () { return "UniEvent::WebSocket::Server"; }
 };
 
-template <class TYPE> struct Typemap<panda::unievent::websocket::ConnectionBase*, TYPE> : Typemap<panda::unievent::TCP*, TYPE> {
-    //std::string package () = delete;
-    std::string package () { return "UniEvent::WebSocket::ConnectionBase"; }
+template <class TYPE> struct Typemap<panda::unievent::websocket::Connection*, TYPE> : Typemap<panda::unievent::TCP*, TYPE> {
+    std::string package () { throw "can't return abstract class without backref"; }
 };
 
-template <class TYPE> struct Typemap<panda::unievent::websocket::server::Connection*, TYPE> : Typemap<panda::unievent::websocket::ConnectionBase*, TYPE> {
-    std::string package () { return "UniEvent::WebSocket::Server::Connection"; }
+template <class TYPE> struct Typemap<panda::unievent::websocket::ServerConnection*, TYPE> : Typemap<panda::unievent::websocket::Connection*, TYPE> {
+    std::string package () { return "UniEvent::WebSocket::ServerConnection"; }
 };
 
-template <class TYPE> struct Typemap<panda::unievent::websocket::Client*, TYPE> : Typemap<panda::unievent::websocket::ConnectionBase*, TYPE> {
+template <class TYPE> struct Typemap<panda::unievent::websocket::Client*, TYPE> : Typemap<panda::unievent::websocket::Connection*, TYPE> {
     std::string package () { return "UniEvent::WebSocket::Client"; }
 };
 
-template <> struct Typemap<panda::unievent::websocket::server::Location> : TypemapBase<panda::unievent::websocket::server::Location> {
-    using Location = panda::unievent::websocket::server::Location;
+template <> struct Typemap<panda::unievent::websocket::Location> : TypemapBase<panda::unievent::websocket::Location> {
+    using Location = panda::unievent::websocket::Location;
     Location in (pTHX_ SV* arg) {
         const Hash h = arg;
         Scalar val;
@@ -67,7 +66,7 @@ template <> struct Typemap<panda::unievent::websocket::server::Location> : Typem
     }
 };
 
-template <class TYPE> struct Typemap<panda::unievent::websocket::ConnectionBase::Config, TYPE> : TypemapBase<panda::unievent::websocket::ConnectionBase::Config, TYPE> {
+template <class TYPE> struct Typemap<panda::unievent::websocket::Connection::Config, TYPE> : TypemapBase<panda::unievent::websocket::Connection::Config, TYPE> {
     TYPE in (pTHX_ SV* arg) {
         const Hash h = arg;
         TYPE cfg; Scalar val;
@@ -79,7 +78,7 @@ template <class TYPE> struct Typemap<panda::unievent::websocket::ConnectionBase:
 };
 
 template <class TYPE> struct Typemap<panda::unievent::websocket::Server::Config, TYPE> : TypemapBase<panda::unievent::websocket::Server::Config, TYPE> {
-    using Location = panda::unievent::websocket::server::Location;
+    using Location = panda::unievent::websocket::Location;
     TYPE in (pTHX_ SV* arg) {
         const Hash h = arg;
         TYPE cfg;
