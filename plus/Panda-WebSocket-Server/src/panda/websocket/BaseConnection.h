@@ -22,10 +22,6 @@ public:
     {}
     virtual ~BaseConnection() {}
 
-    iptr<event::Stream> on_create_connection() override {
-        return iptr<BaseConnection>(new BaseConnection(loop()));
-    }
-
     void init(Parser& parser) {
         this->parser = &parser;
     }
