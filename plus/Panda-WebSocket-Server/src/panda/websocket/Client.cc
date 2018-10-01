@@ -65,7 +65,9 @@ void Client::on_read(const string& buf, const event::StreamError& err) {
         return;
     }
 
-    string chunk = buf;
+    // parser breaks const-ness, so force a copy here
+    string chunk = string(buf.data(), buf.length());
+
     if (state == State::TCP_CONNECTED) {
         auto req = parser.connect(chunk);
         if (!req) return;

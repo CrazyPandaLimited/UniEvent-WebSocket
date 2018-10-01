@@ -6,7 +6,7 @@ namespace xs { namespace websocket { namespace server {
 using xs::my_perl;
 using panda::string;
 
-Server::ConnectionSP XSServer::new_connection(uint64_t id) {
+panda::iptr<Connection> XSServer::new_connection(uint64_t id) {
     return new XSConnection(this, id);
 }
 

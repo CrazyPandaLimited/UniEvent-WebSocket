@@ -19,7 +19,6 @@ Connection::Connection (Server* server, uint64_t id)
 }
 
 void Connection::run (Stream* listener) {
-    listener->accept(this); // TODO: concurrent non-blocking accept in multi-thread may result in not accepting (err from libuv?)
     state = State::TCP_CONNECTED;
     read_start();
 }
@@ -27,7 +26,8 @@ void Connection::run (Stream* listener) {
 void Connection::on_read (const string& buf, const StreamError& err) {
     if (err) return on_stream_error(err);
 
-    string chunk = buf;
+    // parser breaks const-ness, so force a copy here
+    string chunk = string(buf.data(), buf.length());
 
     if (!_parser.accept_parsed()) {
         auto creq = _parser.accept(chunk);

@@ -26,7 +26,6 @@ public:
     const Location& location () const { return _location; }
 
     void run ();
-    
 };
 
 typedef shared_ptr<Listener> ListenerSP;

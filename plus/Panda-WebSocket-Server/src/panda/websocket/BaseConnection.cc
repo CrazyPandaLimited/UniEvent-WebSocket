@@ -55,7 +55,7 @@ void BaseConnection::on_stream_error(const event::StreamError& err) {
     panda_log_info("websocket on_stream_error: " << err.what());
     stream_error_callback(this, err);
     on_any_error(err.what());
-    close_reinit(true);
+    close_reinit(state != State::CONNECTING);
 }
 
 void BaseConnection::on_any_error(const string& err) {
@@ -64,12 +64,12 @@ void BaseConnection::on_any_error(const string& err) {
     close(CloseCode::ABNORMALLY);
 }
 
-void BaseConnection::on_eof() {
+void BaseConnection::on_eof(const event::StreamError& err) {
     panda_log_info("websocket on_eof");
     if (state == State::WS_CONNECTED) {
         close(CloseCode::ABNORMALLY);
     }
-    TCP::on_eof();
+    TCP::on_eof(0);
 }
 
 void BaseConnection::on_write(const event::StreamError& err, event::WriteRequest* req) {
@@ -78,8 +78,12 @@ void BaseConnection::on_write(const event::StreamError& err, event::WriteRequest
 }
 
 void BaseConnection::close_tcp() {
-    shutdown();
-    disconnect();
+    if (state == State::CONNECTING) {
+        reset();
+    } else {
+        shutdown();
+        disconnect();
+    }
     state = State::DISCONNECTED;
 }
 
