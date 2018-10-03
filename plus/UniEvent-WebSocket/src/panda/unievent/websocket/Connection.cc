@@ -5,9 +5,7 @@
 namespace panda { namespace unievent { namespace websocket {
 
 void Connection::configure (const Config& conf) {
-    parser->max_handshake_size = conf.max_handshake_size;
-    parser->max_frame_size     = conf.max_frame_size;
-    parser->max_message_size   = conf.max_message_size;
+    parser->configure(conf);
 }
 
 bool Connection::connected () const { return parser->established() && !parser->send_closed(); }

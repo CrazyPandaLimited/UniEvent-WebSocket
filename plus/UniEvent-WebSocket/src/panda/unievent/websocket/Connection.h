@@ -10,11 +10,7 @@ using panda::CallbackDispatcher;
 using namespace panda::protocol::websocket;
 
 struct Connection : TCP {
-    struct Config {
-        size_t max_handshake_size = 0;
-        size_t max_frame_size     = 0;
-        size_t max_message_size   = 0;
-    };
+    struct Config: public Parser::Config {};
 
     using SP = iptr<Connection>;
 
@@ -33,24 +29,24 @@ struct Connection : TCP {
     CallbackDispatcher<void(SP, MessageSP)>        pong_event;
 
     void send_message (string& payload, write_fn callback = {}) {
-        auto all = parser->send_message(payload, Opcode::BINARY);
+        auto all = parser->message().opcode(Opcode::BINARY).send(payload);
         write(all.begin(), all.end(), callback);
     }
 
     template <class ContIt>
     void send_message (ContIt begin, ContIt end, write_fn callback = {}) {
-        auto all = parser->send_message(begin, end, Opcode::BINARY);
+        auto all = parser->message().opcode(Opcode::BINARY).send(begin, end);
         write(all.begin(), all.end(), callback);
     }
 
     void send_text (string& payload, write_fn callback = {}) {
-        auto all = parser->send_message(payload, Opcode::TEXT);
+        auto all = parser->message().opcode(Opcode::TEXT).send(payload);
         write(all.begin(), all.end(), callback);
     }
 
     template <class ContIt>
     void send_text (ContIt begin, ContIt end, write_fn callback = {}) {
-        auto all = parser->send_message(begin, end, Opcode::TEXT);
+        auto all = parser->message().opcode(Opcode::TEXT).send(begin, end);
         write(all.begin(), all.end(), callback);
     }
 
