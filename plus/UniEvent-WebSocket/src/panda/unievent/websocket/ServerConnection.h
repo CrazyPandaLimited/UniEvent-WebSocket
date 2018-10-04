@@ -19,12 +19,17 @@ struct ServerConnection : virtual Connection {
 
     uint64_t id () const { return _id; }
 
-    virtual void run (Stream* listener);
+    virtual void run ();
 
     virtual void send_accept_error    (HTTPResponse* res);
     virtual void send_accept_response (ConnectResponse* res);
 
     virtual void close (uint16_t code = uint16_t(CloseCode::DONE), const string& payload = string()) override;
+
+    template <typename T = Server>
+    T* get_server() const {
+        return dyn_cast<T*>(server);
+    }
 
 protected:
     virtual void on_accept (ConnectRequestSP request);

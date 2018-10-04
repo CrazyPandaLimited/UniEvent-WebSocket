@@ -65,7 +65,7 @@ private:
     std::vector<Location>   locations;
     std::vector<ListenerSP> listeners;
 
-    void on_connect    (Stream* handle, const CodeError* err);
+    void on_connect    (Stream* parent, Stream* handle, const CodeError* err);
     void on_disconnect (Stream* handle);
 };
 

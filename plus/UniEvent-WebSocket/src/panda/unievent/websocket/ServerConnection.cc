@@ -14,12 +14,12 @@ ServerConnection::ServerConnection (Server* server, uint64_t id, const Config& c
     configure(conf);
 }
 
-void ServerConnection::run (Stream* listener) {
-    listener->accept(this); // TODO: concurrent non-blocking accept in multi-thread may result in not accepting (err from libuv?)
+void ServerConnection::run () {
     read_start();
 }
 
-void ServerConnection::on_read (string& buf, const CodeError* err) {
+void ServerConnection::on_read (string& _buf, const CodeError* err) {
+    string buf = string(_buf.data(), _buf.length()); // TODO - REMOVE COPYING
     if (parser.established()) return Connection::on_read(buf, err);
     if (err) return on_error(*err);
 

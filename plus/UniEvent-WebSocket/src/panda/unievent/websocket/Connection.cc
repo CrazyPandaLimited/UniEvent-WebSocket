@@ -88,7 +88,6 @@ void Connection::on_error (const Error& err) {
     panda_log_info("websocket on_error: " << err.whats());
     error_event(this, err);
     close(CloseCode::ABNORMALLY);
-    close_reinit(true);
 }
 
 void Connection::on_eof () {
@@ -110,7 +109,7 @@ void Connection::close (uint16_t code, const string& payload) {
         write(data.begin(), data.end());
     }
     parser->reset();
-    if (TCP::connecting() || TCP::connected()) close_tcp();
+    close_tcp();
     if (established) on_close(code, payload);
 }
 
@@ -119,8 +118,13 @@ void Connection::on_close (uint16_t code, const string& payload) {
 }
 
 void Connection::close_tcp () {
-    shutdown();
-    disconnect();
+    if (TCP::connected()) {
+        shutdown();
+        disconnect();
+    } else {
+        TCP::set_connected(false);
+        reset();
+    }
 }
 
 std::ostream& operator<< (std::ostream& stream, const Connection::Config& conf) {
