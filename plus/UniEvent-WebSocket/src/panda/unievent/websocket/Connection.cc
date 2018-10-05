@@ -4,6 +4,15 @@
 
 namespace panda { namespace unievent { namespace websocket {
 
+Builder::Builder(Builder&& b): MessageBuilder(std::move((MessageBuilder)b)), _connection{b._connection} {}
+
+Builder::Builder(Connection& connection):MessageBuilder(connection.parser->message()), _connection{connection}{}
+
+void Builder::send(string& payload, TCP::write_fn callback) {
+    auto all = MessageBuilder::send(payload);
+    _connection.write(all.begin(), all.end(), callback);
+}
+
 void Connection::configure (const Config& conf) {
     parser->configure(conf);
 }

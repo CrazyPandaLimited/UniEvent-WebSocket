@@ -9,6 +9,29 @@ namespace panda { namespace unievent { namespace websocket {
 using panda::CallbackDispatcher;
 using namespace panda::protocol::websocket;
 
+struct Connection;
+
+struct Builder: private MessageBuilder {
+    using MessageBuilder::opcode;
+    using MessageBuilder::deflate;
+
+    Builder(Builder&&);
+    void send(string& payload, TCP::write_fn callback = {});
+
+    Builder& opcode(Opcode value) { MessageBuilder::opcode(value); return  *this; }
+    Builder& deflate(bool value) { MessageBuilder::deflate(value); return  *this; }
+
+    template <class ContIt>
+    void send(ContIt begin, ContIt end, TCP::write_fn callback = {});
+
+private:
+    Builder(Connection& connection);
+protected:
+    Connection& _connection;
+    friend struct Connection;
+};
+
+
 struct Connection : TCP {
     struct Config: public Parser::Config {};
 
@@ -28,27 +51,28 @@ struct Connection : TCP {
     CallbackDispatcher<void(SP, MessageSP)>        ping_event;
     CallbackDispatcher<void(SP, MessageSP)>        pong_event;
 
+    Builder message() {
+        return Builder(*this);
+    }
+
     void send_message (string& payload, write_fn callback = {}) {
-        auto all = parser->message().opcode(Opcode::BINARY).send(payload);
-        write(all.begin(), all.end(), callback);
+        message().opcode(Opcode::BINARY).send(payload, callback);
     }
 
     template <class ContIt>
     void send_message (ContIt begin, ContIt end, write_fn callback = {}) {
-        auto all = parser->message().opcode(Opcode::BINARY).send(begin, end);
-        write(all.begin(), all.end(), callback);
+        message().opcode(Opcode::BINARY).send(begin, end, callback);
     }
 
     void send_text (string& payload, write_fn callback = {}) {
-        auto all = parser->message().opcode(Opcode::TEXT).send(payload);
-        write(all.begin(), all.end(), callback);
+        message().opcode(Opcode::TEXT).send(payload, callback);
     }
 
     template <class ContIt>
     void send_text (ContIt begin, ContIt end, write_fn callback = {}) {
-        auto all = parser->message().opcode(Opcode::TEXT).send(begin, end);
-        write(all.begin(), all.end(), callback);
+        message().opcode(Opcode::TEXT).send(begin, end, callback);
     }
+
 
     void send_ping (string& payload);
     void send_pong (string& payload);
@@ -79,9 +103,16 @@ protected:
 
 private:
     Parser* parser;
+    friend struct Builder;
 };
 
 inline Connection::~Connection () {}
+
+template <class ContIt>
+void Builder::send(ContIt begin, ContIt end, TCP::write_fn callback) {
+    auto all = MessageBuilder::send(begin, end);
+    write(all.begin(), all.end(), callback);
+}
 
 using ConnectionSP = Connection::SP;
 
