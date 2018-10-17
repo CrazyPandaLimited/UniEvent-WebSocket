@@ -111,7 +111,7 @@ inline Connection::~Connection () {}
 template <class ContIt>
 void Builder::send(ContIt begin, ContIt end, TCP::write_fn callback) {
     auto all = MessageBuilder::send(begin, end);
-    write(all.begin(), all.end(), callback);
+    _connection.write(all.begin(), all.end(), callback);
 }
 
 using ConnectionSP = Connection::SP;
