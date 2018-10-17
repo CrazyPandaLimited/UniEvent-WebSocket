@@ -25,7 +25,7 @@ void Client::connect (ConnectRequestSP request, bool secure, uint16_t port) {
 void Client::close (uint16_t code, const string& payload) {
     if ((TCP::connecting() || TCP::connected()) && !parser.established()) {
         panda_log_info("Client::close: connect started but not completed");
-        TCP::reset();
+        TCP::set_connected(false);
         on_connect(CodeError(ERRNO_ECANCELED), nullptr);
     }
     else Connection::close(code, payload);
@@ -44,7 +44,8 @@ void Client::on_connect (const CodeError* err, ConnectRequest*) {
     }
 }
 
-void Client::on_read (string& buf, const CodeError* err) {
+void Client::on_read (string& _buf, const CodeError* err) {
+    string buf = string(_buf.data(), _buf.length());
     if (parser.established()) return Connection::on_read(buf, err);
     if (err) return on_error(*err);
 
