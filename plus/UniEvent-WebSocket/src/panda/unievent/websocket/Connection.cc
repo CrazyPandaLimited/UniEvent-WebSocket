@@ -4,7 +4,7 @@
 
 namespace panda { namespace unievent { namespace websocket {
 
-Builder::Builder(Builder&& b): MessageBuilder(std::move((MessageBuilder)b)), _connection{b._connection} {}
+Builder::Builder(Builder&& b): MessageBuilder(std::move(b)), _connection{b._connection} {}
 
 Builder::Builder(Connection& connection):MessageBuilder(connection.parser->message()), _connection{connection}{}
 
