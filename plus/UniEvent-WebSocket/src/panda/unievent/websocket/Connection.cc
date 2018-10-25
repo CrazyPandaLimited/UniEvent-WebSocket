@@ -13,6 +13,7 @@ void Connection::configure (const Config& conf) {
 bool Connection::connected () const { return parser->established() && !parser->send_closed(); }
 
 void Connection::on_read (string& buf, const CodeError* err) {
+    panda_log_debug("Websocket on_read " << logger::escaped{buf});
     assert(parser->established());
     if (err) return on_error(*err);
     auto msg_range = parser->get_messages(buf);
