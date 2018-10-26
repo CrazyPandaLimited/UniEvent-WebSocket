@@ -23,8 +23,8 @@ void Server::config_validate (const Config& c) const {
 
     for (auto& loc : c.locations) {
         if (!loc.host)    throw std::invalid_argument("empty host in one of locations");
-        if (!loc.port)    throw std::invalid_argument("zero port in one of locations");
         if (!loc.backlog) throw std::invalid_argument("zero backlog in one of locations");
+        //do not check port, 0 is some free port and you can get if with get_listeners()[i]->get_sockadr();
     }
 }
 
