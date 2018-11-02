@@ -16,10 +16,9 @@ void Client::connect (ConnectRequestSP request, bool secure, uint16_t port) {
     parser.reset();
 
     if (!port) port = secure ? 443 : 80;
-    string port_str = string::from_number(port);
-    panda_log_debug("connecting to " << request->uri->host() << ":" << port_str);
+    panda_log_debug("connecting to " << request->uri->host() << ":" << port);
     if (secure) use_ssl();
-    connect(request->uri->host(), port_str);
+    connect(request->uri->host(), port);
     read_start();
     write(parser.connect_request(request));
 }
