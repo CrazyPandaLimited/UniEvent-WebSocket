@@ -12,7 +12,9 @@ Client::Client (Loop* loop, const Connection::Config& conf) : Connection(loop) {
 }
 
 void Client::connect (ConnectRequestSP request, bool secure, uint16_t port) {
+    init(parser);
     parser.reset();
+
     if (!port) port = secure ? 443 : 80;
     string port_str = string::from_number(port);
     panda_log_debug("connecting to " << request->uri->host() << ":" << port_str);
@@ -35,7 +37,8 @@ void Client::on_connect (ConnectResponseSP response) {
     connect_event(this, response);
 }
 
-void Client::on_connect (const CodeError* err, ConnectRequest*) {
+void Client::on_connect (const CodeError* err, ConnectRequest* req) {
+    TCP::on_connect(err, req);
     if (err) {
         ConnectResponseSP res = new ConnectResponse();
         res->error = err->whats();
@@ -45,6 +48,11 @@ void Client::on_connect (const CodeError* err, ConnectRequest*) {
 }
 
 void Client::on_read (string& _buf, const CodeError* err) {
+    if (!is_valid()) { // just ignore everything, we are here after close
+        panda_log_debug("use websocket::Client after close");
+        return;
+    }
+
     string buf = string(_buf.data(), _buf.length());
     if (parser.established()) return Connection::on_read(buf, err);
     if (err) return on_error(*err);

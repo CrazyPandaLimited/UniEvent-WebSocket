@@ -110,6 +110,9 @@ void Server::stop () {
 }
 
 Server::~Server () {
+    for (auto con : connections) {
+        con.second->eof_event.remove_all();
+    }
     stop();
     panda_log_info("server destroy");
 }
