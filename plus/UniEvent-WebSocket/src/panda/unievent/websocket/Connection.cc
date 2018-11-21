@@ -4,10 +4,17 @@
 
 namespace panda { namespace unievent { namespace websocket {
 
+Builder::Builder(Builder&& b): MessageBuilder(std::move(b)), _connection{b._connection} {}
+
+Builder::Builder(Connection& connection):MessageBuilder(connection.parser->message()), _connection{connection}{}
+
+void Builder::send(string& payload, TCP::write_fn callback) {
+    auto all = MessageBuilder::send(payload);
+    _connection.write(all.begin(), all.end(), callback);
+}
+
 void Connection::configure (const Config& conf) {
-    parser->max_handshake_size = conf.max_handshake_size;
-    parser->max_frame_size     = conf.max_frame_size;
-    parser->max_message_size   = conf.max_message_size;
+    parser->configure(conf);
 }
 
 bool Connection::connected () const { return parser->established() && !parser->send_closed(); }

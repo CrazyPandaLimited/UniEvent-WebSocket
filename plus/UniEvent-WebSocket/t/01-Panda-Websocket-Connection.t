@@ -10,6 +10,7 @@ use lib 't'; use MyTest;
 
 my $loop = UE::Loop->default_loop;
 my $state = 0;
+my $send_cb = 0;
 my ($server, $port) = make_server();
 
 $server->connection_event->add(sub {
@@ -18,7 +19,7 @@ $server->connection_event->add(sub {
     $conn->accept_event->add(sub {
         my $conn1 = shift;
         is(ref($conn1), 'Flogs::GetLogs::Connection');
-        $conn1->send_text('Hey!');
+        $conn1->send(deflate => 1, payload => 'Hey!', cb => sub { $send_cb = 1;} );
     });
 });
 
@@ -43,4 +44,6 @@ $server->disconnection_event->add(sub {
 
 }
 ok($state == 2);
+is $send_cb, 1;
+
 done_testing();
