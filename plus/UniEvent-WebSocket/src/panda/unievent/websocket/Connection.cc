@@ -19,9 +19,17 @@ void Connection::configure (const Config& conf) {
 
 bool Connection::connected () const { return parser->established() && !parser->send_closed(); }
 
+static void log_use_after_close() {
+    panda_log_debug("using websocket::Connection after close");
+}
+
 void Connection::on_read (string& buf, const CodeError* err) {
+    panda_log_verbose_debug("Websocket " << is_valid() << " on read:" << logger::escaped{buf});
+    TCP::on_read(buf, err);
+    if (!is_valid()) return log_use_after_close(); // just ignore everything, we are here after close
     assert(parser->established());
     if (err) return on_error(*err);
+
     auto msg_range = parser->get_messages(buf);
     for (const auto& msg : msg_range) {
         if (msg->error) return close(CloseCode::PROTOCOL_ERROR);
@@ -61,11 +69,13 @@ void Connection::on_message (MessageSP msg) {
 }
 
 void Connection::send_ping (string& payload) {
+    if (!is_valid()) return log_use_after_close(); // just ignore everything, we are here after close
     auto all = parser->send_ping(payload);
     write(all.begin(), all.end());
 }
 
 void Connection::send_pong (string& payload) {
+    if (!is_valid()) return log_use_after_close(); // just ignore everything, we are here after close
     auto all = parser->send_pong(payload);
     write(all.begin(), all.end());
 }
@@ -132,6 +142,11 @@ void Connection::close_tcp () {
         TCP::set_connected(false);
         reset();
     }
+    valid = false;
+}
+
+bool Connection::is_valid() {
+    return valid;
 }
 
 std::ostream& operator<< (std::ostream& stream, const Connection::Config& conf) {

@@ -37,7 +37,7 @@ struct Connection : TCP {
 
     using SP = iptr<Connection>;
 
-    Connection (Loop* loop) : TCP(loop), parser(nullptr) {}
+    Connection (Loop* loop) : TCP(loop), parser(nullptr), valid(false) {}
 
     void configure (const Config& conf);
 
@@ -83,7 +83,7 @@ struct Connection : TCP {
     virtual void close (uint16_t code = uint16_t(CloseCode::DONE), const string& payload = string());
 
 protected:
-    void init (Parser& parser) { this->parser = &parser; }
+    void init (Parser& parser) { this->parser = &parser; valid = true; }
 
     virtual void on_frame      (FrameSP frame);
     virtual void on_message    (MessageSP msg);
@@ -99,10 +99,13 @@ protected:
 
     void close_tcp ();
 
+    bool is_valid();
+
     virtual ~Connection () = 0;
 
 private:
     Parser* parser;
+    bool valid;
     friend struct Builder;
 };
 

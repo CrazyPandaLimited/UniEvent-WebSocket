@@ -19,6 +19,10 @@ void ServerConnection::run () {
 }
 
 void ServerConnection::on_read (string& _buf, const CodeError* err) {
+    if (!is_valid()) { // just ignore everything, we are here after close
+        panda_log_debug("use websocket::ServerConnection " << id() << " after close");
+        return;
+    }
     string buf = string(_buf.data(), _buf.length()); // TODO - REMOVE COPYING
     if (parser.established()) return Connection::on_read(buf, err);
     if (err) return on_error(*err);
