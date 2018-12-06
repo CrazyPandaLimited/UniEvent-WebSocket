@@ -87,6 +87,11 @@ void Connection::on_peer_close (MessageSP msg) {
 
 void Connection::on_ping (MessageSP msg) {
     ping_event(this, msg);
+    if (msg->payload_length() > Frame::MAX_CONTROL_PAYLOAD) {
+        panda_log_info("something weird, ping payload is bigger than possible");
+        send_pong(); // send pong without payload
+        return;
+    }
     switch (msg->payload.size()) {
         case 0: send_pong(); break;
         case 1: send_pong(msg->payload.front()); break;
