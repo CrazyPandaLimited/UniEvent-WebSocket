@@ -5,11 +5,10 @@ using namespace panda::unievent::websocket;
 
 // initializing TCP with two params ctor: this way it will pre-create socket so we could set its options in run()
 Listener::Listener (Loop* loop, const Location& loc) : TCP(loop, (unsigned)AF_INET), _location(loc) {
-    if (_location.ssl_ctx) _location.secure = true;
 }
 
 void Listener::run () {
-    panda_log_info("Listener[run]: listening " << (_location.secure ? "wss://" : "ws://") << _location.host << ":" << _location.port
+    panda_log_info("Listener[run]: listening " << (_location.ssl_ctx ? "wss://" : "ws://") << _location.host << ":" << _location.port
                    << ", backlog:" << _location.backlog);
     if (_location.reuse_port) {
         int on = 1;
