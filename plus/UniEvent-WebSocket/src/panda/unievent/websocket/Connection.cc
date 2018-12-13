@@ -32,7 +32,10 @@ void Connection::on_read (string& buf, const CodeError* err) {
 
     auto msg_range = parser->get_messages(buf);
     for (const auto& msg : msg_range) {
-        if (msg->error) return close(CloseCode::PROTOCOL_ERROR);
+        if (msg->error) {
+            panda_log_debug("protocol error :" << msg->error);
+            return close(CloseCode::PROTOCOL_ERROR);
+        }
         switch (msg->opcode()) {
             case Opcode::CLOSE:
                 panda_log_debug("connection closed by peer:" << msg->close_code());
