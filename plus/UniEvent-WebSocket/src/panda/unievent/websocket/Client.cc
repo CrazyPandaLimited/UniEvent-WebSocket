@@ -15,6 +15,10 @@ void Client::connect (ConnectRequestSP request, bool secure, uint16_t port) {
     init(parser);
     parser.reset();
 
+    if (!request || !request->uri) {
+        throw std::invalid_argument("ConnectRequest should contains uri");
+    }
+
     if (!port) port = secure ? 443 : 80;
     panda_log_debug("connecting to " << request->uri->host() << ":" << port);
     if (secure) use_ssl();
