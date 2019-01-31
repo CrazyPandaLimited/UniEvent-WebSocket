@@ -62,11 +62,13 @@ void ServerConnection::send_accept_response (ConnectResponse* res) {
     if (Log::should_log(logger::VERBOSE_DEBUG, _panda_code_point_)){
         Log logger = Log(_panda_code_point_, logger::VERBOSE_DEBUG);
         auto deflate_cfg = parser.effective_deflate_config();
-        logger << "websocket::ServerConnection " << id() << " agreed deflate settings"
-               << ": server_max_window_bits = " << (int)deflate_cfg->server_max_window_bits
-               << ", client_max_window_bits = " << (int)deflate_cfg->client_max_window_bits
-               << ", server_no_context_takeover = " << deflate_cfg->server_no_context_takeover
-               << ", client_no_context_takeover = " << deflate_cfg->client_no_context_takeover;
+        if (deflate_cfg) {
+            logger << "websocket::ServerConnection " << id() << " agreed deflate settings"
+                   << ": server_max_window_bits = " << (int)deflate_cfg->server_max_window_bits
+                   << ", client_max_window_bits = " << (int)deflate_cfg->client_max_window_bits
+                   << ", server_no_context_takeover = " << deflate_cfg->server_no_context_takeover
+                   << ", client_no_context_takeover = " << deflate_cfg->client_no_context_takeover;
+        }
     }
 
 
