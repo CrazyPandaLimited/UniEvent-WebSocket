@@ -46,8 +46,8 @@ void Client::on_connect (const CodeError* err, ConnectRequest* req) {
     if (err) {
         ConnectResponseSP res = new ConnectResponse();
         res->error = err->whats();
+        on_error(*err);
         on_connect(res);
-        return on_error(*err);
     }
 }
 
