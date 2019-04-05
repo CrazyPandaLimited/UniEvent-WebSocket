@@ -36,6 +36,7 @@ struct Server : virtual Refcnt {
     virtual ~Server ();
 
     std::vector<ListenerSP>& get_listeners() { return listeners; }
+    const std::map<uint64_t, ServerConnectionSP>& get_connections() { return connections; }
 
     CallbackDispatcher<void (SP, ServerConnectionSP)>                   connection_event;
     CallbackDispatcher<void (SP, ServerConnectionSP, uint16_t, string)> disconnection_event;

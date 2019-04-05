@@ -21,6 +21,13 @@ $server->connection_event->add(sub {
         is(ref($conn1), 'Flogs::GetLogs::Connection');
         $conn1->send(deflate => 1, payload => 'Hey!', cb => sub { $send_cb = 1;} );
     });
+
+    warn($serv->connections_count());
+    $serv->foreach_connection(sub {
+        my $conn = shift;
+        warn(defined($conn));
+    });
+
 });
 
 $server->disconnection_event->add(sub {

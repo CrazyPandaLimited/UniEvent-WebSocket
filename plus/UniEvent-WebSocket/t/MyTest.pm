@@ -15,8 +15,8 @@ sub make_server {
 
 	my $s = new UniEvent::TCP();
 	$s->bind('localhost',0);
-	my $adr = $s->getsockname;
-	my ($port, $adrrrr) = sockaddr_in ($adr);
+    my $adr = $s->get_sockaddr;
+    my $port = $adr->port();
 
 	my $server = new UniEvent::WebSocket::Server({
 		locations => [{
