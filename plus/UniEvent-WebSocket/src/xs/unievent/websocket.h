@@ -19,6 +19,30 @@ namespace xs { namespace unievent  { namespace websocket {
         ~XSServerConnection () { Backref::dtor(); }
     };
 
+    struct XSConnectionIterator : panda::Refcnt {
+        XSConnectionIterator(const Server::Connections& connections) {
+            cur = connections.begin();
+            end = connections.end();
+        }
+
+        Scalar next() {
+            if (cur != end) {
+                Scalar res = xs::out(cur->second);
+                ++cur;
+                return res;
+            } else {
+                return Scalar::undef;
+            }
+        }
+
+    private:
+        using iterator = Server::Connections::const_iterator;
+
+        iterator cur;
+        iterator end;
+    };
+
+
     struct XSServer : Server, Backref {
         using Server::Server;
 
@@ -27,6 +51,7 @@ namespace xs { namespace unievent  { namespace websocket {
     private:
         ~XSServer () { Backref::dtor(); }
     };
+
 
 }}}
 
@@ -48,6 +73,12 @@ template <class TYPE> struct Typemap<panda::unievent::websocket::ServerConnectio
 
 template <class TYPE> struct Typemap<panda::unievent::websocket::Client*, TYPE> : Typemap<panda::unievent::websocket::Connection*, TYPE> {
     std::string package () { return "UniEvent::WebSocket::Client"; }
+};
+
+template <class TYPE> struct Typemap<xs::unievent::websocket::XSConnectionIterator*, TYPE> :
+    TypemapObject<xs::unievent::websocket::XSConnectionIterator*, TYPE, ObjectTypeRefcntPtr, ObjectStorageMG, StaticCast>
+{
+    std::string package () { return "UniEvent::WebSocket::XSConnectionIterator"; }
 };
 
 template <> struct Typemap<panda::unievent::websocket::Location> : TypemapBase<panda::unievent::websocket::Location> {

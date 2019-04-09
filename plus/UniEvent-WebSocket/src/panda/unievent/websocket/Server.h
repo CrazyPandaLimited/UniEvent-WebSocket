@@ -35,8 +35,17 @@ struct Server : virtual Refcnt {
 
     virtual ~Server ();
 
+    template <class Conn = ServerConnection>
+    iptr<Conn> get_connection (uint64_t id) {
+        auto iter = connections.find(id);
+        if (iter == connections.end()) return {};
+        else return dynamic_pointer_cast<Conn>(iter->second);
+    }
+
+    using Connections = std::map<uint64_t, ServerConnectionSP>;
+
     std::vector<ListenerSP>& get_listeners() { return listeners; }
-    const std::map<uint64_t, ServerConnectionSP>& get_connections() { return connections; }
+    const Connections& get_connections() { return connections; }
 
     CallbackDispatcher<void (SP, ServerConnectionSP)>                   connection_event;
     CallbackDispatcher<void (SP, ServerConnectionSP, uint16_t, string)> disconnection_event;
@@ -50,15 +59,9 @@ protected:
     virtual void on_connection        (ServerConnectionSP conn);
     virtual void on_remove_connection (ServerConnectionSP conn, uint16_t code = uint16_t(CloseCode::ABNORMALLY), const string& payload = {});
 
-    template <class Conn = ServerConnection>
-    iptr<Conn> get_connection (uint64_t id) {
-        auto iter = connections.find(id);
-        if (iter == connections.end()) return {};
-        else return dynamic_pointer_cast<Conn>(iter->second);
-    }
 
     bool running;
-    std::map<uint64_t, ServerConnectionSP> connections;
+    Connections connections;
     Connection::Config                     conn_conf;
 
 private:

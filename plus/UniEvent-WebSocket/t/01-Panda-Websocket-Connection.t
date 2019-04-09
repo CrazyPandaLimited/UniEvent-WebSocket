@@ -13,6 +13,11 @@ my $state = 0;
 my $send_cb = 0;
 my ($server, $port) = make_server();
 
+my $conns = $server->get_connections();
+while (my $c = $conns->next()) {
+    warn(defined($c));
+}
+
 $server->connection_event->add(sub {
     my ($serv, $conn) = @_;
     bless $conn, 'Flogs::GetLogs::Connection';
@@ -27,6 +32,11 @@ $server->connection_event->add(sub {
         my $conn = shift;
         warn(defined($conn));
     });
+    my $conns = $serv->get_connections();
+    while (my $c = $conns->next()) {
+        warn(defined($c));
+    }
+
 
 });
 
