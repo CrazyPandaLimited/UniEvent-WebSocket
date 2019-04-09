@@ -36,6 +36,7 @@ $server->connection_event->add(sub {
     while (my $c = $conns->next()) {
         warn(defined($c));
     }
+    is ($conn, $serv->get_connection($conn->id()));
 
 
 });
