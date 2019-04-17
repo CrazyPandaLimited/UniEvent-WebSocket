@@ -49,6 +49,7 @@ struct Server : virtual Refcnt {
 
     CallbackDispatcher<void (SP, ServerConnectionSP)>                   connection_event;
     CallbackDispatcher<void (SP, ServerConnectionSP, uint16_t, string)> disconnection_event;
+    function<HTTPResponseSP(ConnectRequestSP)>                          accept_filter;
 
 protected:
     virtual void config_validate (const Config&) const;

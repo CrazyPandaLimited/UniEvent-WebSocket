@@ -18,6 +18,18 @@ while (my $c = $conns->next()) {
     warn(defined($c));
 }
 
+$server->accept_filter(sub {
+    my $creq = shift;
+    my $auth = $creq->header('MyAuth');
+    if ($auth && $auth eq 'MyPass') {
+        return new Protocol::WebSocket::XS::HTTPResponse({
+            code => 403,
+            message => 'fuck off',
+        });
+    }
+    return undef; #allow connection
+});
+
 $server->connection_event->add(sub {
     my ($serv, $conn) = @_;
     bless $conn, 'Flogs::GetLogs::Connection';

@@ -40,6 +40,15 @@ void ServerConnection::on_read (string& _buf, const CodeError* err) {
         return;
     }
 
+    if (server->accept_filter) {
+        HTTPResponseSP res = server->accept_filter(creq);
+        if (res) {
+            send_accept_error(res.get());
+            close();
+            return;
+        }
+    }
+
     on_accept(creq);
 }
 
