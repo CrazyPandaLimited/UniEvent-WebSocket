@@ -22,7 +22,6 @@ sub make_server {
 		locations => [{
 			host => 'localhost',
 			port => $port,
-			secure => 0,
 		}],
 	});
 	return ($server, $port);
