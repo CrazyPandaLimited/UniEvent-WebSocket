@@ -28,7 +28,7 @@ void Client::connect (ConnectRequestSP request, bool secure, uint16_t port) {
 }
 
 void Client::close (uint16_t code, const string& payload) {
-    if ((TCP::connected()) && !parser.established()) { // if TCP is connecting, callback will be called by UniEvent in reset on next iteration
+    if (is_valid() && (TCP::connected()) && !parser.established()) { // if TCP is connecting, callback will be called by UniEvent in reset on next iteration
         panda_log_info("Client::close: connect started but not completed");
         TCP::set_connected(false);
         on_connect(CodeError(ERRNO_ECANCELED), nullptr);
