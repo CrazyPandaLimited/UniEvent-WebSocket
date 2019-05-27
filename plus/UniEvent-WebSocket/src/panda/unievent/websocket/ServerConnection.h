@@ -33,6 +33,7 @@ struct ServerConnection : virtual Connection {
 
 protected:
     virtual void on_accept (ConnectRequestSP request);
+    void on_read (string& buf, const CodeError* err) override;
 
     virtual ~ServerConnection () {
         panda_log_debug("connection destroy");
@@ -43,7 +44,6 @@ private:
     Server*      server;
     ServerParser parser;
 
-    void on_read (string& buf, const CodeError* err) override;
 };
 
 using ServerConnectionSP = ServerConnection::SP;
