@@ -60,30 +60,30 @@ namespace xs {
 
 template <class TYPE> struct Typemap<panda::unievent::websocket::Server*, TYPE> :
     TypemapObject<panda::unievent::websocket::Server*, TYPE, ObjectTypeRefcntPtr, ObjectStorageMGBackref, DynamicCast> {
-    std::string package () { return "UniEvent::WebSocket::Server"; }
+    static std::string package () { return "UniEvent::WebSocket::Server"; }
 };
 
 template <class TYPE> struct Typemap<panda::unievent::websocket::Connection*, TYPE> : Typemap<panda::unievent::TCP*, TYPE> {
-    std::string package () { throw "can't return abstract class without backref"; }
+    static std::string package () { throw "can't return abstract class without backref"; }
 };
 
 template <class TYPE> struct Typemap<panda::unievent::websocket::ServerConnection*, TYPE> : Typemap<panda::unievent::websocket::Connection*, TYPE> {
-    std::string package () { return "UniEvent::WebSocket::ServerConnection"; }
+    static std::string package () { return "UniEvent::WebSocket::ServerConnection"; }
 };
 
 template <class TYPE> struct Typemap<panda::unievent::websocket::Client*, TYPE> : Typemap<panda::unievent::websocket::Connection*, TYPE> {
-    std::string package () { return "UniEvent::WebSocket::Client"; }
+    static std::string package () { return "UniEvent::WebSocket::Client"; }
 };
 
 template <class TYPE> struct Typemap<xs::unievent::websocket::XSConnectionIterator*, TYPE> :
     TypemapObject<xs::unievent::websocket::XSConnectionIterator*, TYPE, ObjectTypeRefcntPtr, ObjectStorageMG, StaticCast>
 {
-    std::string package () { return "UniEvent::WebSocket::XSConnectionIterator"; }
+    static std::string package () { return "UniEvent::WebSocket::XSConnectionIterator"; }
 };
 
 template <> struct Typemap<panda::unievent::websocket::Location> : TypemapBase<panda::unievent::websocket::Location> {
     using Location = panda::unievent::websocket::Location;
-    Location in (pTHX_ SV* arg) {
+    static Location in (pTHX_ SV* arg) {
         const Hash h = arg;
         Scalar val;
         Location loc;
@@ -97,7 +97,7 @@ template <> struct Typemap<panda::unievent::websocket::Location> : TypemapBase<p
 };
 
 template <class TYPE> struct Typemap<panda::unievent::websocket::Connection::Config, TYPE> : Typemap<panda::protocol::websocket::Parser::Config, TYPE> {
-    TYPE in (pTHX_ SV* arg) {
+    static TYPE in (pTHX_ SV* arg) {
         using Super = Typemap<panda::protocol::websocket::Parser::Config, TYPE>;
         TYPE cfg = Super::in(aTHX_ arg);
         return cfg;
@@ -106,7 +106,7 @@ template <class TYPE> struct Typemap<panda::unievent::websocket::Connection::Con
 
 template <class TYPE> struct Typemap<panda::unievent::websocket::Server::Config, TYPE> : TypemapBase<panda::unievent::websocket::Server::Config, TYPE> {
     using Location = panda::unievent::websocket::Location;
-    TYPE in (pTHX_ SV* arg) {
+    static TYPE in (pTHX_ SV* arg) {
         const Hash h = arg;
         TYPE cfg;
 
