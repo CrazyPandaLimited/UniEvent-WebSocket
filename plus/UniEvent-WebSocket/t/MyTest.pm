@@ -4,7 +4,7 @@ use Test::More;
 use UniEvent::WebSocket;
 use Socket;
 
-plan skip_all => 'set TEST_FULL=1 to enable all tests' unless $ENV{TEST_FULL};
+XS::Loader::load_tests();
 
 sub make_server {
 	Panda::Lib::Logger::set_native_logger(sub {
@@ -13,9 +13,9 @@ sub make_server {
 
 	my $loop = UniEvent::Loop->default_loop;
 
-	my $s = new UniEvent::TCP();
+	my $s = new UniEvent::Tcp();
 	$s->bind('localhost',0);
-    my $adr = $s->get_sockaddr;
+    my $adr = $s->sockaddr;
     my $port = $adr->port();
 
 	my $server = new UniEvent::WebSocket::Server({
@@ -32,10 +32,9 @@ sub make_client {
 	my $client = new UniEvent::WebSocket::Client();
 	
 	$client->connect({
-			uri           => "ws://localhost",
-			ws_key        => "dGhlIHNhbXBsZSBub25jZQ==",
-		}, 0, $port
-	);
+		uri           => "ws://localhost",
+		ws_key        => "dGhlIHNhbXBsZSBub25jZQ==",
+	}, 0, $port);
 	
 	return $client;
 }

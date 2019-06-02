@@ -6,7 +6,7 @@ use Panda::Lib::Logger;
 
 set_native_logger(sub {
     my ($level, $cp, $msg) = @_;
-    warn("$cp $msg\n");
+    #warn("$cp $msg\n");
 });
 
 my $loop = UniEvent::Loop->default_loop;

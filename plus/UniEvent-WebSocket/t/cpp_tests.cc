@@ -4,7 +4,6 @@
 #include <panda/unievent/websocket/Client.h>
 #include <panda/unievent/websocket/Server.h>
 
-
 using namespace panda::unievent::websocket;
 using panda::unievent::test::AsyncTest;
 using panda::unievent::LoopSP;
@@ -19,11 +18,11 @@ static ServerSP make_server(LoopSP loop, uint16_t& port) {
     conf.locations.push_back(loc);
     server->configure(conf);
     server->run();
-    port = server->get_listeners()[0]->get_sockaddr().port();
+    port = server->get_listeners()[0]->sockaddr().port();
     return server;
 }
 
-TEST_CASE("on_read after close", "[errors]") {
+TEST_CASE("on_read after close", "[uews]") {
     AsyncTest test(5000, {"connect", "close"});
     uint16_t port;
 
@@ -56,7 +55,7 @@ TEST_CASE("on_read after close", "[errors]") {
     sconn->write(big_buf);
 
     size_t rcount = 0;
-    client->read_event.add([&](StreamSP, string, const panda::unievent::CodeError* err){
+    client->read_event.add([&](auto, auto&, auto& err){
         REQUIRE_FALSE(err);
         rcount++;
         client->shutdown();

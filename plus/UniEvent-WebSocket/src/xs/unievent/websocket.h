@@ -1,14 +1,14 @@
 #pragma once
-#include <xs.h>
 #include <xs/unievent.h>
 #include <xs/protocol/websocket.h>
 #include <panda/unievent/websocket.h>
 
 namespace xs { namespace unievent  { namespace websocket {
     using namespace panda::unievent::websocket;
+    using panda::unievent::LoopSP;
 
     struct XSClient : Client, Backref {
-        XSClient (Loop* loop, const Client::Config& config) : Connection(loop), Client(loop, config) {}
+        XSClient (const LoopSP& loop, const Client::Config& config) : Connection(loop), Client(loop, config) {}
     private:
         ~XSClient () { Backref::dtor(); }
     };
@@ -19,20 +19,17 @@ namespace xs { namespace unievent  { namespace websocket {
         ~XSServerConnection () { Backref::dtor(); }
     };
 
-    struct XSConnectionIterator : panda::Refcnt {
-        XSConnectionIterator(const Server::Connections& connections) {
+    struct XSConnectionIterator {
+        XSConnectionIterator (const Server::Connections& connections) {
             cur = connections.begin();
             end = connections.end();
         }
 
         Scalar next() {
-            if (cur != end) {
-                Scalar res = xs::out(cur->second);
-                ++cur;
-                return res;
-            } else {
-                return Scalar::undef;
-            }
+            if (cur == end) return Scalar::undef;
+            Scalar res = xs::out(cur->second);
+            ++cur;
+            return res;
         }
 
     private:
@@ -42,7 +39,6 @@ namespace xs { namespace unievent  { namespace websocket {
         iterator end;
     };
 
-
     struct XSServer : Server, Backref {
         using Server::Server;
 
@@ -51,7 +47,6 @@ namespace xs { namespace unievent  { namespace websocket {
     private:
         ~XSServer () { Backref::dtor(); }
     };
-
 
 }}}
 
@@ -63,7 +58,7 @@ template <class TYPE> struct Typemap<panda::unievent::websocket::Server*, TYPE> 
     static std::string package () { return "UniEvent::WebSocket::Server"; }
 };
 
-template <class TYPE> struct Typemap<panda::unievent::websocket::Connection*, TYPE> : Typemap<panda::unievent::TCP*, TYPE> {
+template <class TYPE> struct Typemap<panda::unievent::websocket::Connection*, TYPE> : Typemap<panda::unievent::Tcp*, TYPE> {
     static std::string package () { throw "can't return abstract class without backref"; }
 };
 
@@ -76,7 +71,7 @@ template <class TYPE> struct Typemap<panda::unievent::websocket::Client*, TYPE> 
 };
 
 template <class TYPE> struct Typemap<xs::unievent::websocket::XSConnectionIterator*, TYPE> :
-    TypemapObject<xs::unievent::websocket::XSConnectionIterator*, TYPE, ObjectTypeRefcntPtr, ObjectStorageMG, StaticCast>
+    TypemapObject<xs::unievent::websocket::XSConnectionIterator*, TYPE, ObjectTypePtr, ObjectStorageMG, StaticCast>
 {
     static std::string package () { return "UniEvent::WebSocket::XSConnectionIterator"; }
 };

@@ -39,18 +39,14 @@ $server->connection_event->add(sub {
         $conn1->send(deflate => 1, payload => 'Hey!', cb => sub { $send_cb = 1;} );
     });
 
-    warn($serv->connections_count());
     $serv->foreach_connection(sub {
         my $conn = shift;
-        warn(defined($conn));
     });
     my $conns = $serv->get_connections();
     while (my $c = $conns->next()) {
-        warn(defined($c));
+        ok defined $c;
     }
     is ($conn, $serv->get_connection($conn->id()));
-
-
 });
 
 $server->disconnection_event->add(sub {

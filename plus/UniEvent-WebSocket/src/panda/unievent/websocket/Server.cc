@@ -6,7 +6,7 @@ using namespace panda::unievent::websocket;
 
 std::atomic<uint64_t> Server::lastid(0);
 
-Server::Server (Loop* loop) : running(false), _loop(loop) {
+Server::Server (const LoopSP& loop) : running(false), _loop(loop) {
     panda_log_info("Server(): loop is default = " << (_loop == Loop::default_loop()));
 }
 
@@ -45,11 +45,11 @@ ServerConnectionSP Server::new_connection (uint64_t id) {
     return new ServerConnection(this, id, conn_conf);
 }
 
-void Server::on_connection (ServerConnectionSP conn) {
+void Server::on_connection (const ServerConnectionSP& conn) {
     connection_event(this, conn);
 }
 
-void Server::on_remove_connection (ServerConnectionSP conn, uint16_t code, const string& payload) {
+void Server::on_remove_connection (const ServerConnectionSP& conn, uint16_t code, const string& payload) {
     disconnection_event(this, conn, code, payload);
 }
 
@@ -67,17 +67,17 @@ void Server::stop_listening () {
     listeners.clear();
 }
 
-void Server::on_connect (Stream* parent, Stream* stream, const CodeError* err) {
+void Server::on_connect (const StreamSP& parent, const StreamSP& stream, const CodeError& err) {
     if (err) {
-        panda_log_info("Server[on_connect]: error: " << err->whats());
+        panda_log_info("Server[on_connect]: error: " << err.whats());
         return;
     }
 
-    if (auto listener = dyn_cast<Listener*>(parent)) {
+    if (auto listener = dynamic_pointer_cast<Listener>(parent)) {
         panda_log_info("Server[on_connect]: somebody connected to " << listener->location());
     }
 
-    auto connection = dyn_cast<ServerConnection*>(stream);
+    auto connection = dynamic_pointer_cast<ServerConnection>(stream);
 
     connections[connection->id()] = connection;
     connection->eof_event.add(std::bind(&Server::on_disconnect, this, _1));
@@ -88,13 +88,13 @@ void Server::on_connect (Stream* parent, Stream* stream, const CodeError* err) {
     panda_log_info("Server[on_connect]: now i have " << connections.size() << " connections");
 }
 
-void Server::on_disconnect (Stream* handle) {
-    auto conn = dyn_cast<ServerConnection*>(handle);
+void Server::on_disconnect (const StreamSP& handle) {
+    auto conn = dynamic_pointer_cast<ServerConnection>(handle);
     panda_log_info("Server[on_disconnect]: disconnected id " << conn->id());
     remove_connection(conn);
 }
 
-void Server::remove_connection (ServerConnectionSP conn, uint16_t code, string payload) {
+void Server::remove_connection (const ServerConnectionSP& conn, uint16_t code, const string& payload) {
     auto erased = connections.erase(conn->id());
     if (!erased) return;
     on_remove_connection(conn, code, payload);
@@ -110,9 +110,7 @@ void Server::stop () {
 }
 
 Server::~Server () {
-    for (auto con : connections) {
-        con.second->eof_event.remove_all();
-    }
+    for (auto con : connections) con.second->eof_event.remove_all();
     stop();
     panda_log_info("server destroy");
 }

@@ -1,14 +1,13 @@
 #include "Connection.h"
-#include <panda/log.h>
 #include <panda/encode/base16.h>
 
 namespace panda { namespace unievent { namespace websocket {
 
-Builder::Builder(Builder&& b): MessageBuilder(std::move(b)), _connection{b._connection} {}
+Builder::Builder (Builder&& b) : MessageBuilder(std::move(b)), _connection{b._connection} {}
 
-Builder::Builder(Connection& connection):MessageBuilder(connection.parser->message()), _connection{connection}{}
+Builder::Builder (Connection& connection) : MessageBuilder(connection.parser->message()), _connection{connection} {}
 
-void Builder::send(string& payload, TCP::write_fn callback) {
+void Builder::send (string& payload, const Stream::write_fn& callback) {
     auto all = MessageBuilder::send(payload);
     _connection.write(all.begin(), all.end(), callback);
 }
@@ -19,16 +18,16 @@ void Connection::configure (const Config& conf) {
 
 bool Connection::connected () const { return parser->established() && !parser->send_closed(); }
 
-static void log_use_after_close() {
+static void log_use_after_close () {
     panda_log_debug("using websocket::Connection after close");
 }
 
-void Connection::on_read (string& buf, const CodeError* err) {
+void Connection::on_read (string& buf, const CodeError& err) {
     panda_log_verbose_debug("Websocket " << is_valid() << " on read:" << logger::escaped{buf});
-    TCP::on_read(buf, err);
+    Tcp::on_read(buf, err);
     if (!is_valid()) return log_use_after_close(); // just ignore everything, we are here after close
     assert(parser->established());
-    if (err) return on_error(*err);
+    if (err) return on_error(err);
 
     auto msg_range = parser->get_messages(buf);
     for (const auto& msg : msg_range) {
@@ -53,8 +52,8 @@ void Connection::on_read (string& buf, const CodeError* err) {
     }
 }
 
-void Connection::on_frame (FrameSP frame) {
-    if (Log::should_log(logger::VERBOSE_DEBUG, _panda_code_point_)){
+void Connection::on_frame (const FrameSP& frame) {
+    if (Log::should_log(logger::VERBOSE_DEBUG, _panda_code_point_)) {
         Log logger = Log(_panda_code_point_, logger::VERBOSE_DEBUG);
         logger << "websocket Connection::on_frame: payload=\n";
         for (const auto& str : frame->payload) logger << encode::encode_base16(str);
@@ -62,7 +61,7 @@ void Connection::on_frame (FrameSP frame) {
     frame_event(this, frame);
 }
 
-void Connection::on_message (MessageSP msg) {
+void Connection::on_message (const MessageSP& msg) {
     if (Log::should_log(logger::VERBOSE_DEBUG, _panda_code_point_)){
         Log logger = Log(_panda_code_point_, logger::VERBOSE_DEBUG);
         logger << "websocket Connection::on_message: payload=\n";
@@ -83,12 +82,12 @@ void Connection::send_pong (string& payload) {
     write(all.begin(), all.end());
 }
 
-void Connection::on_peer_close (MessageSP msg) {
+void Connection::on_peer_close (const MessageSP& msg) {
     peer_close_event(this, msg);
     close(msg->close_code(), msg->close_message());
 }
 
-void Connection::on_ping (MessageSP msg) {
+void Connection::on_ping (const MessageSP& msg) {
     ping_event(this, msg);
     if (msg->payload_length() > Frame::MAX_CONTROL_PAYLOAD) {
         panda_log_info("something weird, ping payload is bigger than possible");
@@ -105,7 +104,7 @@ void Connection::on_ping (MessageSP msg) {
     }
 }
 
-void Connection::on_pong (MessageSP msg) {
+void Connection::on_pong (const MessageSP& msg) {
     pong_event(this, msg);
 }
 
@@ -118,12 +117,12 @@ void Connection::on_error (const Error& err) {
 void Connection::on_eof () {
     panda_log_info("websocket on_eof");
     if (parser->established()) close(CloseCode::ABNORMALLY);
-    TCP::on_eof();
+    Tcp::on_eof();
 }
 
-void Connection::on_write (const CodeError* err, WriteRequest* req) {
-    TCP::on_write(err, req);
-    if (err) on_error(*err);
+void Connection::on_write (const CodeError& err, const WriteRequestSP& req) {
+    Tcp::on_write(err, req);
+    if (err) on_error(err);
 }
 
 void Connection::close (uint16_t code, const string& payload) {
@@ -143,18 +142,14 @@ void Connection::on_close (uint16_t code, const string& payload) {
 }
 
 void Connection::close_tcp () {
-    if (TCP::connected()) {
+    if (Tcp::connected()) {
         shutdown();
         disconnect();
     } else {
-        TCP::set_connected(false);
+        Tcp::set_connected(false);
         reset();
     }
     valid = false;
-}
-
-bool Connection::is_valid() {
-    return valid;
 }
 
 std::ostream& operator<< (std::ostream& stream, const Connection::Config& conf) {
