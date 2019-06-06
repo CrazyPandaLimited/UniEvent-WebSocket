@@ -10,6 +10,16 @@ using panda::unievent::LoopSP;
 using panda::unievent::StreamSP;
 using panda::string;
 
+static bool _init () {
+    //panda::log::set_level(panda::log::VERBOSE_DEBUG);
+    panda::log::set_level(panda::log::WARNING);
+    panda::log::set_logger([](auto, auto cp, auto& msg) {
+        WARN("" << cp << msg);
+    });
+    return true;
+}
+static bool __init = _init();
+
 struct Pair {
     ServerSP server;
     ClientSP client;
@@ -78,15 +88,18 @@ TEST_CASE("on_read after close", "[uews]") {
 }
 
 TEST_CASE("destroying server&client in callbacks", "[uews]") {
-    AsyncTest test(1000, {});
-    panda_log_info("######### test start ###########");
+    AsyncTest test(1000, 1);
     {
         auto p = make_pair(test.loop);
         auto srm = [&](auto...) {
+            test.happens();
+            CHECK(true);
             p.server->stop();
             p.server = nullptr;
         };
         auto crm = [&](auto...){
+            test.happens();
+            CHECK(true);
             p.client = nullptr;
             p.server->stop_listening();
         };
@@ -157,20 +170,41 @@ TEST_CASE("destroying server&client in callbacks", "[uews]") {
 }
 
 TEST_CASE("destroying server in error callback", "[uews]") {
-    AsyncTest test(1000, {});
-    set_log_level(panda::logger::Level::VERBOSE_DEBUG);
-    set_native_logger([](auto level, auto cp, auto msg) { WARN("" << cp << msg); });
+    AsyncTest test(1000, 1);
     auto p = make_pair(test.loop);
 
     p.server->connection_event.add([&](auto, auto conn) {
-        conn->error_event.add([&](auto, auto& err){
-            WARN("err = " << err.what());
+        conn->error_event.add([&](auto, auto&){
+            test.happens();
+            CHECK(true);
+            //WARN("err = " << err.what());
+            p.server->stop();
             p.server = nullptr;
         });
     });
 
-    p.client->connect_event.add([&](auto client, auto res) {
+    p.client->connect_event.add([&](auto client, auto) {
         client->write("fuck you bitch");
+    });
+
+    test.run();
+    test.run(); // hang check
+}
+
+TEST_CASE("destroying client in error callback", "[uews]") {
+    AsyncTest test(1000, 1);
+    auto p = make_pair(test.loop);
+
+    p.server->connection_event.add([&](auto, auto conn) {
+        conn->write("fuck you dude");
+    });
+
+    p.client->error_event.add([&](auto, auto&){
+        test.happens();
+        CHECK(true);
+        //WARN("err = " << err.what());
+        p.server->stop_listening();
+        p.client = nullptr;
     });
 
     test.run();
@@ -195,6 +229,9 @@ TEST_CASE("cleanup on success", "[uews]") {
                 }
                 SECTION("stop listening") {
                     p.server->stop_listening();
+                }
+                SECTION("stop loop") {
+                    test.loop->stop();
                 }
             });
         });

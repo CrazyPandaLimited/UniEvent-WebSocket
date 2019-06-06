@@ -10,7 +10,7 @@ Server::Server (const LoopSP& loop) : running(false), _loop(loop) {
     panda_log_info("Server(): loop is default = " << (_loop == Loop::default_loop()));
 }
 
-Server::~Server () {
+void Server::on_delete () noexcept {
     try {
         stop();
     }

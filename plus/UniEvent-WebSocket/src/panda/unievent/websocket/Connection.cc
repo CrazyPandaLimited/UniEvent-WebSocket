@@ -21,7 +21,7 @@ static void log_use_after_close () {
 }
 
 void Connection::on_read (string& buf, const CodeError& err) {
-    panda_log_verbose_debug("Websocket on read:" << logger::escaped{buf});
+    panda_log_verbose_debug("Websocket on read:" << log::escaped{buf});
     Tcp::on_read(buf, err);
     assert(_state == State::CONNECTED && parser->established());
     if (err) return on_error(err);
@@ -51,11 +51,10 @@ void Connection::on_read (string& buf, const CodeError& err) {
 }
 
 void Connection::on_message (const MessageSP& msg) {
-    if (Log::should_log(logger::VERBOSE_DEBUG, _panda_code_point_)){
-        Log logger = Log(_panda_code_point_, logger::VERBOSE_DEBUG);
-        logger << "websocket Connection::on_message: payload=\n";
-        for (const auto& str : msg->payload) logger << encode::encode_base16(str);
-    }
+    panda_elog_verbose_debug({
+        log << "websocket Connection::on_message: payload=\n";
+        for (const auto& str : msg->payload) log << encode::encode_base16(str);
+    });
     message_event(this, msg);
 }
 

@@ -64,7 +64,7 @@ void Client::on_read (string& _buf, const CodeError& err) {
 
     assert(_state == State::CONNECTING);
     if (err) return on_error(err);
-    panda_log_verbose_debug("Websocket on read (connecting):" << logger::escaped{buf});
+    panda_log_verbose_debug("Websocket on read (connecting):" << log::escaped{buf});
 
     auto res = parser.connect(buf);
     if (!res) return;

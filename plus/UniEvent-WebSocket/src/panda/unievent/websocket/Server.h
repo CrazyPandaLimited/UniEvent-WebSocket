@@ -10,7 +10,7 @@ namespace panda { namespace unievent { namespace websocket {
 struct Server;
 using ServerSP = iptr<Server>;
 
-struct Server : virtual Refcnt {
+struct Server : virtual Refcntd {
     struct Config {
         std::vector<Location> locations;
         Connection::Config    connection;
@@ -62,7 +62,7 @@ protected:
     virtual void on_connection    (const ServerConnectionSP& conn);
     virtual void on_disconnection (const ServerConnectionSP& conn, uint16_t = uint16_t(CloseCode::ABNORMALLY), const string& = {});
 
-    ~Server ();
+    void on_delete () noexcept override;
 
 private:
     friend ServerConnection;
