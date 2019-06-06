@@ -37,13 +37,16 @@ private:
 struct Connection : Tcp {
     struct Config: public Parser::Config {};
 
-    Connection (const LoopSP& loop) : Tcp(loop), parser(nullptr), valid(false) {}
+    enum class State { INITIAL, TCP_CONNECTING, CONNECTING, CONNECTED };
+
+    Connection (const LoopSP& loop) : Tcp(loop), _state(State::INITIAL) {}
 
     void configure (const Config& conf);
 
-    virtual bool connected () const;
+    State state () const { return _state; }
 
-    CallbackDispatcher<void(const ConnectionSP&, const FrameSP&)>          frame_event;
+    bool connected () const { return _state == State::CONNECTED; }
+
     CallbackDispatcher<void(const ConnectionSP&, const MessageSP&)>        message_event;
     CallbackDispatcher<void(const ConnectionSP&, const Error&)>            error_event;
     CallbackDispatcher<void(const ConnectionSP&, uint16_t, const string&)> close_event;
@@ -75,15 +78,19 @@ struct Connection : Tcp {
     void send_ping (string& payload);
     void send_pong (string& payload);
 
-    void send_ping () { write(parser->send_ping()); }
-    void send_pong () { write(parser->send_ping()); }
+    void send_ping ();
+    void send_pong ();
 
-    virtual void close (uint16_t code = uint16_t(CloseCode::DONE), const string& payload = string());
+    void close (uint16_t code = uint16_t(CloseCode::DONE), const string& payload = string()) {
+        if (_state == State::INITIAL) return;
+        do_close(code, payload);
+    }
 
 protected:
-    void init (Parser& parser) { this->parser = &parser; valid = true; }
+    State _state;
 
-    virtual void on_frame      (const FrameSP&);
+    void init (Parser& parser) { this->parser = &parser; }
+
     virtual void on_message    (const MessageSP&);
     virtual void on_error      (const Error&);
     virtual void on_peer_close (const MessageSP&);
@@ -91,20 +98,17 @@ protected:
     virtual void on_pong       (const MessageSP&);
     virtual void on_close      (uint16_t code, const string& payload);
 
+    virtual void do_close (uint16_t code, const string& payload);
+
     void on_read  (string&, const CodeError&) override;
     void on_eof   () override;
     void on_write (const CodeError&, const WriteRequestSP&) override;
-
-    void close_tcp ();
-
-    bool is_valid () const { return valid; }
 
     virtual ~Connection () = 0;
 
 private:
     friend struct Builder;
     Parser* parser;
-    bool    valid;
 };
 
 template <class ContIt>

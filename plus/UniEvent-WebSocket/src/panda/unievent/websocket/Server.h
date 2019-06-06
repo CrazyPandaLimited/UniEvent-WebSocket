@@ -20,6 +20,10 @@ struct Server : virtual Refcnt {
     using disconnection_fptr = void(const ServerSP&, const ServerConnectionSP&, uint16_t code, const string& payload);
     using Connections        = std::map<uint64_t, ServerConnectionSP>;
 
+    CallbackDispatcher<connection_fptr>    connection_event;
+    CallbackDispatcher<disconnection_fptr> disconnection_event;
+    accept_filter_fn                       accept_filter;
+
     Server (const LoopSP& loop = Loop::default_loop());
 
     virtual void configure (const Config&);
@@ -34,9 +38,6 @@ struct Server : virtual Refcnt {
 
     void close_connection  (const ServerConnectionSP& conn, uint16_t code)  { conn->close(code); }
     void close_connection  (const ServerConnectionSP& conn, int code)       { conn->close(code); }
-    void remove_connection (const ServerConnectionSP& conn, uint16_t code = uint16_t(CloseCode::ABNORMALLY), const string& payload = "");
-
-    virtual ~Server ();
 
     template <class Conn = ServerConnection>
     iptr<Conn> get_connection (uint64_t id) {
@@ -48,10 +49,6 @@ struct Server : virtual Refcnt {
     std::vector<ListenerSP>& get_listeners   () { return listeners; }
     const Connections&       get_connections () { return connections; }
 
-    CallbackDispatcher<connection_fptr>    connection_event;
-    CallbackDispatcher<disconnection_fptr> disconnection_event;
-    accept_filter_fn                       accept_filter;
-
 protected:
     bool               running;
     Connections        connections;
@@ -62,18 +59,22 @@ protected:
 
     virtual ServerConnectionSP new_connection (uint64_t id);
 
-    virtual void on_connection        (const ServerConnectionSP& conn);
-    virtual void on_remove_connection (const ServerConnectionSP& conn, uint16_t = uint16_t(CloseCode::ABNORMALLY), const string& = {});
+    virtual void on_connection    (const ServerConnectionSP& conn);
+    virtual void on_disconnection (const ServerConnectionSP& conn, uint16_t = uint16_t(CloseCode::ABNORMALLY), const string& = {});
+
+    ~Server ();
 
 private:
+    friend ServerConnection;
+
     static std::atomic<uint64_t> lastid;
 
     LoopSP                  _loop;
     std::vector<Location>   locations;
     std::vector<ListenerSP> listeners;
 
-    void on_connect    (const StreamSP& parent, const StreamSP& handle, const CodeError&);
-    void on_disconnect (const StreamSP& handle);
+    void on_tcp_connection (const StreamSP&, const StreamSP&, const CodeError&);
+    void remove_connection (const ServerConnectionSP& conn, uint16_t code = uint16_t(CloseCode::ABNORMALLY), const string& payload = "");
 };
 
 template <typename Stream>

@@ -19,10 +19,11 @@ struct Client : virtual Connection {
     /** @param port default value is 443 for secure and 80 for usual     */
     void connect (const ConnectRequestSP& request, bool secure = false, uint16_t port = 0);
 
-    void close (uint16_t code = uint16_t(CloseCode::DONE), const string& = string()) override;
 
 protected:
     virtual void on_connect (const ConnectResponseSP& response);
+
+    void do_close (uint16_t code, const string&) override;
 
     using Tcp::connect;
 

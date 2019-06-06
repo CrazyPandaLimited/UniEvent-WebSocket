@@ -8,20 +8,25 @@ ServerConnection::ServerConnection (Server* server, uint64_t id, const Config& c
     panda_log_info("ServerConnection[new]: id = " << _id);
     init(parser);
     configure(conf);
+    _state = State::TCP_CONNECTING;
 }
 
 void ServerConnection::run () {
-    read_start();
+    _state = State::CONNECTING;
 }
 
 void ServerConnection::on_read (string& _buf, const CodeError& err) {
-    if (!is_valid()) { // just ignore everything, we are here after close
+    if (_state == State::INITIAL) { // just ignore everything, we are here after close
         panda_log_debug("use websocket::ServerConnection " << id() << " after close");
         return;
     }
+
     string buf = string(_buf.data(), _buf.length()); // TODO - REMOVE COPYING
-    if (parser.established()) return Connection::on_read(buf, err);
+    if (_state == State::CONNECTED) return Connection::on_read(buf, err);
+
+    assert(_state == State::CONNECTING);
     if (err) return on_error(err);
+    panda_log_verbose_debug("Websocket on read (accepting):" << logger::escaped{buf});
 
     assert(!parser.accept_parsed());
 
@@ -45,6 +50,7 @@ void ServerConnection::on_read (string& _buf, const CodeError& err) {
         }
     }
 
+    _state = State::CONNECTED;
     on_accept(creq);
 }
 
@@ -77,11 +83,9 @@ void ServerConnection::send_accept_response (ConnectResponse* res) {
     }
 }
 
-void ServerConnection::close (uint16_t code, const string& payload) {
-    ServerConnectionSP sp = this; // keep self from destruction if user loses all references
-    bool call = Tcp::connecting() || Tcp::connected();
-    Connection::close(code, payload);
-    if (call) server->remove_connection(sp, code, payload);
+void ServerConnection::do_close (uint16_t code, const string& payload) {
+    Connection::do_close(code, payload);
+    if (server) server->remove_connection(this, code, payload); // server might have been removed in callbacks
 }
 
 }}}

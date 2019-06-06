@@ -7,11 +7,14 @@ namespace panda { namespace unievent { namespace websocket {
 using panda::protocol::websocket::ConnectRequestSP;
 
 struct Server;
+
 struct ServerConnection;
 using ServerConnectionSP = iptr<ServerConnection>;
 
 struct ServerConnection : virtual Connection {
-    CallbackDispatcher<void(const ServerConnectionSP&, const ConnectRequestSP&)> accept_event;
+    using accept_fptr = void(const ServerConnectionSP&, const ConnectRequestSP&);
+
+    CallbackDispatcher<accept_fptr> accept_event;
 
     ServerConnection (Server* server, uint64_t id, const Config& conf);
 
@@ -22,8 +25,6 @@ struct ServerConnection : virtual Connection {
     virtual void send_accept_error    (HTTPResponse*);
     virtual void send_accept_response (ConnectResponse*);
 
-    virtual void close (uint16_t code = uint16_t(CloseCode::DONE), const string& payload = string()) override;
-
     template <typename T = Server> T* get_server () const { return dyn_cast<T*>(server); }
 
 protected:
@@ -31,14 +32,20 @@ protected:
 
     void on_read (string&, const CodeError&) override;
 
-    virtual ~ServerConnection () {
+    void do_close (uint16_t code, const string& payload) override;
+
+    ~ServerConnection () {
         panda_log_debug("connection destroy");
     }
 
 private:
+    friend Server;
+
     uint64_t     _id;
     Server*      server;
     ServerParser parser;
+
+    void endgame () { server = nullptr; }
 };
 
 }}}
