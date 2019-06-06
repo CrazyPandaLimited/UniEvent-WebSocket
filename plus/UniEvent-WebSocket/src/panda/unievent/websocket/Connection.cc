@@ -24,7 +24,7 @@ static void log_use_after_close() {
 }
 
 void Connection::on_read (string& buf, const CodeError* err) {
-    panda_log_verbose_debug("Websocket " << is_valid() << " on read:" << logger::escaped{buf});
+    panda_log_verbose_debug("Websocket " << is_valid() << " on read:" << log::escaped{buf});
     TCP::on_read(buf, err);
     if (!is_valid()) return log_use_after_close(); // just ignore everything, we are here after close
     assert(parser->established());
@@ -54,20 +54,14 @@ void Connection::on_read (string& buf, const CodeError* err) {
 }
 
 void Connection::on_frame (FrameSP frame) {
-    if (Log::should_log(logger::VERBOSE_DEBUG, _panda_code_point_)){
-        Log logger = Log(_panda_code_point_, logger::VERBOSE_DEBUG);
-        logger << "websocket Connection::on_frame: payload=\n";
-        for (const auto& str : frame->payload) logger << encode::encode_base16(str);
-    }
     frame_event(this, frame);
 }
 
 void Connection::on_message (MessageSP msg) {
-    if (Log::should_log(logger::VERBOSE_DEBUG, _panda_code_point_)){
-        Log logger = Log(_panda_code_point_, logger::VERBOSE_DEBUG);
-        logger << "websocket Connection::on_message: payload=\n";
-        for (const auto& str : msg->payload) logger << encode::encode_base16(str);
-    }
+    panda_elog_verbose_debug({
+        log << "websocket Connection::on_message: payload=\n";
+        for (const auto& str : msg->payload) log << encode::encode_base16(str);
+    });
     message_event(this, msg);
 }
 

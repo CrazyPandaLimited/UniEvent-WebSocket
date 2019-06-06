@@ -68,19 +68,16 @@ void ServerConnection::send_accept_response (ConnectResponse* res) {
     panda_log_debug("websocket::ServerConnection " << id() << " has been accepted, "
                     << "deflate is " << (using_deflate ? "on" : "off"));
 
-    if (Log::should_log(logger::VERBOSE_DEBUG, _panda_code_point_)){
-        Log logger = Log(_panda_code_point_, logger::VERBOSE_DEBUG);
+    panda_elog_verbose_debug({
         auto deflate_cfg = parser.effective_deflate_config();
         if (deflate_cfg) {
-            logger << "websocket::ServerConnection " << id() << " agreed deflate settings"
-                   << ": server_max_window_bits = " << (int)deflate_cfg->server_max_window_bits
-                   << ", client_max_window_bits = " << (int)deflate_cfg->client_max_window_bits
-                   << ", server_no_context_takeover = " << deflate_cfg->server_no_context_takeover
-                   << ", client_no_context_takeover = " << deflate_cfg->client_no_context_takeover;
+            log << "websocket::ServerConnection " << id() << " agreed deflate settings"
+                << ": server_max_window_bits = " << (int)deflate_cfg->server_max_window_bits
+                << ", client_max_window_bits = " << (int)deflate_cfg->client_max_window_bits
+                << ", server_no_context_takeover = " << deflate_cfg->server_no_context_takeover
+                << ", client_no_context_takeover = " << deflate_cfg->client_no_context_takeover;
         }
-    }
-
-
+    });
 }
 
 void ServerConnection::close (uint16_t code, const string& payload) {
