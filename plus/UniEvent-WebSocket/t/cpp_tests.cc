@@ -254,3 +254,12 @@ TEST_CASE("cleanup on success", "[uews]") {
 
     test.run(); // everything should be destroyed and not holding the loop
 }
+
+TEST_CASE("connect and close", "[uews]") {
+    AsyncTest test(1000, 0);
+    auto p = make_pair(test.loop);
+    p.client->close();
+    p.server = nullptr;
+    test.run();
+    SUCCEED("ok");
+}
