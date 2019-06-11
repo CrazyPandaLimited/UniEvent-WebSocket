@@ -39,7 +39,7 @@ struct Connection : Tcp {
 
     enum class State { INITIAL, TCP_CONNECTING, CONNECTING, CONNECTED };
 
-    Connection (const LoopSP& loop) : Tcp(loop), _state(State::INITIAL) {}
+    Connection (const LoopSP& loop) : Tcp(loop), _state(State::INITIAL), _error_state() {}
 
     void configure (const Config& conf);
 
@@ -104,11 +104,16 @@ protected:
     void on_eof   () override;
     void on_write (const CodeError&, const WriteRequestSP&) override;
 
+    void process_error (const Error& err);
+
     virtual ~Connection () = 0;
 
 private:
     friend struct Builder;
     Parser* parser;
+    bool    _error_state;
+
+    void process_peer_close (const MessageSP&);
 };
 
 template <class ContIt>

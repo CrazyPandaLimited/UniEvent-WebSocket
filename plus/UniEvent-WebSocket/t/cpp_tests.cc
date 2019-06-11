@@ -196,7 +196,9 @@ TEST_CASE("destroying client in error callback", "[uews]") {
     auto p = make_pair(test.loop);
 
     p.server->connection_event.add([&](auto, auto conn) {
-        conn->write("fuck you dude");
+        conn->accept_event.add([&](auto conn, auto) {
+            conn->write("fuck you dudefuck you dudefuck you dudefuck you dudefuck you dudefuck you dudefuck you dudefuck you");
+        });
     });
 
     p.client->error_event.add([&](auto, auto&){

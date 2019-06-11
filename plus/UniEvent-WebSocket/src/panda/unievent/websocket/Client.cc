@@ -46,11 +46,8 @@ void Client::on_connect (const ConnectResponseSP& response) {
 void Client::on_connect (const CodeError& err, const unievent::ConnectRequestSP& req) {
     panda_log_verbose_debug("websokcet::Client::on_connect(unievent) " <<  err.what());
     Tcp::on_connect(err, req);
-    if (err) {
-        on_error(err);
-        on_connect(cres_from_cerr(err));
-    }
-    else _state = State::CONNECTING;
+    if (err) on_connect(cres_from_cerr(err));
+    else     _state = State::CONNECTING;
 }
 
 void Client::on_read (string& _buf, const CodeError& err) {
@@ -61,21 +58,16 @@ void Client::on_read (string& _buf, const CodeError& err) {
 
     string buf = string(_buf.data(), _buf.length()); // TODO: remove copying
     if (_state == State::CONNECTED) return Connection::on_read(buf, err);
-
     assert(_state == State::CONNECTING);
-    if (err) return on_error(err);
+
+    if (err) return on_connect(cres_from_cerr(std::errc::operation_canceled));
+
     panda_log_verbose_debug("Websocket on read (connecting):" << log::escaped{buf});
 
     auto res = parser.connect(buf);
     if (!res) return;
 
     if (parser.established()) _state = State::CONNECTED;
-    else {
-        assert(res->error);
-        on_error(res->error);
-        close();
-    }
-
     on_connect(res);
 
     if (_state == State::CONNECTED && buf.length()) Connection::on_read(buf, err);

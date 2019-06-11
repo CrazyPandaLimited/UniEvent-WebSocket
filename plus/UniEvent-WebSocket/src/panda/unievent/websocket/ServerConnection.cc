@@ -23,9 +23,17 @@ void ServerConnection::on_read (string& _buf, const CodeError& err) {
 
     string buf = string(_buf.data(), _buf.length()); // TODO - REMOVE COPYING
     if (_state == State::CONNECTED) return Connection::on_read(buf, err);
-
     assert(_state == State::CONNECTING);
-    if (err) return on_error(err);
+
+    if (err) {
+        panda_log_info("Websocket accept error: " << err.whats());
+        ConnectRequestSP creq = new protocol::websocket::ConnectRequest();
+        creq->error = err.whats();
+        on_accept(creq);
+        close();
+        return;
+    }
+
     panda_log_verbose_debug("Websocket on read (accepting):" << log::escaped{buf});
 
     assert(!parser.accept_parsed());
@@ -34,9 +42,10 @@ void ServerConnection::on_read (string& _buf, const CodeError& err) {
     if (!creq) return;
 
     if (creq->error) {
-        panda_log_info(creq->error);
+        panda_log_info("Websocket accept error: " << creq->error);
         HTTPResponse res;
         send_accept_error(&res);
+        on_accept(creq);
         close();
         return;
     }
