@@ -53,21 +53,20 @@ void Server::run () {
     start_listening();
 }
 
-void Server::stop () {
+void Server::stop (uint16_t code) {
     if (!running) return;
     running = false;
     panda_log_info("stop!");
     stop_listening();
 
-    auto it = connections.begin();
-    while (it != connections.end()) {
-        auto conn = it->second;
-        conn->clear();
+    auto tmp = connections;
+    for (auto& it : tmp) {
+        auto& conn = it.second;
+        conn->close(code);
         conn->endgame();
-        auto check_it = connections.begin();
-        if (check_it != connections.end() && check_it->second == conn)
-            it = connections.erase(it);
+        conn.reset();
     }
+    // connections may not be empty if stop() is called from on_close() callback
 }
 
 void Server::start_listening () {
