@@ -136,7 +136,7 @@ void Connection::on_eof () {
 }
 
 void Connection::on_write (const CodeError& err, const WriteRequestSP& req) {
-    panda_log_debug("websocket on_write: " << err.whats());
+    panda_log_verbose_debug("websocket on_write: " << err.whats());
     Tcp::on_write(err, req);
     if (err && err.code() != std::errc::operation_canceled) process_error(err);
 }
