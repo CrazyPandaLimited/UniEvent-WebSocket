@@ -31,7 +31,8 @@ struct Server : virtual Refcntd {
     const LoopSP& loop () const { return _loop; }
     
     virtual void run  ();
-    virtual void stop (uint16_t = (uint16_t)CloseCode::AWAY);
+    virtual void stop ();
+    virtual void stop (uint16_t code);
 
     void start_listening ();
     void stop_listening  ();

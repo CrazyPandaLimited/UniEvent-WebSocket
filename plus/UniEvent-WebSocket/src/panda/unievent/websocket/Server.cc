@@ -53,6 +53,8 @@ void Server::run () {
     start_listening();
 }
 
+void Server::stop () { stop((uint16_t)CloseCode::AWAY); }
+
 void Server::stop (uint16_t code) {
     if (!running) return;
     running = false;
