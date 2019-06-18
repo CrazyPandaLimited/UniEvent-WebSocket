@@ -121,7 +121,7 @@ void Connection::on_write (const CodeError* err, WriteRequest* req) {
 }
 
 void Connection::close (uint16_t code, const string& payload) {
-    panda_log_info("Connection[close]: code=" << code << ", payload:" << payload);
+    panda_log_verbose_debug("Connection[close]: code=" << code << ", payload:" << payload);
     bool established = parser->established();
     if (established && !parser->send_closed()) {
         auto data = parser->send_close(code, payload);
