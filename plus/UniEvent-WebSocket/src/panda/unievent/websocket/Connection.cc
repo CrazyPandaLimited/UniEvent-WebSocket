@@ -142,7 +142,7 @@ void Connection::on_write (const CodeError& err, const WriteRequestSP& req) {
 }
 
 void Connection::do_close (uint16_t code, const string& payload) {
-    panda_log_info("Connection[close]: code=" << code << ", payload:" << payload);
+    panda_log_verbose_debug("Connection[close]: code=" << code << ", payload:" << payload);
     bool was_connected = connected();
 
     if (was_connected && !parser->send_closed()) {

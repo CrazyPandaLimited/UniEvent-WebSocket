@@ -58,6 +58,10 @@ template <class TYPE> struct Typemap<panda::unievent::websocket::Server*, TYPE> 
     static std::string package () { return "UniEvent::WebSocket::Server"; }
 };
 
+template <class TYPE> struct Typemap<panda::unievent::websocket::Listener*, TYPE> : Typemap<panda::unievent::Tcp*, TYPE> {
+    static std::string package () { return "UniEvent::WebSocket::Listener"; }
+};
+
 template <class TYPE> struct Typemap<panda::unievent::websocket::Connection*, TYPE> : Typemap<panda::unievent::Tcp*, TYPE> {
     static std::string package () { throw "can't return abstract class without backref"; }
 };
