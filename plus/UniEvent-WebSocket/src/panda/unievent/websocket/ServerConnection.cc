@@ -64,8 +64,10 @@ void ServerConnection::on_read (string& _buf, const CodeError& err) {
 }
 
 void ServerConnection::on_accept (const ConnectRequestSP& req) {
-    ConnectResponse res;
-    send_accept_response(&res);
+    if (!req->error) {
+        ConnectResponse res;
+        send_accept_response(&res);
+    }
     accept_event(this, req);
 }
 
