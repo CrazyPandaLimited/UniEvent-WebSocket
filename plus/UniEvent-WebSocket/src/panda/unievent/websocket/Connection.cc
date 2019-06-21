@@ -117,7 +117,7 @@ void Connection::on_eof () {
 
 void Connection::on_write (const CodeError* err, WriteRequest* req) {
     TCP::on_write(err, req);
-    if (err) on_error(*err);
+    if (err && err->code() != ERRNO_EPIPE) on_error(*err);
 }
 
 void Connection::close (uint16_t code, const string& payload) {
