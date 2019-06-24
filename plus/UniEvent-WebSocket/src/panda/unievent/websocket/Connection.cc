@@ -154,6 +154,7 @@ void Connection::do_close (uint16_t code, const string& payload) {
     _state = State::INITIAL;
 
     if (Tcp::connected()) {
+        read_stop();
         shutdown();
         disconnect();
     } else {

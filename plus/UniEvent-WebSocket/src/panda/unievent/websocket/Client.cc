@@ -46,8 +46,12 @@ void Client::on_connect (const ConnectResponseSP& response) {
 void Client::on_connect (const CodeError& err, const unievent::ConnectRequestSP& req) {
     panda_log_verbose_debug("websokcet::Client::on_connect(unievent) " <<  err.what());
     Tcp::on_connect(err, req);
-    if (err) on_connect(cres_from_cerr(err));
-    else     _state = State::CONNECTING;
+    if (err) {
+        on_connect(cres_from_cerr(err));
+    } else {
+        _state = State::CONNECTING;
+        read_start();
+    }
 }
 
 void Client::on_read (string& _buf, const CodeError& err) {
