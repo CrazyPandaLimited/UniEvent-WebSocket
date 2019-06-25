@@ -11,7 +11,7 @@ use lib 't'; use MyTest;
 my $loop = UE::Loop->default_loop;
 my $state = 0;
 my $send_cb = 0;
-my ($server, $port) = make_server();
+my ($server, $port) = MyTest::make_server();
 
 my $conns = $server->get_connections();
 while (my $c = $conns->next()) {
@@ -55,7 +55,7 @@ $server->disconnection_event->add(sub {
 });
 
 {
-    my $client = make_client($port);
+    my $client = MyTest::make_client($port);
     
     $client->message_event->add(sub {
         my ($client, $msg) = @_;

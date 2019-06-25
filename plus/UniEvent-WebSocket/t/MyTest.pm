@@ -1,10 +1,9 @@
+package MyTest;
 use 5.020;
 use warnings;
-use Test::More;
 use UniEvent::WebSocket;
-use Socket;
 
-XS::Loader::load_tests();
+XS::Loader::load();
 
 sub make_server {
 	Panda::Lib::Logger::set_native_logger(sub {
@@ -32,8 +31,8 @@ sub make_client {
 	my $client = new UniEvent::WebSocket::Client();
 	
 	$client->connect({
-		uri           => "ws://localhost",
-		ws_key        => "dGhlIHNhbXBsZSBub25jZQ==",
+		uri    => "ws://localhost",
+		ws_key => "dGhlIHNhbXBsZSBub25jZQ==",
 	}, 0, $port);
 	
 	return $client;

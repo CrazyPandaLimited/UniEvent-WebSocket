@@ -5,7 +5,7 @@ use lib 't'; use MyTest;
 
 my $loop = UniEvent::Loop->default_loop;
 my $state = 0;
-my ($server, $port) = make_server();
+my ($server, $port) = MyTest::make_server();
 
 my $cl1 = new UniEvent::Tcp();
 $cl1->connect('localhost', $port);
