@@ -29,7 +29,7 @@ static ServerSP make_server (LoopSP loop, uint16_t& port) {
     ServerSP server = new Server(loop);
     Server::Config conf;
     Location loc;
-    loc.host = "localhost";
+    loc.host = "127.0.0.1";
     conf.locations.push_back(loc);
     server->configure(conf);
     server->run();
@@ -43,7 +43,7 @@ static Pair make_pair (LoopSP loop) {
     ClientSP client = new Client(loop);
     ConnectRequestSP req = new ConnectRequest();
     req->uri = new URI();
-    req->uri->host("localhost");
+    req->uri->host("127.0.0.1");
     client->connect(req, false, port);
     return {server, client};
 }
@@ -74,6 +74,7 @@ TEST_CASE("on_read after close", "[uews]") {
 
         size_t rcount = 0;
         p.client->read_event.add([&](auto client, auto&, auto& err){
+            if (err) WARN(err.what());
             REQUIRE_FALSE(err);
             rcount++;
             client->shutdown();
