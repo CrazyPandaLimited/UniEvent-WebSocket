@@ -1,69 +1,80 @@
 #include "Client.h"
-#include <panda/log.h>
 #include <panda/encode/base16.h>
 
-using namespace panda::unievent::websocket;
+namespace panda { namespace unievent { namespace websocket {
 
 Connection::Config Client::default_config;
 
-Client::Client (Loop* loop, const Connection::Config& conf) : Connection(loop) {
+static ConnectResponseSP cres_from_cerr (const CodeError& err) {
+    ConnectResponseSP res = new ConnectResponse();
+    res->error = err.whats();
+    return res;
+}
+
+Client::Client (const LoopSP& loop, const Connection::Config& conf) : Connection(loop) {
     init(parser);
     configure(conf);
 }
 
-void Client::connect (ConnectRequestSP request, bool secure, uint16_t port) {
-    init(parser);
+void Client::connect (const ConnectRequestSP& request, bool secure, uint16_t port) {
+    if (_state != State::INITIAL) throw std::logic_error("can't connect(): you should close() the client connection first");
     parser.reset();
 
-    if (!request || !request->uri) {
-        throw std::invalid_argument("ConnectRequest should contains uri");
-    }
+    if (!request || !request->uri) throw std::invalid_argument("ConnectRequest should contains uri");
 
     if (!port) port = secure ? 443 : 80;
     panda_log_debug("connecting to " << request->uri->host() << ":" << port);
     if (secure) use_ssl();
     connect(request->uri->host(), port);
-    read_start();
     write(parser.connect_request(request));
+    _state = State::TCP_CONNECTING;
 }
 
-void Client::close (uint16_t code, const string& payload) {
-    if (is_valid() && (TCP::connected()) && !parser.established()) { // if TCP is connecting, callback will be called by UniEvent in reset on next iteration
+void Client::do_close (uint16_t code, const string& payload) {
+    bool connecting = _state == State::CONNECTING;
+    Connection::do_close(code, payload);
+    if (connecting) {
         panda_log_info("Client::close: connect started but not completed");
-        TCP::set_connected(false);
-        on_connect(CodeError(ERRNO_ECANCELED), nullptr);
+        on_connect(cres_from_cerr(std::errc::operation_canceled));
     }
-    else Connection::close(code, payload);
 }
 
-void Client::on_connect (ConnectResponseSP response) {
+void Client::on_connect (const ConnectResponseSP& response) {
     connect_event(this, response);
 }
 
-void Client::on_connect (const CodeError* err, ConnectRequest* req) {
-    panda_log_verbose_debug("websokcet::Client::on_connect(unievent) " <<  (err ? err->what() : "no errors"));
-    TCP::on_connect(err, req);
+void Client::on_connect (const CodeError& err, const unievent::ConnectRequestSP& req) {
+    panda_log_verbose_debug("websokcet::Client::on_connect(unievent) " <<  err.what());
+    Tcp::on_connect(err, req);
     if (err) {
-        ConnectResponseSP res = new ConnectResponse();
-        res->error = err->whats();
-        on_error(*err);
-        on_connect(res);
+        on_connect(cres_from_cerr(err));
+    } else {
+        _state = State::CONNECTING;
+        read_start();
     }
 }
 
-void Client::on_read (string& _buf, const CodeError* err) {
-    if (!is_valid()) { // just ignore everything, we are here after close
+void Client::on_read (string& _buf, const CodeError& err) {
+    if (_state == State::INITIAL) { // just ignore everything, we are here after close
         panda_log_debug("use websocket::Client after close");
         return;
     }
 
-    string buf = string(_buf.data(), _buf.length());
-    if (parser.established()) return Connection::on_read(buf, err);
-    if (err) return on_error(*err);
+    string buf = string(_buf.data(), _buf.length()); // TODO: remove copying
+    if (_state == State::CONNECTED) return Connection::on_read(buf, err);
+    assert(_state == State::CONNECTING);
 
-    auto req = parser.connect(buf);
-    if (!req) return;
-    on_connect(req);
+    if (err) return on_connect(cres_from_cerr(std::errc::operation_canceled));
 
-    if (parser.established() && buf.length()) Connection::on_read(buf, err);
+    panda_log_verbose_debug("Websocket on read (connecting):" << log::escaped{buf});
+
+    auto res = parser.connect(buf);
+    if (!res) return;
+
+    if (parser.established()) _state = State::CONNECTED;
+    on_connect(res);
+
+    if (_state == State::CONNECTED && buf.length()) Connection::on_read(buf, err);
 }
+
+}}}

@@ -6,8 +6,21 @@ using namespace panda::unievent::websocket;
 
 std::atomic<uint64_t> Server::lastid(0);
 
-Server::Server (Loop* loop) : running(false), _loop(loop) {
+Server::Server (const LoopSP& loop) : running(false), _loop(loop) {
     panda_log_info("Server(): loop is default = " << (_loop == Loop::default_loop()));
+}
+
+void Server::on_delete () noexcept {
+    try {
+        stop();
+    }
+    catch (const std::exception& e) {
+        panda_log_critical("[Websocket ~Server] exception caught in while stopping server: " << e.what());
+    }
+    catch (...) {
+        panda_log_critical("[Websocket ~Server] unknown exception caught while stopping server");
+    }
+    panda_log_info("server destroy");
 }
 
 void Server::configure (const Config& conf) {
@@ -24,7 +37,7 @@ void Server::config_validate (const Config& c) const {
     for (auto& loc : c.locations) {
         if (!loc.host)    throw std::invalid_argument("empty host in one of locations");
         if (!loc.backlog) throw std::invalid_argument("zero backlog in one of locations");
-        //do not check port, 0 is some free port and you can get if with get_listeners()[i]->get_sockadr();
+        //do not check port, 0 is some free port and you can get if with get_listeners()[i]->sockadr();
     }
 }
 
@@ -37,26 +50,31 @@ void Server::run () {
     if (running) throw std::logic_error("already running");
     running = true;
     panda_log_info("websocket::Server::run with conn_conf:" << conn_conf);
-
     start_listening();
 }
 
-ServerConnectionSP Server::new_connection (uint64_t id) {
-    return new ServerConnection(this, id, conn_conf);
-}
+void Server::stop () { stop((uint16_t)CloseCode::AWAY); }
 
-void Server::on_connection (ServerConnectionSP conn) {
-    connection_event(this, conn);
-}
+void Server::stop (uint16_t code) {
+    if (!running) return;
+    running = false;
+    panda_log_info("stop!");
+    stop_listening();
 
-void Server::on_remove_connection (ServerConnectionSP conn, uint16_t code, const string& payload) {
-    disconnection_event(this, conn, code, payload);
+    auto tmp = connections;
+    for (auto& it : tmp) {
+        auto& conn = it.second;
+        conn->close(code);
+        conn->endgame();
+        conn.reset();
+    }
+    // connections may not be empty if stop() is called from on_close() callback
 }
 
 void Server::start_listening () {
     for (auto& location : locations) {
         auto l = new Listener(_loop, location);
-        l->connection_event.add(std::bind(&Server::on_connect, this, _1, _2, _3));
+        l->connection_event.add(std::bind(&Server::on_tcp_connection, this, _1, _2, _3));
         l->connection_factory = [this]() { return new_connection(++lastid); };
         l->run();
         listeners.push_back(l);
@@ -67,52 +85,37 @@ void Server::stop_listening () {
     listeners.clear();
 }
 
-void Server::on_connect (Stream* parent, Stream* stream, const CodeError* err) {
+ServerConnectionSP Server::new_connection (uint64_t id) {
+    return new ServerConnection(this, id, conn_conf);
+}
+
+void Server::on_tcp_connection (const StreamSP& _lstn, const StreamSP& _conn, const CodeError& err) {
     if (err) {
-        panda_log_info("Server[on_connect]: error: " << err->whats());
+        panda_log_info("Server[on_tcp_connection]: error: " << err.whats());
         return;
     }
 
-    if (auto listener = dyn_cast<Listener*>(parent)) {
-        panda_log_info("Server[on_connect]: somebody connected to " << listener->location());
-    }
-
-    auto connection = dyn_cast<ServerConnection*>(stream);
-
+    auto connection = dynamic_pointer_cast<ServerConnection>(_conn);
     connections[connection->id()] = connection;
-    connection->eof_event.add(std::bind(&Server::on_disconnect, this, _1));
     connection->run();
 
+    auto listener = dynamic_pointer_cast<Listener>(_lstn);
+    panda_log_info("Server[on_tcp_connection]: somebody connected to " << listener->location() << ", now i have " << connections.size() << " connections");
+
     on_connection(connection);
-
-    panda_log_info("Server[on_connect]: now i have " << connections.size() << " connections");
 }
 
-void Server::on_disconnect (Stream* handle) {
-    auto conn = dyn_cast<ServerConnection*>(handle);
-    panda_log_info("Server[on_disconnect]: disconnected id " << conn->id());
-    remove_connection(conn);
+void Server::on_connection (const ServerConnectionSP& conn) {
+    connection_event(this, conn);
 }
 
-void Server::remove_connection (ServerConnectionSP conn, uint16_t code, string payload) {
+void Server::remove_connection (const ServerConnectionSP& conn, uint16_t code, const string& payload) {
     auto erased = connections.erase(conn->id());
-    if (!erased) return;
-    on_remove_connection(conn, code, payload);
+    assert(erased);
     panda_log_info("Server[remove_connection]: now i have " << connections.size() << " connections");
+    on_disconnection(conn, code, payload);
 }
 
-void Server::stop () {
-    if (!running) return;
-    panda_log_info("stop!");
-    stop_listening();
-    connections.clear();
-    running = false;
-}
-
-Server::~Server () {
-    for (auto con : connections) {
-        con.second->eof_event.remove_all();
-    }
-    stop();
-    panda_log_info("server destroy");
+void Server::on_disconnection (const ServerConnectionSP& conn, uint16_t code, const string& payload) {
+    disconnection_event(this, conn, code, payload);
 }

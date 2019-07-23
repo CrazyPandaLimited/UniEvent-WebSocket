@@ -1,19 +1,20 @@
 #pragma once
 #include "Connection.h"
-#include <panda/CallbackDispatcher.h>
 #include <panda/protocol/websocket/ServerParser.h>
 
 namespace panda { namespace unievent { namespace websocket {
 
-struct Server;
-
-using panda::CallbackDispatcher;
 using panda::protocol::websocket::ConnectRequestSP;
 
-struct ServerConnection : virtual Connection {
-    using SP = iptr<ServerConnection>;
+struct Server;
 
-    CallbackDispatcher<void(SP, ConnectRequestSP)> accept_event;
+struct ServerConnection;
+using ServerConnectionSP = iptr<ServerConnection>;
+
+struct ServerConnection : virtual Connection {
+    using accept_fptr = void(const ServerConnectionSP&, const ConnectRequestSP&);
+
+    CallbackDispatcher<accept_fptr> accept_event;
 
     ServerConnection (Server* server, uint64_t id, const Config& conf);
 
@@ -21,31 +22,30 @@ struct ServerConnection : virtual Connection {
 
     virtual void run ();
 
-    virtual void send_accept_error    (HTTPResponse* res);
-    virtual void send_accept_response (ConnectResponse* res);
+    virtual void send_accept_error    (HTTPResponse*);
+    virtual void send_accept_response (ConnectResponse*);
 
-    virtual void close (uint16_t code = uint16_t(CloseCode::DONE), const string& payload = string()) override;
-
-    template <typename T = Server>
-    T* get_server() const {
-        return dyn_cast<T*>(server);
-    }
+    template <typename T = Server> T* get_server () const { return dyn_cast<T*>(server); }
 
 protected:
-    virtual void on_accept (ConnectRequestSP request);
-    void on_read (string& buf, const CodeError* err) override;
+    virtual void on_accept (const ConnectRequestSP&);
 
-    virtual ~ServerConnection () {
+    void on_read (string&, const CodeError&) override;
+
+    void do_close (uint16_t code, const string& payload) override;
+
+    ~ServerConnection () {
         panda_log_debug("connection destroy");
     }
 
 private:
+    friend Server;
+
     uint64_t     _id;
     Server*      server;
     ServerParser parser;
 
+    void endgame () { server = nullptr; }
 };
-
-using ServerConnectionSP = ServerConnection::SP;
 
 }}}

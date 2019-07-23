@@ -1,6 +1,6 @@
 #pragma once
 #include <panda/string.h>
-#include <panda/unievent/TCP.h>
+#include <panda/unievent/Tcp.h>
 
 namespace panda { namespace unievent { namespace websocket {
 
@@ -14,8 +14,8 @@ struct Location {
     SSL_CTX* ssl_ctx    = nullptr; // config with sertificate for server
 };
 
-struct Listener : TCP {
-    Listener (Loop* loop, const Location& loc);
+struct Listener : Tcp {
+    Listener (const LoopSP& loop, const Location& loc);
 
     const Location& location () const { return _location; }
 
