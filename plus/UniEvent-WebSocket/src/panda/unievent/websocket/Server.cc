@@ -96,10 +96,10 @@ void Server::on_tcp_connection (const StreamSP& _lstn, const StreamSP& _conn, co
     }
 
     auto connection = dynamic_pointer_cast<ServerConnection>(_conn);
-    connections[connection->id()] = connection;
-    connection->run();
-
     auto listener = dynamic_pointer_cast<Listener>(_lstn);
+    connections[connection->id()] = connection;
+    connection->run(listener.get());
+
     panda_log_info("Server[on_tcp_connection]: somebody connected to " << listener->location() << ", now i have " << connections.size() << " connections");
 
     on_connection(connection);

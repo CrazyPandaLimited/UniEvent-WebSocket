@@ -4,6 +4,8 @@
 
 namespace panda { namespace unievent { namespace websocket {
 
+struct Listener;
+
 using panda::protocol::websocket::ConnectRequestSP;
 
 struct Server;
@@ -20,7 +22,8 @@ struct ServerConnection : virtual Connection {
 
     uint64_t id () const { return _id; }
 
-    virtual void run ();
+    /** @param listener for derived classes to know wich listener they are on */
+    virtual void run (Listener* listener);
 
     virtual void send_accept_error    (HTTPResponse*);
     virtual void send_accept_response (ConnectResponse*);

@@ -12,6 +12,7 @@ struct Location {
     bool     reuse_port = true;    // several listeners(servers) can be bound to the same port if true, useful for threaded apps
     int      backlog    = 4096;    // max accept queue
     SSL_CTX* ssl_ctx    = nullptr; // config with sertificate for server
+    string   name       = "";      // optional name for logging of new connections
 };
 
 struct Listener : Tcp {
@@ -29,7 +30,8 @@ using ListenerSP = iptr<Listener>;
 template <typename Stream>
 Stream& operator<< (Stream& stream, const Location& loc) {
     stream << "Location{";
-    stream << "host:\"" << loc.host << "\"";
+    stream << "name:" << loc.name;
+    stream << ",host:\"" << loc.host << "\"";
     stream << ",port:" << loc.port;
     stream << ",secure:" << bool(loc.ssl_ctx);
     stream << ",reuse_port:" << loc.reuse_port;

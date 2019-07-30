@@ -11,7 +11,7 @@ ServerConnection::ServerConnection (Server* server, uint64_t id, const Config& c
     _state = State::TCP_CONNECTING;
 }
 
-void ServerConnection::run () {
+void ServerConnection::run (Listener*) {
     _state = State::CONNECTING;
 }
 
