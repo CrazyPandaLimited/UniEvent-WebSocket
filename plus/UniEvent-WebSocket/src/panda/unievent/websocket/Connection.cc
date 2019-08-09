@@ -22,7 +22,6 @@ static void log_use_after_close () {
 
 void Connection::on_read (string& buf, const CodeError& err) {
     panda_log_verbose_debug("Websocket on read:" << log::escaped{buf});
-    Tcp::on_read(buf, err);
     assert(_state == State::CONNECTED && parser->established());
     if (err) return process_error(err);
 
@@ -131,13 +130,11 @@ void Connection::on_error (const Error& err) {
 
 void Connection::on_eof () {
     panda_log_info("websocket on_eof");
-    Tcp::on_eof();
     process_peer_close(nullptr);
 }
 
-void Connection::on_write (const CodeError& err, const WriteRequestSP& req) {
+void Connection::on_write (const CodeError& err, const WriteRequestSP&) {
     panda_log_verbose_debug("websocket on_write: " << err.whats());
-    Tcp::on_write(err, req);
     if (err && err.code() != std::errc::operation_canceled && err.code() != std::errc::broken_pipe) process_error(err);
 }
 

@@ -43,9 +43,8 @@ void Client::on_connect (const ConnectResponseSP& response) {
     connect_event(this, response);
 }
 
-void Client::on_connect (const CodeError& err, const unievent::ConnectRequestSP& req) {
+void Client::on_connect (const CodeError& err, const unievent::ConnectRequestSP&) {
     panda_log_verbose_debug("websokcet::Client::on_connect(unievent) " <<  err.what());
-    Tcp::on_connect(err, req);
     if (err) {
         on_connect(cres_from_cerr(err));
     } else {

@@ -34,12 +34,14 @@ private:
 };
 
 
-struct Connection : Tcp {
+struct Connection : Tcp, protected ITcpSelfListener {
     struct Config: public Parser::Config {};
 
     enum class State { INITIAL, TCP_CONNECTING, CONNECTING, CONNECTED };
 
-    Connection (const LoopSP& loop) : Tcp(loop), _state(State::INITIAL), _error_state() {}
+    Connection (const LoopSP& loop) : Tcp(loop), _state(State::INITIAL), _error_state() {
+        event_listener(this);
+    }
 
     void configure (const Config& conf);
 
