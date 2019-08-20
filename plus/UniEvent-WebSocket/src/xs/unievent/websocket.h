@@ -82,7 +82,7 @@ template <class TYPE> struct Typemap<xs::unievent::websocket::XSConnectionIterat
 
 template <> struct Typemap<panda::unievent::websocket::Location> : TypemapBase<panda::unievent::websocket::Location> {
     using Location = panda::unievent::websocket::Location;
-    static Location in (pTHX_ SV* arg) {
+    static Location in (SV* arg) {
         const Hash h = arg;
         Scalar val;
         Location loc;
@@ -97,16 +97,16 @@ template <> struct Typemap<panda::unievent::websocket::Location> : TypemapBase<p
 };
 
 template <class TYPE> struct Typemap<panda::unievent::websocket::Connection::Config, TYPE> : Typemap<panda::protocol::websocket::Parser::Config, TYPE> {
-    static TYPE in (pTHX_ SV* arg) {
+    static TYPE in (SV* arg) {
         using Super = Typemap<panda::protocol::websocket::Parser::Config, TYPE>;
-        TYPE cfg = Super::in(aTHX_ arg);
+        TYPE cfg = Super::in(arg);
         return cfg;
     }
 };
 
 template <class TYPE> struct Typemap<panda::unievent::websocket::Server::Config, TYPE> : TypemapBase<panda::unievent::websocket::Server::Config, TYPE> {
     using Location = panda::unievent::websocket::Location;
-    static TYPE in (pTHX_ SV* arg) {
+    static TYPE in (SV* arg) {
         const Hash h = arg;
         TYPE cfg;
 
