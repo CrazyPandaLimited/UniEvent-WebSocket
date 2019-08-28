@@ -43,8 +43,8 @@ void ServerConnection::on_read (string& _buf, const CodeError& err) {
 
     if (creq->error) {
         panda_log_info("Websocket accept error: " << creq->error);
-        HTTPResponse res;
-        send_accept_error(&res);
+        HTTPResponseSP res = new HTTPResponse;
+        send_accept_error(res);
         on_accept(creq);
         close();
         return;

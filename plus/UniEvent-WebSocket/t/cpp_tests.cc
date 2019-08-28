@@ -198,7 +198,7 @@ TEST_CASE("destroying client in error callback", "[uews]") {
 
     p.server->connection_event.add([&](auto, auto conn) {
         conn->accept_event.add([&](auto conn, auto) {
-            conn->write("fuck you dudefuck you dudefuck you dudefuck you dudefuck you dudefuck you dudefuck you dudefuck you");
+            conn->write("f1uck you dudefuck you dudefuck you dudefuck you dudefuck you dudefuck you dudefuck you dudefuck you");
         });
     });
 
