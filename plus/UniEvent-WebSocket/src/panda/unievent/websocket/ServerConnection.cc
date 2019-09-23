@@ -8,6 +8,7 @@ ServerConnection::ServerConnection (Server* server, uint64_t id, const Config& c
     panda_log_info("ServerConnection[new]: id = " << _id);
     init(parser);
     configure(conf);
+    set_nodelay(true);
     _state = State::TCP_CONNECTING;
 }
 
