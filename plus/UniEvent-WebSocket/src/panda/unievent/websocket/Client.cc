@@ -48,6 +48,7 @@ void Client::on_connect (const CodeError& err, const unievent::ConnectRequestSP&
     if (err) {
         on_connect(cres_from_cerr(err));
     } else {
+        set_nodelay(true);
         _state = State::CONNECTING;
         read_start();
     }
@@ -61,7 +62,10 @@ void Client::on_read (string& _buf, const CodeError& err) {
 
     string buf = string(_buf.data(), _buf.length()); // TODO: remove copying
     if (_state == State::CONNECTED) return Connection::on_read(buf, err);
-    assert(_state == State::CONNECTING);
+    if (_state != State::CONNECTING) { // may be read in state TCP_CONNECTED
+        panda_log_debug("ignore all reads if !CONNECTING and !CONNECTED");
+        return;
+    }
 
     if (err) return on_connect(cres_from_cerr(std::errc::operation_canceled));
 
