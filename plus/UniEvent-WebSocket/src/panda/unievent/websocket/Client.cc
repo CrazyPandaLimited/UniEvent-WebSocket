@@ -77,7 +77,8 @@ void Client::on_read (string& _buf, const CodeError& err) {
     if (parser.established()) _state = State::CONNECTED;
     on_connect(res);
 
-    if (_state == State::CONNECTED && buf.length()) Connection::on_read(buf, err);
+    string empty;
+    if (_state == State::CONNECTED) Connection::on_read(empty, err); // in case of messages in buffer with handshake
 }
 
 }}}
