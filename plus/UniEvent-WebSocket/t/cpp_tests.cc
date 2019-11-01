@@ -125,7 +125,7 @@ TEST_CASE("destroying server&client in callbacks", "[uews]") {
                 conn->send_message(omsg);
             });
 
-            conn->error_event.add([&](auto, auto& err) { panda_log_info("s-err: " << err.whats()); });
+            conn->error_event.add([&](auto, auto& err) { panda_log_info("s-err: " << err); });
             conn->accept_event.add([&](auto...)        { panda_log_info("s-accept"); });
             conn->message_event.add([&](auto...)       { panda_log_info("s-message"); });
             conn->close_event.add([&](auto...)         { panda_log_info("s-close"); });
@@ -156,7 +156,7 @@ TEST_CASE("destroying server&client in callbacks", "[uews]") {
                 client->close();
             });
 
-            client->error_event.add([&](auto, auto& err) { panda_log_info("c-err: " << err.whats()); });
+            client->error_event.add([&](auto, auto& err) { panda_log_info("c-err: " << err); });
             client->message_event.add([&](auto...)       { panda_log_info("c-message"); });
             client->close_event.add([&](auto...)         { panda_log_info("c-close"); });
             client->peer_close_event.add([&](auto...)    { panda_log_info("c-peer-close"); });

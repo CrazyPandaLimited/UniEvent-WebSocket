@@ -29,7 +29,7 @@ void ServerConnection::on_read (string& _buf, const CodeError& err) {
     if (err) {
         panda_log_info("Websocket accept error: " << err.whats());
         ConnectRequestSP creq = new protocol::websocket::ConnectRequest();
-        creq->error = err.whats();
+        creq->error = ErrorCode(errc::READ_ERROR, ErrorCode(err.code()));
         on_accept(creq);
         close();
         return;

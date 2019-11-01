@@ -7,7 +7,7 @@ Connection::Config Client::default_config;
 
 static ConnectResponseSP cres_from_cerr (const CodeError& err) {
     ConnectResponseSP res = new ConnectResponse();
-    res->error = err.whats();
+    res->error = ErrorCode(errc::CONNECT_ERROR, ErrorCode(err.code()));
     return res;
 }
 

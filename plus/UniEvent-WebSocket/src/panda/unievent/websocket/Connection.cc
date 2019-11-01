@@ -23,7 +23,7 @@ static void log_use_after_close () {
 void Connection::on_read (string& buf, const CodeError& err) {
     panda_log_verbose_debug("Websocket on read:" << log::escaped{buf});
     assert(_state == State::CONNECTED && parser->established());
-    if (err) return process_error(err);
+    if (err) return process_error(ErrorCode(errc::READ_ERROR, ErrorCode(err.code())));
 
     auto msg_range = parser->get_messages(buf);
     for (const auto& msg : msg_range) {
@@ -31,7 +31,7 @@ void Connection::on_read (string& buf, const CodeError& err) {
             panda_log_debug("protocol error :" << msg->error);
             auto data = parser->send_close(CloseCode::PROTOCOL_ERROR);
             write(data.begin(), data.end());
-            return process_error(msg->error);
+            return process_error(ErrorCode(errc::READ_ERROR, msg->error));
         }
         switch (msg->opcode()) {
             case Opcode::CLOSE:
@@ -116,15 +116,15 @@ void Connection::on_pong (const MessageSP& msg) {
     pong_event(this, msg);
 }
 
-void Connection::process_error (const Error& err) {
-    panda_log_info("websocket error: " << err.whats());
+void Connection::process_error (const ErrorCode& err) {
+    panda_log_info("websocket error: " << err.message());
     if (_state == State::INITIAL) return; // just ignore everything, we are here after close
     _error_state = true;
     on_error(err);
     if (_error_state) close(CloseCode::ABNORMALLY);
 }
 
-void Connection::on_error (const Error& err) {
+void Connection::on_error (const ErrorCode& err) {
     error_event(this, err);
 }
 
@@ -135,7 +135,9 @@ void Connection::on_eof () {
 
 void Connection::on_write (const CodeError& err, const WriteRequestSP&) {
     panda_log_verbose_debug("websocket on_write: " << err.whats());
-    if (err && err.code() != std::errc::operation_canceled && err.code() != std::errc::broken_pipe) process_error(err);
+    if (err && err.code() != std::errc::operation_canceled && err.code() != std::errc::broken_pipe) {
+        process_error(ErrorCode(errc::WRITE_ERROR, ErrorCode(err.code())));
+    }
 }
 
 void Connection::do_close (uint16_t code, const string& payload) {
@@ -173,5 +175,21 @@ std::ostream& operator<< (std::ostream& stream, const Connection::Config& conf) 
            << "}";
     return stream;
 }
+
+class WSErrorCategoty : public std::error_category
+{
+public:
+    const char * name() const noexcept override {return "unievent::websocket::Error";}
+    std::string message(int ev) const override {
+        switch (ev) {
+        case (int)errc::READ_ERROR:    return "read error";
+        case (int)errc::WRITE_ERROR:   return "write error";
+        case (int)errc::CONNECT_ERROR: return "connect error";
+        default: return "unknown ws error";
+        }
+    }
+};
+
+const std::error_category& ws_error_categoty = WSErrorCategoty();
 
 }}}

@@ -2,6 +2,7 @@
 #include <panda/log.h>
 #include <panda/unievent/Tcp.h>
 #include <panda/protocol/websocket/Parser.h>
+#include <panda/error.h>
 
 namespace panda { namespace unievent { namespace websocket {
 
@@ -50,7 +51,7 @@ struct Connection : Tcp, protected ITcpSelfListener {
     bool connected () const { return _state == State::CONNECTED; }
 
     CallbackDispatcher<void(const ConnectionSP&, const MessageSP&)>        message_event;
-    CallbackDispatcher<void(const ConnectionSP&, const Error&)>            error_event;
+    CallbackDispatcher<void(const ConnectionSP&, const ErrorCode&)>        error_event;
     CallbackDispatcher<void(const ConnectionSP&, uint16_t, const string&)> close_event;
     CallbackDispatcher<void(const ConnectionSP&, const MessageSP&)>        peer_close_event;
     CallbackDispatcher<void(const ConnectionSP&, const MessageSP&)>        ping_event;
@@ -94,7 +95,7 @@ protected:
     void init (Parser& parser) { this->parser = &parser; }
 
     virtual void on_message    (const MessageSP&);
-    virtual void on_error      (const Error&);
+    virtual void on_error      (const ErrorCode&);
     virtual void on_peer_close (const MessageSP&);
     virtual void on_ping       (const MessageSP&);
     virtual void on_pong       (const MessageSP&);
@@ -106,7 +107,7 @@ protected:
     void on_eof   () override;
     void on_write (const CodeError&, const WriteRequestSP&) override;
 
-    void process_error (const Error& err);
+    void process_error (const ErrorCode& err);
 
     virtual ~Connection () = 0;
 
@@ -128,4 +129,21 @@ inline Connection::~Connection () {}
 
 std::ostream& operator<< (std::ostream& stream, const Connection::Config& conf);
 
+enum class errc {
+    READ_ERROR = 1,
+    WRITE_ERROR,
+    CONNECT_ERROR
+};
+
+extern const std::error_category& ws_error_categoty;
+
+
+inline std::error_code make_error_code(errc err) noexcept {
+    return std::error_code(int(err), ws_error_categoty);
+}
+
 }}}
+
+namespace std {
+template <> struct is_error_code_enum<panda::unievent::websocket::errc> : std::true_type {};
+}
