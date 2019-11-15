@@ -1,5 +1,6 @@
 #include "Connection.h"
 #include <panda/encode/base16.h>
+#include <numeric>
 
 namespace panda { namespace unievent { namespace websocket {
 
@@ -24,6 +25,10 @@ void Connection::on_read (string& buf, const CodeError& err) {
     panda_log_verbose_debug("Websocket on read:" << log::escaped{buf});
     assert(_state == State::CONNECTED && parser->established());
     if (err) return process_error(err);
+    if (stats) {
+        stats->bytes_in += buf.size();
+        stats->msgs_in++;
+    }
 
     auto msg_range = parser->get_messages(buf);
     for (const auto& msg : msg_range) {
@@ -133,9 +138,15 @@ void Connection::on_eof () {
     process_peer_close(nullptr);
 }
 
-void Connection::on_write (const CodeError& err, const WriteRequestSP&) {
+void Connection::on_write (const CodeError& err, const WriteRequestSP& req) {
     panda_log_verbose_debug("websocket on_write: " << err.whats());
-    if (err && err.code() != std::errc::operation_canceled && err.code() != std::errc::broken_pipe) process_error(err);
+    if (err && err.code() != std::errc::operation_canceled && err.code() != std::errc::broken_pipe) {
+        process_error(err);
+    } else if (stats) {
+        size_t size = std::accumulate(req->bufs.begin(), req->bufs.end(), size_t(0), [](size_t r, const string& s) {return r + s.size();});
+        stats->bytes_out += size;
+        stats->msgs_out++;
+    }
 }
 
 void Connection::do_close (uint16_t code, const string& payload) {
@@ -171,6 +182,32 @@ std::ostream& operator<< (std::ostream& stream, const Connection::Config& conf) 
            << ", max_message_size:" << conf.max_message_size
            << ", max_handshake_size:" << conf.max_handshake_size
            << "}";
+    return stream;
+}
+
+namespace {
+struct PrettyBytes {
+    size_t count;
+};
+
+std::ostream& operator<< (std::ostream& stream, const PrettyBytes& c) {
+    std::array<const char*, 5> NAMES = {" B", " KiB", " MiB", " GiB", " TiB"};
+    size_t val = c.count;
+    size_t i = 0;
+    while (val > 1200 && i < NAMES.size() - 1) {
+        val /= 1024;
+        ++i;
+    }
+    stream << val << NAMES[i];
+    return stream;
+}
+}
+
+
+std::ostream& operator<< (std::ostream& stream, const Connection::Statistics& c) {
+    stream << "total " << (c.msgs_in + c.msgs_out) << "pps(" << PrettyBytes{c.bytes_in + c.bytes_out} << "/s),"
+              "input " << c.msgs_in << "pps(" << PrettyBytes{c.bytes_in} << "/s),"
+              "output " << c.msgs_out << "pps(" << PrettyBytes{c.bytes_out} << "/s)";
     return stream;
 }
 

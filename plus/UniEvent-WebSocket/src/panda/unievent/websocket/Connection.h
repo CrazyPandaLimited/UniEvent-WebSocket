@@ -88,6 +88,28 @@ struct Connection : Tcp, protected ITcpSelfListener {
         do_close(code, payload);
     }
 
+    struct Statistics : Refcnt {
+        size_t msgs_in   = 0;
+        size_t msgs_out  = 0;
+        size_t bytes_in  = 0;
+        size_t bytes_out = 0;
+
+        Statistics() = default;
+        Statistics(size_t msgs_in, size_t msgs_out, size_t bytes_in, size_t bytes_out)
+            : msgs_in(msgs_in), msgs_out(msgs_out), bytes_in(bytes_in), bytes_out(bytes_out)
+        {}
+
+        void reset() {
+            msgs_in = msgs_out = bytes_in = bytes_out = 0;
+        }
+        Statistics normalized(double secs) {
+            return Statistics(msgs_in / secs, msgs_out / secs, bytes_in / secs, bytes_out / secs);
+        }
+    };
+    using StatisticsSP = iptr<Statistics>;
+
+    void set_statistics_counters(const StatisticsSP& val) {stats = val;}
+
 protected:
     State _state;
 
@@ -112,8 +134,9 @@ protected:
 
 private:
     friend struct Builder;
-    Parser* parser;
-    bool    _error_state;
+    Parser*      parser;
+    StatisticsSP stats;
+    bool         _error_state;
 
     void process_peer_close (const MessageSP&);
 };
@@ -127,5 +150,6 @@ void Builder::send (ContIt begin, ContIt end, const Stream::write_fn& callback) 
 inline Connection::~Connection () {}
 
 std::ostream& operator<< (std::ostream& stream, const Connection::Config& conf);
+std::ostream& operator<< (std::ostream& stream, const Connection::Statistics& conf);
 
 }}}
