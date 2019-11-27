@@ -15,7 +15,7 @@ struct Server : virtual Refcntd {
         std::vector<Location> locations;
         Connection::Config    connection;
     };
-    using accept_filter_fn   = function<HTTPResponseSP(const ConnectRequestSP&)>;
+    using accept_filter_fn   = function<panda::protocol::http::ResponseSP(const ConnectRequestSP&)>;
     using connection_fptr    = void(const ServerSP&, const ServerConnectionSP&);
     using disconnection_fptr = void(const ServerSP&, const ServerConnectionSP&, uint16_t code, const string& payload);
     using Connections        = std::map<uint64_t, ServerConnectionSP>;

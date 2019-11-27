@@ -25,7 +25,7 @@ struct ServerConnection : virtual Connection {
     /** @param listener for derived classes to know wich listener they are on */
     virtual void run (Listener* listener);
 
-    virtual void send_accept_error    (HTTPResponse*);
+    virtual void send_accept_error    (panda::protocol::http::Response*);
     virtual void send_accept_response (ConnectResponse*);
 
     template <typename T = Server> T* get_server () const { return dyn_cast<T*>(server); }
