@@ -128,7 +128,7 @@ protected:
     void on_eof   () override;
     void on_write (const CodeError&, const WriteRequestSP&) override;
 
-    void process_error (const Error& err);
+    void process_error (const Error& err, uint16_t code = CloseCode::ABNORMALLY);
 
     virtual ~Connection () = 0;
 
