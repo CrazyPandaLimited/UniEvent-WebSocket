@@ -34,9 +34,8 @@ void Connection::on_read (string& buf, const CodeError& err) {
     for (const auto& msg : msg_range) {
         if (msg->error) {
             panda_log_debug("protocol error :" << msg->error);
-            auto data = parser->send_close(CloseCode::PROTOCOL_ERROR);
-            write(data.begin(), data.end());
-            return process_error(ErrorCode(errc::READ_ERROR, msg->error));
+            process_error(ErrorCode(errc::READ_ERROR, msg->error), CloseCode::PROTOCOL_ERROR);
+            break;
         }
         switch (msg->opcode()) {
             case Opcode::CLOSE:
@@ -121,12 +120,12 @@ void Connection::on_pong (const MessageSP& msg) {
     pong_event(this, msg);
 }
 
-void Connection::process_error (const ErrorCode& err) {
+void Connection::process_error (const ErrorCode& err, uint16_t code) {
     panda_log_info("websocket error: " << err.message());
     if (_state == State::INITIAL) return; // just ignore everything, we are here after close
     _error_state = true;
     on_error(err);
-    if (_error_state) close(CloseCode::ABNORMALLY);
+    if (_error_state) close(code);
 }
 
 void Connection::on_error (const ErrorCode& err) {
@@ -140,7 +139,7 @@ void Connection::on_eof () {
 
 void Connection::on_write (const CodeError& err, const WriteRequestSP& req) {
     panda_log_verbose_debug("websocket on_write: " << err.whats());
-    if (err && err.code() != std::errc::operation_canceled && err.code() != std::errc::broken_pipe) {
+    if (err && err.code() != std::errc::operation_canceled && err.code() != std::errc::broken_pipe && err.code() != std::errc::not_connected) {
         process_error(ErrorCode(errc::WRITE_ERROR, ErrorCode(err.code())));
     } else if (stats) {
         size_t size = std::accumulate(req->bufs.begin(), req->bufs.end(), size_t(0), [](size_t r, const string& s) {return r + s.size();});
