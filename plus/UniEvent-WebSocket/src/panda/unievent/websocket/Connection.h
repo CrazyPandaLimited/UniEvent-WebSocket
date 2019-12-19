@@ -23,8 +23,8 @@ struct Builder : private MessageBuilder {
     Builder& opcode  (Opcode value) { MessageBuilder::opcode(value); return *this; }
     Builder& deflate (bool value)   { MessageBuilder::deflate(value); return *this; }
 
-    template <class ContIt>
-    void send (ContIt begin, ContIt end, const Stream::write_fn& callback = {});
+    template <class Begin, class End>
+    void send (Begin begin, End end, const Stream::write_fn& callback = {});
 
 protected:
     friend struct Connection;
@@ -63,8 +63,8 @@ struct Connection : Tcp, protected ITcpSelfListener {
         message().opcode(Opcode::BINARY).send(payload, callback);
     }
 
-    template <class ContIt>
-    void send_message (ContIt begin, ContIt end, const write_fn& callback = {}) {
+    template <class Begin, class End>
+    void send_message (Begin begin, End end, const write_fn& callback = {}) {
         message().opcode(Opcode::BINARY).send(begin, end, callback);
     }
 
@@ -72,8 +72,8 @@ struct Connection : Tcp, protected ITcpSelfListener {
         message().opcode(Opcode::TEXT).send(payload, callback);
     }
 
-    template <class ContIt>
-    void send_text (ContIt begin, ContIt end, const write_fn& callback = {}) {
+    template <class Begin, class End>
+    void send_text (Begin begin, End end, const write_fn& callback = {}) {
         message().opcode(Opcode::TEXT).send(begin, end, callback);
     }
 
@@ -142,8 +142,8 @@ private:
     void process_peer_close (const MessageSP&);
 };
 
-template <class ContIt>
-void Builder::send (ContIt begin, ContIt end, const Stream::write_fn& callback) {
+template <class Begin, class End>
+void Builder::send (Begin begin, End end, const Stream::write_fn& callback) {
     auto all = MessageBuilder::send(begin, end);
     _connection.write(all.begin(), all.end(), callback);
 }

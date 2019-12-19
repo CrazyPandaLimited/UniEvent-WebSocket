@@ -4,6 +4,8 @@
 #include <panda/unievent/websocket/Client.h>
 #include <panda/unievent/websocket/Server.h>
 
+#include <range/v3/view/transform.hpp>
+
 using namespace panda::unievent::websocket;
 using panda::unievent::test::AsyncTest;
 using panda::unievent::LoopSP;
@@ -48,6 +50,18 @@ static Pair make_pair (LoopSP loop) {
     return {server, client};
 }
 
+TEST_CASE("send ranges compiles", "[uews]") {
+    if (false) {
+        ServerConnectionSP conn;
+
+        string msgs[] = {"1", "2", "3"};
+        auto rr = msgs | ::ranges::view::transform([](string& s) -> string& {
+            return s;
+        });
+        conn->send_message(begin(rr), end(rr));
+    }
+}
+
 TEST_CASE("on_read after close", "[uews]") {
     AsyncTest test(1000, {"connect", "close"});
     {
@@ -59,6 +73,7 @@ TEST_CASE("on_read after close", "[uews]") {
             sconn->accept_event.add([](auto conn, auto) {
                 string msg = "123";
                 conn->send_message(msg);
+
             });
         });
         test.await(p.client->message_event, "connect");
