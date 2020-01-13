@@ -17,7 +17,7 @@ struct Client : virtual Connection {
     CallbackDispatcher<void(const ClientSP&, const ConnectResponseSP&)> connect_event;
 
     /** @param port default value is 443 for secure and 80 for usual     */
-    void connect (const ConnectRequestSP& request, bool secure = false, uint16_t port = 0);
+    void connect (const ConnectRequestSP& request);
 
 
 protected:
@@ -33,5 +33,9 @@ private:
 
     ClientParser parser;
 };
+
+inline string ws_scheme(bool secure = false) {
+    return secure ? string("wss") : string("ws");
+}
 
 }}}

@@ -21,9 +21,8 @@ my $stoped = 0;
     });
     
 	$client->connect({
-			uri           => "ws://google.com",
-			ws_key        => "dGhlIHNhbXBsZSBub25jZQ==",
-		}, 0, 81
+            uri           => "ws://google.com:81",
+        }
 	);
     $client->close(1000);
     

@@ -30,11 +30,12 @@ sub make_server {
 sub make_client {
 	my ($port) = @_;
 	my $client = new UniEvent::WebSocket::Client();
+    my $scheme = UniEvent::WebSocket::ws_scheme();
 	
 	$client->connect({
-		uri    => "ws://127.0.0.1",
+        uri    => "$scheme://127.0.0.1:$port",
 		ws_key => "dGhlIHNhbXBsZSBub25jZQ==",
-	}, 0, $port);
+    });
 	
 	return $client;
 }

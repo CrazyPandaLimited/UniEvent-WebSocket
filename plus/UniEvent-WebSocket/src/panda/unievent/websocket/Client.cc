@@ -16,15 +16,16 @@ Client::Client (const LoopSP& loop, const Connection::Config& conf) : Connection
     configure(conf);
 }
 
-void Client::connect (const ConnectRequestSP& request, bool secure, uint16_t port) {
+void Client::connect (const ConnectRequestSP& request) {
     if (_state != State::INITIAL) throw std::logic_error("can't connect(): you should close() the client connection first");
     parser.reset();
 
     if (!request || !request->uri) throw std::invalid_argument("ConnectRequest should contains uri");
 
-    if (!port) port = secure ? 443 : 80;
+    auto port = request->uri->port();
     panda_log_debug("connecting to " << request->uri->host() << ":" << port);
-    if (secure) use_ssl();
+    if (request->uri->secure()) use_ssl();
+
     connect(request->uri->host(), port);
     write(parser.connect_request(request));
     _state = State::TCP_CONNECTING;

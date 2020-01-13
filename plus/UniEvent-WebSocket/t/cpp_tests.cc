@@ -46,7 +46,9 @@ static Pair make_pair (LoopSP loop) {
     ConnectRequestSP req = new ConnectRequest();
     req->uri = new URI();
     req->uri->host("127.0.0.1");
-    client->connect(req, false, port);
+    req->uri->scheme("ws");
+    req->uri->port(port);
+    client->connect(req);
     return {server, client};
 }
 
