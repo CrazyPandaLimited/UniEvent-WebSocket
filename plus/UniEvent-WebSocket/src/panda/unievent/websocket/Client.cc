@@ -16,7 +16,7 @@ Client::Client (const LoopSP& loop, const Connection::Config& conf) : Connection
     configure(conf);
 }
 
-void Client::connect (const ConnectRequestSP& request) {
+void Client::connect (const ClientConnectRequestSP& request) {
     if (_state != State::INITIAL) throw std::logic_error("can't connect(): you should close() the client connection first");
     parser.reset();
 
@@ -26,7 +26,11 @@ void Client::connect (const ConnectRequestSP& request) {
     panda_log_debug("connecting to " << request->uri->host() << ":" << port);
     if (request->uri->secure()) use_ssl();
 
-    connect(request->uri->host(), port);
+    connect()->to(request->uri->host(), port)
+             ->use_cache(request->cached_resolver)
+             ->set_hints(request->addr_hints)
+             ->run();
+
     write(parser.connect_request(request));
     _state = State::TCP_CONNECTING;
 }

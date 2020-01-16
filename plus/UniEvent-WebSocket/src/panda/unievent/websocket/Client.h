@@ -4,7 +4,14 @@
 
 namespace panda { namespace unievent { namespace websocket {
 
-using panda::protocol::websocket::ConnectRequestSP;
+struct ClientConnectRequest : panda::protocol::websocket::ConnectRequest {
+    using panda::protocol::websocket::ConnectRequest::ConnectRequest;
+
+    unievent::AddrInfoHints addr_hints = Tcp::defhints;
+    bool cached_resolver = true;
+};
+
+using ClientConnectRequestSP = iptr<ClientConnectRequest>;
 
 struct Client;
 using ClientSP = iptr<Client>;
@@ -16,8 +23,7 @@ struct Client : virtual Connection {
 
     CallbackDispatcher<void(const ClientSP&, const ConnectResponseSP&)> connect_event;
 
-    /** @param port default value is 443 for secure and 80 for usual     */
-    void connect (const ConnectRequestSP& request);
+    void connect (const ClientConnectRequestSP& request);
 
 
 protected:

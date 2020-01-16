@@ -48,6 +48,18 @@ namespace xs { namespace unievent  { namespace websocket {
         ~XSServer () { Backref::dtor(); }
     };
 
+    inline ClientConnectRequestSP  make_request  (const Hash& params, const ClientConnectRequestSP& dest = {}) {
+        ClientConnectRequestSP ret = dest ? dest : ClientConnectRequestSP(new ClientConnectRequest());
+        xs::protocol::websocket::make_request(params, ret);
+
+        Scalar val;
+
+        if ((val = params.fetch("addr_hints")))      ret->addr_hints = xs::in<panda::unievent::AddrInfoHints>(val);
+        if ((val = params.fetch("cached_resolver"))) ret->cached_resolver = SvTRUE(val);
+
+        return ret;
+    }
+
 }}}
 
 
@@ -78,6 +90,23 @@ template <class TYPE> struct Typemap<xs::unievent::websocket::XSConnectionIterat
     TypemapObject<xs::unievent::websocket::XSConnectionIterator*, TYPE, ObjectTypePtr, ObjectStorageMG, StaticCast>
 {
     static std::string package () { return "UniEvent::WebSocket::XSConnectionIterator"; }
+};
+
+template <class TYPE> struct Typemap<xs::unievent::websocket::ClientConnectRequest*, TYPE> :
+    Typemap<xs::protocol::websocket::ConnectRequest*, TYPE>
+{
+    static std::string package () { return "UniEvent::WebSocket::ConnectRequest"; }
+};
+
+template <class TYPE>
+struct Typemap<xs::unievent::websocket::ClientConnectRequestSP, panda::iptr<TYPE>> : Typemap<TYPE*> {
+    using Super = Typemap<TYPE*>;
+    static panda::iptr<TYPE> in (Sv arg) {
+        if (!arg.is_hash_ref()) return Super::in(arg);
+        panda::iptr<TYPE> ret = make_backref<TYPE>();
+        xs::unievent::websocket::make_request(arg, ret.get());
+        return ret;
+    }
 };
 
 template <> struct Typemap<panda::unievent::websocket::Location> : TypemapBase<panda::unievent::websocket::Location> {

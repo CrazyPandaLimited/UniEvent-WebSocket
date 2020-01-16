@@ -43,7 +43,7 @@ static Pair make_pair (LoopSP loop) {
     uint16_t port;
     ServerSP server = make_server(loop, port);
     ClientSP client = new Client(loop);
-    ConnectRequestSP req = new ConnectRequest();
+    ClientConnectRequestSP req = new ClientConnectRequest();
     req->uri = new URI();
     req->uri->host("127.0.0.1");
     req->uri->scheme("ws");
