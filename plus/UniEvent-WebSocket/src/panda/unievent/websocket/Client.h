@@ -27,18 +27,18 @@ struct Client : virtual Connection {
 
 
 protected:
+    using Connection::on_connect; // suppress 'hide' warnings
+
     virtual void on_connect (const ConnectResponseSP& response);
+
+    void on_connect (const CodeError&, const unievent::ConnectRequestSP&) override;
+    void on_read    (string& buf, const CodeError&) override;
 
     void do_close (uint16_t code, const string&) override;
 
     using Tcp::connect;
 
 private:
-    using Connection::on_connect; // hide unievent's on_connect in a way that suppresses warnings
-
-    void on_connect (const CodeError&, const unievent::ConnectRequestSP&) override;
-    void on_read    (string& buf, const CodeError&) override;
-
     ClientParser parser;
 };
 
