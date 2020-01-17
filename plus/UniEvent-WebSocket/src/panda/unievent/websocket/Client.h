@@ -34,6 +34,8 @@ protected:
     using Tcp::connect;
 
 private:
+    using Connection::on_connect; // hide unievent's on_connect in a way that suppresses warnings
+
     void on_connect (const CodeError&, const unievent::ConnectRequestSP&) override;
     void on_read    (string& buf, const CodeError&) override;
 
