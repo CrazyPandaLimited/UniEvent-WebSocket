@@ -102,7 +102,8 @@ template <class TYPE>
 struct Typemap<xs::unievent::websocket::ClientConnectRequestSP, panda::iptr<TYPE>> : Typemap<TYPE*> {
     using Super = Typemap<TYPE*>;
     static panda::iptr<TYPE> in (Sv arg) {
-        if (!arg.is_hash_ref()) return Super::in(arg);
+        if (!arg.defined()) return {};
+        if (arg.is_object_ref()) return Super::in(arg);
         panda::iptr<TYPE> ret = make_backref<TYPE>();
         xs::unievent::websocket::make_request(arg, ret.get());
         return ret;
