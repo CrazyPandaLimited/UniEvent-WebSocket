@@ -12,6 +12,12 @@ using namespace panda::protocol::websocket;
 struct Connection;
 using ConnectionSP = iptr<Connection>;
 
+enum class errc {
+    READ_ERROR = 1,
+    WRITE_ERROR,
+    CONNECT_ERROR
+};
+
 struct Builder : private MessageBuilder {
     using MessageBuilder::opcode;
     using MessageBuilder::deflate;
@@ -144,6 +150,10 @@ private:
 
 template <class Begin, class End>
 void Builder::send (Begin begin, End end, const Stream::write_fn& callback) {
+    if (!_connection.connected()) {
+        if (callback) callback(&_connection, CodeError(errc::WRITE_ERROR), new unievent::WriteRequest());
+        return;
+    }
     auto all = MessageBuilder::send(begin, end);
     _connection.write(all.begin(), all.end(), callback);
 }
@@ -152,12 +162,6 @@ inline Connection::~Connection () {}
 
 std::ostream& operator<< (std::ostream& stream, const Connection::Config& conf);
 std::ostream& operator<< (std::ostream& stream, const Connection::Statistics& conf);
-
-enum class errc {
-    READ_ERROR = 1,
-    WRITE_ERROR,
-    CONNECT_ERROR
-};
 
 extern const std::error_category& ws_error_categoty;
 

@@ -9,6 +9,10 @@ Builder::Builder (Builder&& b) : MessageBuilder(std::move(b)), _connection{b._co
 Builder::Builder (Connection& connection) : MessageBuilder(connection.parser->message()), _connection{connection} {}
 
 void Builder::send (string& payload, const Stream::write_fn& callback) {
+    if (!_connection.connected()) {
+        if (callback) callback(&_connection, CodeError(errc::WRITE_ERROR), new unievent::WriteRequest());
+        return;
+    }
     auto all = MessageBuilder::send(payload);
     _connection.write(all.begin(), all.end(), callback);
 }
