@@ -4,6 +4,8 @@
 #include <panda/protocol/websocket/Parser.h>
 #include <panda/error.h>
 
+#include "Error.h"
+
 namespace panda { namespace unievent { namespace websocket {
 
 using panda::CallbackDispatcher;
@@ -11,12 +13,6 @@ using namespace panda::protocol::websocket;
 
 struct Connection;
 using ConnectionSP = iptr<Connection>;
-
-enum class errc {
-    READ_ERROR = 1,
-    WRITE_ERROR,
-    CONNECT_ERROR
-};
 
 struct Builder : private MessageBuilder {
     using MessageBuilder::opcode;
@@ -163,15 +159,4 @@ inline Connection::~Connection () {}
 std::ostream& operator<< (std::ostream& stream, const Connection::Config& conf);
 std::ostream& operator<< (std::ostream& stream, const Connection::Statistics& conf);
 
-extern const std::error_category& ws_error_categoty;
-
-
-inline std::error_code make_error_code(errc err) noexcept {
-    return std::error_code(int(err), ws_error_categoty);
-}
-
 }}}
-
-namespace std {
-template <> struct is_error_code_enum<panda::unievent::websocket::errc> : std::true_type {};
-}
