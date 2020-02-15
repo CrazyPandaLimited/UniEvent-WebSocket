@@ -24,7 +24,12 @@ void Client::connect (const ClientConnectRequestSP& request) {
 
     auto port = request->uri->port();
     panda_log_debug("connecting to " << request->uri->host() << ":" << port);
-    if (request->uri->secure()) use_ssl();
+    bool cur_secure = is_secure();
+    bool need_secure = request->uri->secure();
+    if (cur_secure != need_secure) {
+        if (need_secure) run_in_order([](auto& stream) { stream->use_ssl(); });
+        else             run_in_order([](auto& stream) { stream->no_ssl(); });
+    }
 
     connect()->to(request->uri->host(), port)
              ->use_cache(request->cached_resolver)
