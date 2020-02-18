@@ -2,12 +2,14 @@
 #include <panda/log.h>
 
 using namespace std::placeholders;
-using namespace panda::unievent::websocket;
+namespace panda { namespace unievent { namespace websocket {
+
+static log::Module* panda_log_module = &uewslog;
 
 std::atomic<uint64_t> Server::lastid(0);
 
 Server::Server (const LoopSP& loop) : running(false), _loop(loop) {
-    panda_log_info("Server(): loop is default = " << (_loop == Loop::default_loop()));
+    panda_log_notice("Server(): loop is default = " << (_loop == Loop::default_loop()));
 }
 
 void Server::on_delete () noexcept {
@@ -20,7 +22,7 @@ void Server::on_delete () noexcept {
     catch (...) {
         panda_log_critical("[Websocket ~Server] unknown exception caught while stopping server");
     }
-    panda_log_info("server destroy");
+    panda_log_notice("server destroy");
 }
 
 void Server::configure (const Config& conf) {
@@ -49,7 +51,7 @@ void Server::config_apply (const Config& conf) {
 void Server::run () {
     if (running) throw std::logic_error("already running");
     running = true;
-    panda_log_info("websocket::Server::run with conn_conf:" << conn_conf);
+    panda_log_notice("websocket::Server::run with conn_conf:" << conn_conf);
     start_listening();
 }
 
@@ -58,7 +60,7 @@ void Server::stop () { stop((uint16_t)CloseCode::AWAY); }
 void Server::stop (uint16_t code) {
     if (!running) return;
     running = false;
-    panda_log_info("stop!");
+    panda_log_notice("WebSocket server stop!");
     stop_listening();
 
     auto tmp = connections;
@@ -91,7 +93,7 @@ ServerConnectionSP Server::new_connection (uint64_t id) {
 
 void Server::on_tcp_connection (const StreamSP& _lstn, const StreamSP& _conn, const CodeError& err) {
     if (err) {
-        panda_log_info("Server[on_tcp_connection]: error: " << err.whats());
+        panda_log_notice("Server[on_tcp_connection]: error: " << err.whats());
         return;
     }
 
@@ -100,7 +102,7 @@ void Server::on_tcp_connection (const StreamSP& _lstn, const StreamSP& _conn, co
     connections[connection->id()] = connection;
     connection->run(listener.get());
 
-    panda_log_info("Server[on_tcp_connection]: somebody connected to " << listener->location() << ", now i have " << connections.size() << " connections");
+    panda_log_notice("Server[on_tcp_connection]: somebody connected to " << listener->location() << ", now i have " << connections.size() << " connections");
 
     on_connection(connection);
 }
@@ -112,10 +114,12 @@ void Server::on_connection (const ServerConnectionSP& conn) {
 void Server::remove_connection (const ServerConnectionSP& conn, uint16_t code, const string& payload) {
     auto erased = connections.erase(conn->id());
     assert(erased);
-    panda_log_info("Server[remove_connection]: now i have " << connections.size() << " connections");
+    panda_log_notice("Server[remove_connection]: now i have " << connections.size() << " connections");
     on_disconnection(conn, code, payload);
 }
 
 void Server::on_disconnection (const ServerConnectionSP& conn, uint16_t code, const string& payload) {
     disconnection_event(this, conn, code, payload);
 }
+
+}}}

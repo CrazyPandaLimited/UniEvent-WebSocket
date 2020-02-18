@@ -4,6 +4,8 @@
 
 namespace panda { namespace unievent { namespace websocket {
 
+static log::Module* panda_log_module = &uewslog;
+
 Builder::Builder (Builder&& b) : MessageBuilder(std::move(b)), _connection{b._connection} {}
 
 Builder::Builder (Connection& connection) : MessageBuilder(connection.parser->message()), _connection{connection} {}
@@ -22,11 +24,11 @@ void Connection::configure (const Config& conf) {
 }
 
 static void log_use_after_close () {
-    panda_log_debug("using websocket::Connection after close");
+    panda_log_info("using websocket::Connection after close");
 }
 
 void Connection::on_read (string& buf, const CodeError& err) {
-    panda_log_verbose_debug("Websocket on read:" << log::escaped{buf});
+    panda_log_debug("Websocket on read:" << log::escaped{buf});
     assert(_state == State::CONNECTED && parser->established());
     if (err) return process_error(ErrorCode(errc::READ_ERROR, ErrorCode(err.code())));
     if (stats) {
@@ -37,13 +39,13 @@ void Connection::on_read (string& buf, const CodeError& err) {
     auto msg_range = parser->get_messages(buf);
     for (const auto& msg : msg_range) {
         if (msg->error) {
-            panda_log_debug("protocol error :" << msg->error);
+            panda_log_notice("protocol error :" << msg->error);
             process_error(ErrorCode(errc::READ_ERROR, msg->error), CloseCode::PROTOCOL_ERROR);
             break;
         }
         switch (msg->opcode()) {
             case Opcode::CLOSE:
-                panda_log_debug("connection closed by peer:" << msg->close_code());
+                panda_log_notice("connection closed by peer:" << msg->close_code());
                 return process_peer_close(msg);
             case Opcode::PING:
                 on_ping(msg);
@@ -105,7 +107,7 @@ void Connection::on_peer_close (const MessageSP& msg) {
 
 void Connection::on_ping (const MessageSP& msg) {
     if (msg->payload_length() > Frame::MAX_CONTROL_PAYLOAD) {
-        panda_log_info("something weird, ping payload is bigger than possible");
+        panda_log_notice("something weird, ping payload is bigger than possible");
         send_pong(); // send pong without payload
     } else {
         switch (msg->payload.size()) {
@@ -125,7 +127,7 @@ void Connection::on_pong (const MessageSP& msg) {
 }
 
 void Connection::process_error (const ErrorCode& err, uint16_t code) {
-    panda_log_info("websocket error: " << err.message());
+    panda_log_notice("websocket error: " << err.message());
     if (_state == State::INITIAL) return; // just ignore everything, we are here after close
     _error_state = true;
     on_error(err);
@@ -137,12 +139,12 @@ void Connection::on_error (const ErrorCode& err) {
 }
 
 void Connection::on_eof () {
-    panda_log_info("websocket on_eof");
+    panda_log_notice("websocket on_eof");
     process_peer_close(nullptr);
 }
 
 void Connection::on_write (const CodeError& err, const WriteRequestSP& req) {
-    panda_log_verbose_debug("websocket on_write: " << err.whats());
+    panda_log_debug("websocket on_write: " << err.whats());
     if (err && err.code() != std::errc::operation_canceled && err.code() != std::errc::broken_pipe && err.code() != std::errc::not_connected) {
         process_error(ErrorCode(errc::WRITE_ERROR, ErrorCode(err.code())));
     } else if (stats) {
@@ -153,7 +155,7 @@ void Connection::on_write (const CodeError& err, const WriteRequestSP& req) {
 }
 
 void Connection::do_close (uint16_t code, const string& payload) {
-    panda_log_verbose_debug("Connection[close]: code=" << code << ", payload:" << payload);
+    panda_log_debug("Connection[close]: code=" << code << ", payload:" << payload);
     bool was_connected = connected();
 
     if (was_connected && !parser->send_closed()) {

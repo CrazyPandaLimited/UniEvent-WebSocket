@@ -18,4 +18,6 @@ public:
 
 const std::error_category& ws_error_categoty = WSErrorCategoty();
 
+log::Module uewslog("UniEvent::WebSocket", log::Notice);
+
 }}}

@@ -3,6 +3,8 @@
 
 namespace panda { namespace unievent { namespace websocket {
 
+static log::Module* panda_log_module = &uewslog;
+
 Connection::Config Client::default_config;
 
 static ConnectResponseSP cres_from_cerr (const CodeError& err) {
@@ -23,7 +25,7 @@ void Client::connect (const ClientConnectRequestSP& request) {
     if (!request || !request->uri) throw std::invalid_argument("ConnectRequest should contains uri");
 
     auto port = request->uri->port();
-    panda_log_debug("connecting to " << request->uri->host() << ":" << port);
+    panda_log_notice("connecting to " << request->uri->host() << ":" << port);
     bool cur_secure = is_secure();
     bool need_secure = request->uri->secure();
     if (cur_secure != need_secure) {
@@ -44,7 +46,7 @@ void Client::do_close (uint16_t code, const string& payload) {
     bool connecting = _state == State::CONNECTING;
     Connection::do_close(code, payload);
     if (connecting) {
-        panda_log_info("Client::close: connect started but not completed");
+        panda_log_notice("Client::close: connect started but not completed");
         on_connect(cres_from_cerr(std::errc::operation_canceled));
     }
 }
@@ -54,7 +56,7 @@ void Client::on_connect (const ConnectResponseSP& response) {
 }
 
 void Client::on_connect (const CodeError& err, const unievent::ConnectRequestSP&) {
-    panda_log_verbose_debug("websokcet::Client::on_connect(unievent) " <<  err.what());
+    panda_log_debug("websokcet::Client::on_connect(unievent) " <<  err.what());
     if (err) {
         on_connect(cres_from_cerr(err));
     } else {
@@ -66,20 +68,20 @@ void Client::on_connect (const CodeError& err, const unievent::ConnectRequestSP&
 
 void Client::on_read (string& _buf, const CodeError& err) {
     if (_state == State::INITIAL) { // just ignore everything, we are here after close
-        panda_log_debug("use websocket::Client after close");
+        panda_log_info("use websocket::Client after close");
         return;
     }
 
     string buf = string(_buf.data(), _buf.length()); // TODO: remove copying
     if (_state == State::CONNECTED) return Connection::on_read(buf, err);
     if (_state != State::CONNECTING) { // may be read in state TCP_CONNECTED
-        panda_log_debug("ignore all reads if !CONNECTING and !CONNECTED");
+        panda_log_info("ignore all reads if !CONNECTING and !CONNECTED");
         return;
     }
 
     if (err) return on_connect(cres_from_cerr(std::errc::operation_canceled));
 
-    panda_log_verbose_debug("Websocket on read (connecting):" << log::escaped{buf});
+    panda_log_debug("Websocket on read (connecting):" << log::escaped{buf});
 
     auto res = parser.connect(buf);
     if (!res) return;

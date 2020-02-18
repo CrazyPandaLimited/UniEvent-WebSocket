@@ -38,7 +38,7 @@ protected:
     void do_close (uint16_t code, const string& payload) override;
 
     ~ServerConnection () {
-        panda_log_debug("connection destroy");
+        panda_mlog_verbose_debug(uewslog, "connection destroy");
     }
 
 private:

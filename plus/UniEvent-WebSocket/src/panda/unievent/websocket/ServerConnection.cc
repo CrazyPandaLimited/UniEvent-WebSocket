@@ -4,8 +4,10 @@
 
 namespace panda { namespace unievent { namespace websocket {
 
+static log::Module* panda_log_module = &uewslog;
+
 ServerConnection::ServerConnection (Server* server, uint64_t id, const Config& conf) : Connection(server->loop()), _id(id), server(server) {
-    panda_log_info("ServerConnection[new]: id = " << _id);
+    panda_log_notice("ServerConnection[new]: id = " << _id);
     init(parser);
     configure(conf);
     set_nodelay(true);
@@ -18,7 +20,7 @@ void ServerConnection::run (Listener*) {
 
 void ServerConnection::on_read (string& _buf, const CodeError& err) {
     if (_state == State::INITIAL) { // just ignore everything, we are here after close
-        panda_log_debug("use websocket::ServerConnection " << id() << " after close");
+        panda_log_info("use websocket::ServerConnection " << id() << " after close");
         return;
     }
 
@@ -27,7 +29,7 @@ void ServerConnection::on_read (string& _buf, const CodeError& err) {
     assert(_state == State::CONNECTING);
 
     if (err) {
-        panda_log_info("Websocket accept error: " << err.whats());
+        panda_log_notice("Websocket accept error: " << err.whats());
         ConnectRequestSP creq = new protocol::websocket::ConnectRequest();
         creq->error = ErrorCode(errc::READ_ERROR, ErrorCode(err.code()));
         on_accept(creq);
@@ -35,7 +37,7 @@ void ServerConnection::on_read (string& _buf, const CodeError& err) {
         return;
     }
 
-    panda_log_verbose_debug("Websocket on read (accepting):" << log::escaped{buf});
+    panda_log_debug("Websocket on read (accepting):" << log::escaped{buf});
 
     assert(!parser.accept_parsed());
 
@@ -43,7 +45,7 @@ void ServerConnection::on_read (string& _buf, const CodeError& err) {
     if (!creq) return;
 
     if (creq->error) {
-        panda_log_info("Websocket accept error: " << creq->error);
+        panda_log_notice("Websocket accept error: " << creq->error);
         panda::protocol::http::ResponseSP res = new panda::protocol::http::Response();
         send_accept_error(res);
         on_accept(creq);
@@ -79,7 +81,7 @@ void ServerConnection::send_accept_error (panda::protocol::http::Response* res) 
 void ServerConnection::send_accept_response (ConnectResponse* res) {
     write(parser.accept_response(res));
     auto using_deflate = parser.is_deflate_active();
-    panda_log_debug("websocket::ServerConnection " << id() << " has been accepted, "
+    panda_log_info("websocket::ServerConnection " << id() << " has been accepted, "
                     << "deflate is " << (using_deflate ? "on" : "off"));
 
     panda_elog_verbose_debug({

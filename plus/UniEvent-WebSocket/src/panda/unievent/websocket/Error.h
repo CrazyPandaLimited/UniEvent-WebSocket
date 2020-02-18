@@ -1,6 +1,7 @@
 #pragma once
 
 #include <panda/error.h>
+#include <panda/log.h>
 
 namespace panda { namespace unievent { namespace websocket {
 
@@ -15,6 +16,8 @@ extern const std::error_category& ws_error_categoty;
 inline std::error_code make_error_code(errc err) noexcept {
     return std::error_code(int(err), ws_error_categoty);
 }
+
+extern log::Module uewslog;
 
 }}}
 
