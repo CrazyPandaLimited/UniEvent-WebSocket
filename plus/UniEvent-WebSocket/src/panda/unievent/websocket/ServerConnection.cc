@@ -81,10 +81,10 @@ void ServerConnection::send_accept_error (panda::protocol::http::Response* res) 
 void ServerConnection::send_accept_response (ConnectResponse* res) {
     write(parser.accept_response(res));
     auto using_deflate = parser.is_deflate_active();
-    panda_log_info("websocket::ServerConnection " << id() << " has been accepted, "
+    panda_log_notice("websocket::ServerConnection " << id() << " has been accepted, "
                     << "deflate is " << (using_deflate ? "on" : "off"));
 
-    panda_elog_verbose_debug({
+    panda_elog_debug({
         auto deflate_cfg = parser.effective_deflate_config();
         if (deflate_cfg) {
             log << "websocket::ServerConnection " << id() << " agreed deflate settings"
