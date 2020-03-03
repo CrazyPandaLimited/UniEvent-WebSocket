@@ -12,7 +12,7 @@ Builder::Builder (Connection& connection) : MessageBuilder(connection.parser->me
 
 void Builder::send (string& payload, const Stream::write_fn& callback) {
     if (!_connection.connected()) {
-        if (callback) callback(&_connection, CodeError(errc::WRITE_ERROR), new unievent::WriteRequest());
+        if (callback) callback(&_connection, errc::WRITE_ERROR, new unievent::WriteRequest());
         return;
     }
     auto all = MessageBuilder::send(payload);
@@ -27,10 +27,10 @@ static void log_use_after_close () {
     panda_log_info("using websocket::Connection after close");
 }
 
-void Connection::on_read (string& buf, const CodeError& err) {
+void Connection::on_read (string& buf, const std::error_code& err) {
     panda_log_debug("Websocket on read:" << log::escaped{buf});
     assert(_state == State::CONNECTED && parser->established());
-    if (err) return process_error(ErrorCode(errc::READ_ERROR, ErrorCode(err.code())));
+    if (err) return process_error(ErrorCode(errc::READ_ERROR, err));
     if (stats) {
         stats->bytes_in += buf.size();
         stats->msgs_in++;
@@ -143,10 +143,10 @@ void Connection::on_eof () {
     process_peer_close(nullptr);
 }
 
-void Connection::on_write (const CodeError& err, const WriteRequestSP& req) {
-    panda_log_debug("websocket on_write: " << err.whats());
-    if (err && err.code() != std::errc::operation_canceled && err.code() != std::errc::broken_pipe && err.code() != std::errc::not_connected) {
-        process_error(ErrorCode(errc::WRITE_ERROR, ErrorCode(err.code())));
+void Connection::on_write (const std::error_code& err, const WriteRequestSP& req) {
+    panda_log_debug("websocket on_write: " << err);
+    if (err && err != std::errc::operation_canceled && err != std::errc::broken_pipe && err != std::errc::not_connected) {
+        process_error(ErrorCode(errc::WRITE_ERROR, err));
     } else if (stats) {
         size_t size = std::accumulate(req->bufs.begin(), req->bufs.end(), size_t(0), [](size_t r, const string& s) {return r + s.size();});
         stats->bytes_out += size;

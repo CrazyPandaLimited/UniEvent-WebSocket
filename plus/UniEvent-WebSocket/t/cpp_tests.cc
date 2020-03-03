@@ -91,7 +91,7 @@ TEST_CASE("on_read after close", "[uews]") {
 
         size_t rcount = 0;
         p.client->read_event.add([&](auto client, auto&, auto& err){
-            if (err) WARN(err.what());
+            if (err) WARN(err);
             REQUIRE_FALSE(err);
             rcount++;
             client->shutdown();

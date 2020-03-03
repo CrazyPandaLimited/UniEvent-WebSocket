@@ -7,9 +7,9 @@ static log::Module* panda_log_module = &uewslog;
 
 Connection::Config Client::default_config;
 
-static ConnectResponseSP cres_from_cerr (const CodeError& err) {
+static ConnectResponseSP cres_from_cerr (const std::error_code& err) {
     ConnectResponseSP res = new ConnectResponse();
-    res->error = ErrorCode(errc::CONNECT_ERROR, ErrorCode(err.code()));
+    res->error = ErrorCode(errc::CONNECT_ERROR, err);
     return res;
 }
 
@@ -47,7 +47,7 @@ void Client::do_close (uint16_t code, const string& payload) {
     Connection::do_close(code, payload);
     if (connecting) {
         panda_log_notice("Client::close: connect started but not completed");
-        on_connect(cres_from_cerr(std::errc::operation_canceled));
+        on_connect(cres_from_cerr(make_error_code(std::errc::operation_canceled)));
     }
 }
 
@@ -55,8 +55,8 @@ void Client::on_connect (const ConnectResponseSP& response) {
     connect_event(this, response);
 }
 
-void Client::on_connect (const CodeError& err, const unievent::ConnectRequestSP&) {
-    panda_log_debug("websokcet::Client::on_connect(unievent) " <<  err.what());
+void Client::on_connect (const std::error_code& err, const unievent::ConnectRequestSP&) {
+    panda_log_debug("websokcet::Client::on_connect(unievent) " <<  err);
     if (err) {
         on_connect(cres_from_cerr(err));
     } else {
@@ -66,7 +66,7 @@ void Client::on_connect (const CodeError& err, const unievent::ConnectRequestSP&
     }
 }
 
-void Client::on_read (string& _buf, const CodeError& err) {
+void Client::on_read (string& _buf, const std::error_code& err) {
     if (_state == State::INITIAL) { // just ignore everything, we are here after close
         panda_log_info("use websocket::Client after close");
         return;
@@ -79,7 +79,7 @@ void Client::on_read (string& _buf, const CodeError& err) {
         return;
     }
 
-    if (err) return on_connect(cres_from_cerr(std::errc::operation_canceled));
+    if (err) return on_connect(cres_from_cerr(make_error_code(std::errc::operation_canceled)));
 
     panda_log_debug("Websocket on read (connecting):" << log::escaped{buf});
 

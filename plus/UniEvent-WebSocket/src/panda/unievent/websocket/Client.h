@@ -31,8 +31,8 @@ protected:
 
     virtual void on_connect (const ConnectResponseSP& response);
 
-    void on_connect (const CodeError&, const unievent::ConnectRequestSP&) override;
-    void on_read    (string& buf, const CodeError&) override;
+    void on_connect (const std::error_code&, const unievent::ConnectRequestSP&) override;
+    void on_read    (string& buf, const std::error_code&) override;
 
     void do_close (uint16_t code, const string&) override;
 

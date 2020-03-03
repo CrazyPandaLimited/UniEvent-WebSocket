@@ -18,7 +18,7 @@ void ServerConnection::run (Listener*) {
     _state = State::CONNECTING;
 }
 
-void ServerConnection::on_read (string& _buf, const CodeError& err) {
+void ServerConnection::on_read (string& _buf, const std::error_code& err) {
     if (_state == State::INITIAL) { // just ignore everything, we are here after close
         panda_log_info("use websocket::ServerConnection " << id() << " after close");
         return;
@@ -29,9 +29,9 @@ void ServerConnection::on_read (string& _buf, const CodeError& err) {
     assert(_state == State::CONNECTING);
 
     if (err) {
-        panda_log_notice("Websocket accept error: " << err.whats());
+        panda_log_notice("Websocket accept error: " << err);
         ConnectRequestSP creq = new protocol::websocket::ConnectRequest();
-        creq->error = ErrorCode(errc::READ_ERROR, ErrorCode(err.code()));
+        creq->error = ErrorCode(errc::READ_ERROR, err);
         on_accept(creq);
         close();
         return;

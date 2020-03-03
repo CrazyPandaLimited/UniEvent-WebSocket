@@ -127,9 +127,9 @@ protected:
 
     virtual void do_close (uint16_t code, const string& payload);
 
-    void on_read  (string&, const CodeError&) override;
+    void on_read  (string&, const std::error_code&) override;
     void on_eof   () override;
-    void on_write (const CodeError&, const WriteRequestSP&) override;
+    void on_write (const std::error_code&, const WriteRequestSP&) override;
 
     void process_error (const ErrorCode& err, uint16_t code = CloseCode::ABNORMALLY);
 
@@ -147,7 +147,7 @@ private:
 template <class Begin, class End>
 void Builder::send (Begin begin, End end, const Stream::write_fn& callback) {
     if (!_connection.connected()) {
-        if (callback) callback(&_connection, CodeError(errc::WRITE_ERROR), new unievent::WriteRequest());
+        if (callback) callback(&_connection, errc::WRITE_ERROR, new unievent::WriteRequest());
         return;
     }
     auto all = MessageBuilder::send(begin, end);
