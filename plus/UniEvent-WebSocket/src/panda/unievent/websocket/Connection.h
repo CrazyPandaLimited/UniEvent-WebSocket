@@ -127,9 +127,9 @@ protected:
 
     virtual void do_close (uint16_t code, const string& payload);
 
-    void on_read  (string&, const std::error_code&) override;
+    void on_read  (string&, const ErrorCode&) override;
     void on_eof   () override;
-    void on_write (const std::error_code&, const WriteRequestSP&) override;
+    void on_write (const ErrorCode&, const WriteRequestSP&) override;
 
     void process_error (const ErrorCode& err, uint16_t code = CloseCode::ABNORMALLY);
 

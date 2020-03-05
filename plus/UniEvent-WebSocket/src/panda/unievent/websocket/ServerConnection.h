@@ -33,7 +33,7 @@ struct ServerConnection : virtual Connection {
 protected:
     virtual void on_accept (const ConnectRequestSP&);
 
-    void on_read (string&, const std::error_code&) override;
+    void on_read (string&, const ErrorCode&) override;
 
     void do_close (uint16_t code, const string& payload) override;
 

@@ -74,7 +74,7 @@ private:
     std::vector<Location>   locations;
     std::vector<ListenerSP> listeners;
 
-    void on_tcp_connection (const StreamSP&, const StreamSP&, const std::error_code&);
+    void on_tcp_connection (const StreamSP&, const StreamSP&, const ErrorCode&);
     void remove_connection (const ServerConnectionSP& conn, uint16_t code = uint16_t(CloseCode::ABNORMALLY), const string& payload = "");
 };
 

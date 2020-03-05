@@ -7,9 +7,9 @@ static log::Module* panda_log_module = &uewslog;
 
 Connection::Config Client::default_config;
 
-static ConnectResponseSP cres_from_cerr (const std::error_code& err) {
+static ConnectResponseSP cres_from_cerr (const ErrorCode& err) {
     ConnectResponseSP res = new ConnectResponse();
-    res->error = ErrorCode(errc::CONNECT_ERROR, err);
+    res->error = nest_error(errc::CONNECT_ERROR, err);
     return res;
 }
 
@@ -55,7 +55,7 @@ void Client::on_connect (const ConnectResponseSP& response) {
     connect_event(this, response);
 }
 
-void Client::on_connect (const std::error_code& err, const unievent::ConnectRequestSP&) {
+void Client::on_connect (const ErrorCode& err, const unievent::ConnectRequestSP&) {
     panda_log_debug("websokcet::Client::on_connect(unievent) " <<  err);
     if (err) {
         on_connect(cres_from_cerr(err));
@@ -66,7 +66,7 @@ void Client::on_connect (const std::error_code& err, const unievent::ConnectRequ
     }
 }
 
-void Client::on_read (string& _buf, const std::error_code& err) {
+void Client::on_read (string& _buf, const ErrorCode& err) {
     if (_state == State::INITIAL) { // just ignore everything, we are here after close
         panda_log_info("use websocket::Client after close");
         return;

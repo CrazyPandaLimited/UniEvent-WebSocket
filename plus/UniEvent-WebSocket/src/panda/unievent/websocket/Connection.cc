@@ -27,10 +27,10 @@ static void log_use_after_close () {
     panda_log_info("using websocket::Connection after close");
 }
 
-void Connection::on_read (string& buf, const std::error_code& err) {
+void Connection::on_read (string& buf, const ErrorCode& err) {
     panda_log_debug("Websocket on read:" << log::escaped{buf});
     assert(_state == State::CONNECTED && parser->established());
-    if (err) return process_error(ErrorCode(errc::READ_ERROR, err));
+    if (err) return process_error(nest_error(errc::READ_ERROR, err));
     if (stats) {
         stats->bytes_in += buf.size();
         stats->msgs_in++;
@@ -40,7 +40,7 @@ void Connection::on_read (string& buf, const std::error_code& err) {
     for (const auto& msg : msg_range) {
         if (msg->error) {
             panda_log_notice("protocol error :" << msg->error);
-            process_error(ErrorCode(errc::READ_ERROR, msg->error), CloseCode::PROTOCOL_ERROR);
+            process_error(nest_error(errc::READ_ERROR, msg->error), CloseCode::PROTOCOL_ERROR);
             break;
         }
         switch (msg->opcode()) {
@@ -143,10 +143,10 @@ void Connection::on_eof () {
     process_peer_close(nullptr);
 }
 
-void Connection::on_write (const std::error_code& err, const WriteRequestSP& req) {
+void Connection::on_write (const ErrorCode& err, const WriteRequestSP& req) {
     panda_log_debug("websocket on_write: " << err);
     if (err && err != std::errc::operation_canceled && err != std::errc::broken_pipe && err != std::errc::not_connected) {
-        process_error(ErrorCode(errc::WRITE_ERROR, err));
+        process_error(nest_error(errc::WRITE_ERROR, err));
     } else if (stats) {
         size_t size = std::accumulate(req->bufs.begin(), req->bufs.end(), size_t(0), [](size_t r, const string& s) {return r + s.size();});
         stats->bytes_out += size;

@@ -91,7 +91,7 @@ ServerConnectionSP Server::new_connection (uint64_t id) {
     return new ServerConnection(this, id, conn_conf);
 }
 
-void Server::on_tcp_connection (const StreamSP& _lstn, const StreamSP& _conn, const std::error_code& err) {
+void Server::on_tcp_connection (const StreamSP& _lstn, const StreamSP& _conn, const ErrorCode& err) {
     if (err) {
         panda_log_notice("Server[on_tcp_connection]: error: " << err);
         return;
