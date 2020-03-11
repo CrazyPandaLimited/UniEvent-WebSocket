@@ -5,6 +5,7 @@
 namespace panda { namespace unievent { namespace websocket {
 
 static log::Module* panda_log_module = &uewslog;
+using protocol::websocket::ccfmt;
 
 Builder::Builder (Builder&& b) : MessageBuilder(std::move(b)), _connection{b._connection} {}
 
@@ -45,7 +46,7 @@ void Connection::on_read (string& buf, const ErrorCode& err) {
         }
         switch (msg->opcode()) {
             case Opcode::CLOSE:
-                panda_log_notice("connection closed by peer:" << msg->close_code());
+                panda_log_notice("connection closed by peer:" << ccfmt(msg->close_code(), msg->close_message()));
                 return process_peer_close(msg);
             case Opcode::PING:
                 on_ping(msg);
@@ -155,7 +156,7 @@ void Connection::on_write (const ErrorCode& err, const WriteRequestSP& req) {
 }
 
 void Connection::do_close (uint16_t code, const string& payload) {
-    panda_log_debug("Connection[close]: code=" << code << ", payload:" << payload);
+    panda_log_debug("Connection[close]: code=" << ccfmt(code, payload));
     bool was_connected = connected();
 
     if (was_connected && !parser->send_closed()) {

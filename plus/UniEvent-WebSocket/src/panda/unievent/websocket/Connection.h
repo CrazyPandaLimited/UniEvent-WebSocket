@@ -86,7 +86,11 @@ struct Connection : Tcp, protected ITcpSelfListener {
     void send_ping ();
     void send_pong ();
 
-    void close (uint16_t code = uint16_t(CloseCode::DONE), const string& payload = string()) {
+    void close (uint16_t code = uint16_t(CloseCode::DONE)) {
+        close (code, close_message(code));
+    }
+
+    void close (uint16_t code, const string& payload) {
         if (_state == State::INITIAL) return;
         do_close(code, payload);
     }
