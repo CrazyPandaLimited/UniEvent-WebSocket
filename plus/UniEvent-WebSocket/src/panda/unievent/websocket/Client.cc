@@ -3,7 +3,7 @@
 
 namespace panda { namespace unievent { namespace websocket {
 
-static log::Module* panda_log_module = &uewslog;
+static const auto& panda_log_module = uewslog;
 
 Connection::Config Client::default_config;
 

@@ -4,7 +4,7 @@
 using namespace std::placeholders;
 namespace panda { namespace unievent { namespace websocket {
 
-static log::Module* panda_log_module = &uewslog;
+static const auto& panda_log_module = uewslog;
 
 std::atomic<uint64_t> Server::lastid(0);
 
