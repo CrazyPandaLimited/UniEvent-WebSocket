@@ -20,13 +20,13 @@ struct Builder : private MessageBuilder {
 
     Builder (Builder&&);
 
-    void send (string& payload, const Stream::write_fn& callback = {});
+    WriteRequestSP send (string& payload, const Stream::write_fn& callback = {});
 
     Builder& opcode  (Opcode value) { MessageBuilder::opcode(value); return *this; }
     Builder& deflate (bool value)   { MessageBuilder::deflate(value); return *this; }
 
     template <class Begin, class End>
-    void send (Begin begin, End end, const Stream::write_fn& callback = {});
+    WriteRequestSP send (Begin begin, End end, const Stream::write_fn& callback = {});
 
 protected:
     friend struct Connection;
@@ -149,13 +149,18 @@ private:
 };
 
 template <class Begin, class End>
-void Builder::send (Begin begin, End end, const Stream::write_fn& callback) {
+WriteRequestSP Builder::send (Begin begin, End end, const Stream::write_fn& callback) {
     if (!_connection.connected()) {
         if (callback) callback(&_connection, errc::WRITE_ERROR, new unievent::WriteRequest());
-        return;
+        return nullptr;
     }
     auto all = MessageBuilder::send(begin, end);
-    _connection.write(all.begin(), all.end(), callback);
+    WriteRequestSP req = new WriteRequest(all.begin(), all.end());
+    if (callback) {
+        req->event.add(callback);
+    }
+    _connection.write(req);
+    return req;
 }
 
 inline Connection::~Connection () {}
