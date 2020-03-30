@@ -283,3 +283,58 @@ TEST_CASE("connect and close", "[uews]") {
     test.run();
     SUCCEED("ok");
 }
+
+TEST_CASE("connect timeout", "[uews]") {
+    AsyncTest test(1000, {"connect"});
+    using panda::net::SockAddr;
+    using panda::uri::URI;
+
+    panda::iptr<panda::Refcnt> server;
+    panda::unievent::StreamSP sconn;
+    bool error = true;
+    const uint64_t TIME = 5;
+
+    SockAddr addr;
+    ClientSP client = new Client(test.loop);
+
+    SECTION("blackhole") {
+        addr = test.get_blackhole_addr();
+    }
+    SECTION("no ws") {
+        panda::unievent::TcpSP tserver = new panda::unievent::Tcp(test.loop);
+        tserver->bind("127.0.0.1", 0);
+        tserver->listen(1);
+        tserver->connection_event.add([&](auto, auto conn, auto) {
+            sconn = conn;
+        });
+        addr = tserver->sockaddr();
+        server = tserver;
+    }
+    SECTION("real") {
+        error = false;
+        uint16_t port = 0;
+        auto wsserver = make_server(test.loop, port);
+        addr = SockAddr::Inet4("127.0.0.1", port);
+        client->connect_event.add([&](auto, auto res) {
+            REQUIRE_FALSE(res->error);
+        });
+        server = wsserver;
+    }
+
+
+    ClientConnectRequestSP req = new ClientConnectRequest();
+    req->uri = new URI;
+    req->uri->host(addr.ip());
+    req->uri->port(addr.port());
+    req->uri->scheme(panda::unievent::websocket::ws_scheme(false));
+    req->timeout.set(TIME);
+
+    client->connect(req);
+
+    auto tup = test.await(client->connect_event, "connect");
+    if (error) {
+        REQUIRE(std::get<1>(tup)->error.contains(make_error_code(std::errc::timed_out)));
+    } else {
+        test.wait(TIME + 1);
+    }
+}

@@ -36,7 +36,11 @@ void Client::connect (const ClientConnectRequestSP& request) {
     connect()->to(request->uri->host(), port)
              ->use_cache(request->cached_resolver)
              ->set_hints(request->addr_hints)
+             ->timeout(request->timeout.value)
              ->run();
+
+    request->timeout.start(loop());
+    connect_request = request;
 
     write(parser.connect_request(request));
     _state = State::TCP_CONNECTING;
@@ -52,6 +56,7 @@ void Client::do_close (uint16_t code, const string& payload) {
 }
 
 void Client::on_connect (const ConnectResponseSP& response) {
+    connect_request->timeout.done();
     connect_event(this, response);
 }
 
@@ -63,6 +68,10 @@ void Client::on_connect (const ErrorCode& err, const unievent::ConnectRequestSP&
         set_nodelay(true);
         _state = State::CONNECTING;
         read_start();
+        connect_request->timeout.next([=]() {
+            on_connect(cres_from_cerr(make_error_code(std::errc::timed_out)));
+            Connection::do_close(CloseCode::ABNORMALLY, "");
+        });
     }
 }
 

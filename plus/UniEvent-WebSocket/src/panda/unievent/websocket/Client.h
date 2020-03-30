@@ -1,11 +1,14 @@
 #pragma once
 #include "Connection.h"
+#include "WrapperTimeout.h"
 #include <panda/protocol/websocket/ClientParser.h>
 
 namespace panda { namespace unievent { namespace websocket {
 
 struct ClientConnectRequest : panda::protocol::websocket::ConnectRequest {
     using panda::protocol::websocket::ConnectRequest::ConnectRequest;
+
+    WrapperTimeout timeout;
 
     unievent::AddrInfoHints addr_hints = Tcp::defhints;
     bool cached_resolver = true;
@@ -38,6 +41,7 @@ protected:
 
     using Tcp::connect;
 
+    ClientConnectRequestSP connect_request;
 private:
     ClientParser parser;
 };
