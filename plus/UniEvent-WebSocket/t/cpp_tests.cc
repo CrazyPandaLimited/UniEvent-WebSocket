@@ -315,8 +315,9 @@ TEST_CASE("connect timeout", "[uews]") {
         uint16_t port = 0;
         auto wsserver = make_server(test.loop, port);
         addr = SockAddr::Inet4("127.0.0.1", port);
-        client->connect_event.add([&](auto, auto res) {
-            REQUIRE_FALSE(res->error);
+        test.expected.push_back("cb");
+        client->connect_event.add([&](auto, auto) {
+            test.happens("cb"); // to check it called once. Checking error is wrong in cases of slow connect or under stress
         });
         server = wsserver;
     }
