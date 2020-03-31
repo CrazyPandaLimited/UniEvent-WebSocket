@@ -25,7 +25,7 @@ void Client::connect (const ClientConnectRequestSP& request) {
     if (!request || !request->uri) throw std::invalid_argument("ConnectRequest should contains uri");
 
     auto port = request->uri->port();
-    panda_log_notice("connecting to " << request->uri->host() << ":" << port);
+    panda_log_notice("connecting to " << request->uri->host() << ":" << port << " timeout " << request->timeout.value << "ms");
     bool cur_secure = is_secure();
     bool need_secure = request->uri->secure();
     if (cur_secure != need_secure) {

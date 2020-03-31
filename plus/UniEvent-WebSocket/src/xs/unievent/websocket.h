@@ -48,6 +48,8 @@ namespace xs { namespace unievent  { namespace websocket {
         ~XSServer () { Backref::dtor(); }
     };
 
+    inline uint64_t get_time (double val) { return val * 1000; }
+
     inline ClientConnectRequestSP  make_request  (const Hash& params, const ClientConnectRequestSP& dest = {}) {
         ClientConnectRequestSP ret = dest ? dest : ClientConnectRequestSP(new ClientConnectRequest());
         xs::protocol::websocket::make_request(params, ret);
@@ -56,6 +58,7 @@ namespace xs { namespace unievent  { namespace websocket {
 
         if ((val = params.fetch("addr_hints")))      ret->addr_hints = xs::in<panda::unievent::AddrInfoHints>(val);
         if ((val = params.fetch("cached_resolver"))) ret->cached_resolver = SvTRUE(val);
+        if ((val = params.fetch("timeout")))         ret->timeout.set(get_time(Simple(val)));
 
         return ret;
     }
