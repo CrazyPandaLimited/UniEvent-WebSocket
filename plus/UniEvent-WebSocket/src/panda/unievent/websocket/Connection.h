@@ -40,7 +40,7 @@ private:
 struct Connection : Tcp, protected ITcpSelfListener {
     struct Config: public Parser::Config {};
 
-    enum class State { INITIAL, TCP_CONNECTING, CONNECTING, CONNECTED };
+    enum class State { INITIAL, TCP_CONNECTING, CONNECTING, CONNECTED, HALT };
 
     Connection (const LoopSP& loop) : Tcp(loop), _state(State::INITIAL), _error_state() {
         event_listener(this);

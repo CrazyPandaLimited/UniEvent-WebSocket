@@ -43,6 +43,8 @@ protected:
 
     ClientConnectRequestSP connect_request;
 private:
+    void call_on_connect(const ConnectResponseSP& response);
+
     ClientParser parser;
 };
 

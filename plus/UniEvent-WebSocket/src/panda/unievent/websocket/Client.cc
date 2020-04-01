@@ -51,22 +51,29 @@ void Client::do_close (uint16_t code, const string& payload) {
     Connection::do_close(code, payload);
     if (connecting) {
         panda_log_notice("Client::close: connect started but not completed");
-        on_connect(cres_from_cerr(make_error_code(std::errc::operation_canceled)));
+        call_on_connect(cres_from_cerr(make_error_code(std::errc::operation_canceled)));
     }
 }
 
-void Client::on_connect (const ConnectResponseSP& response) {
+void Client::call_on_connect(const ConnectResponseSP &response) {
     connect_request->timeout.done();
+    if (response->error) {
+        _state = State::HALT;
+    }
+    on_connect(response);
+}
+
+void Client::on_connect (const ConnectResponseSP& response) {
     connect_event(this, response);
 }
 
 void Client::on_connect (const ErrorCode& err, const unievent::ConnectRequestSP&) {
     panda_log_debug("websokcet::Client::on_connect(unievent) " <<  err);
     if (err) {
-        on_connect(cres_from_cerr(err));
+        call_on_connect(cres_from_cerr(err));
     } else {
         auto have_time = connect_request->timeout.next([=]() {
-            on_connect(cres_from_cerr(make_error_code(std::errc::timed_out)));
+            call_on_connect(cres_from_cerr(make_error_code(std::errc::timed_out)));
             Connection::do_close(CloseCode::ABNORMALLY, "");
         });
         if (!have_time) {
@@ -91,7 +98,7 @@ void Client::on_read (string& _buf, const ErrorCode& err) {
         return;
     }
 
-    if (err) return on_connect(cres_from_cerr(make_error_code(std::errc::operation_canceled)));
+    if (err) return call_on_connect(cres_from_cerr(make_error_code(std::errc::operation_canceled)));
 
     panda_log_debug("Websocket on read (connecting):" << log::escaped{buf});
 
@@ -99,7 +106,7 @@ void Client::on_read (string& _buf, const ErrorCode& err) {
     if (!res) return;
 
     if (parser.established()) _state = State::CONNECTED;
-    on_connect(res);
+    call_on_connect(res);
 
     string empty;
     if (_state == State::CONNECTED) Connection::on_read(empty, err); // in case of messages in buffer with handshake
