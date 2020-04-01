@@ -1,6 +1,7 @@
 #pragma once
 
 #include <panda/unievent/Timer.h>
+#include <panda/excepted.h>
 
 namespace panda { namespace unievent { namespace websocket {
 
@@ -14,29 +15,28 @@ struct WrapperTimeout {
         this->loop = loop;
     }
 
-    void next(const function<void()>& cb) {
-        if (value == 0) return;
+    excepted<void, ErrorCode> next(const function<void()>& cb) {
+        if (value == 0) return {};
         auto dt = loop->now() - t0;
         if (value > dt) {
             timer = Timer::once(value - dt, [cb](auto){cb();}, loop);
+            return {};
         } else {
-            delay_id = loop->delay(cb);
+            cb();
+            return make_unexpected(make_error_code(std::errc::timed_out));
         }
     }
 
     void done() {
         if (value == 0) return;
-        if (delay_id) {
-            loop->cancel_delay(delay_id);
-        }
         if (timer) {
             timer->stop();
+            timer.reset();
         }
     }
 
     uint64_t value    = 0;
     uint64_t t0       = 0;
-    uint64_t delay_id = 0;
     LoopSP   loop;
     TimerSP  timer;
 };

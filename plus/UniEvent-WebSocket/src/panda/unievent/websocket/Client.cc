@@ -65,13 +65,16 @@ void Client::on_connect (const ErrorCode& err, const unievent::ConnectRequestSP&
     if (err) {
         on_connect(cres_from_cerr(err));
     } else {
-        set_nodelay(true);
-        _state = State::CONNECTING;
-        read_start();
-        connect_request->timeout.next([=]() {
+        auto have_time = connect_request->timeout.next([=]() {
             on_connect(cres_from_cerr(make_error_code(std::errc::timed_out)));
             Connection::do_close(CloseCode::ABNORMALLY, "");
         });
+        if (!have_time) {
+            return;
+        }
+        set_nodelay(true);
+        _state = State::CONNECTING;
+        read_start();
     }
 }
 
