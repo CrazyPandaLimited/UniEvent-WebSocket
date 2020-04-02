@@ -51,6 +51,7 @@ struct Connection : Tcp, protected ITcpSelfListener {
     State state () const { return _state; }
 
     bool connected () const { return _state == State::CONNECTED; }
+    bool connecting () const { return _state == State::CONNECTING || _state == State::TCP_CONNECTING; }
 
     CallbackDispatcher<void(const ConnectionSP&, const MessageSP&)>        message_event;
     CallbackDispatcher<void(const ConnectionSP&, const ErrorCode&)>        error_event;
