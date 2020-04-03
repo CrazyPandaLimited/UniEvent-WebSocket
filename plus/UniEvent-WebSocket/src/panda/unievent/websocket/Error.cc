@@ -2,7 +2,7 @@
 
 namespace panda { namespace unievent { namespace websocket {
 
-class WSErrorCategoty : public std::error_category
+class WSErrorCategory : public std::error_category
 {
 public:
     const char * name() const noexcept override {return "unievent::websocket::Error";}
@@ -16,7 +16,7 @@ public:
     }
 };
 
-const std::error_category& ws_error_categoty = WSErrorCategoty();
+const std::error_category& ws_error_category = WSErrorCategory();
 
 log::Module uewslog("UniEvent::WebSocket", log::Notice);
 

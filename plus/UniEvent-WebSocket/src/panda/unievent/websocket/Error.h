@@ -11,10 +11,10 @@ enum class errc {
     CONNECT_ERROR
 };
 
-extern const std::error_category& ws_error_categoty;
+extern const std::error_category& ws_error_category;
 
 inline std::error_code make_error_code(errc err) noexcept {
-    return std::error_code(int(err), ws_error_categoty);
+    return std::error_code(int(err), ws_error_category);
 }
 
 extern log::Module uewslog;
