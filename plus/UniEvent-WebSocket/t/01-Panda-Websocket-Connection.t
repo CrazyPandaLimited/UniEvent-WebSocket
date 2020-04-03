@@ -22,7 +22,7 @@ $server->accept_filter(sub {
     my $creq = shift;
     my $auth = $creq->header('MyAuth');
     if ($auth && $auth eq 'MyPass') {
-        return new Protocol::WebSocket::XS::HTTPResponse({
+        return new Protocol::WebSocket::Fast::HTTPResponse({
             code => 403,
             message => 'fuck off',
         });
