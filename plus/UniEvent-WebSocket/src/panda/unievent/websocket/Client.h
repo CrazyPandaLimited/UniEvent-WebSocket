@@ -20,14 +20,16 @@ struct Client;
 using ClientSP = iptr<Client>;
 
 struct Client : virtual Connection {
+    using connect_fptr = void(const ClientSP&, const ConnectResponseSP&);
+    using connect_fn   = function<connect_fptr>;
+
     static Config default_config;
+
+    CallbackDispatcher<connect_fptr> connect_event;
 
     Client (const LoopSP& loop = Loop::default_loop(), const Config& = default_config);
 
-    CallbackDispatcher<void(const ClientSP&, const ConnectResponseSP&)> connect_event;
-
     void connect (const ClientConnectRequestSP& request);
-
 
 protected:
     using Connection::on_connect; // suppress 'hide' warnings

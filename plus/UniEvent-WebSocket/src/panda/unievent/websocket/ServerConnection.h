@@ -15,6 +15,7 @@ using ServerConnectionSP = iptr<ServerConnection>;
 
 struct ServerConnection : virtual Connection {
     using accept_fptr = void(const ServerConnectionSP&, const ConnectRequestSP&);
+    using accept_fn   = function<accept_fptr>;
 
     CallbackDispatcher<accept_fptr> accept_event;
 

@@ -38,9 +38,29 @@ private:
 
 
 struct Connection : Tcp, protected ITcpSelfListener {
-    struct Config: public Parser::Config {};
+    using message_fptr    = void(const ConnectionSP&, const MessageSP&);
+    using message_fn      = function<message_fptr>;
+    using error_fptr      = void(const ConnectionSP&, const ErrorCode&);
+    using error_fn        = function<error_fptr>;
+    using close_fptr      = void(const ConnectionSP&, uint16_t, const string&);
+    using close_fn        = function<close_fptr>;
+    using peer_close_fptr = void(const ConnectionSP&, const MessageSP&);
+    using peer_close_fn   = function<peer_close_fptr>;
+    using ping_fptr       = void(const ConnectionSP&, const MessageSP&);
+    using ping_fn         = function<ping_fptr>;
+    using pong_fptr       = ping_fptr;
+    using pong_fn         = function<pong_fptr>;
+
+    struct Config : Parser::Config {};
 
     enum class State { INITIAL, TCP_CONNECTING, CONNECTING, CONNECTED, HALT };
+
+    CallbackDispatcher<message_fptr>    message_event;
+    CallbackDispatcher<error_fptr>      error_event;
+    CallbackDispatcher<close_fptr>      close_event;
+    CallbackDispatcher<peer_close_fptr> peer_close_event;
+    CallbackDispatcher<ping_fptr>       ping_event;
+    CallbackDispatcher<pong_fptr>       pong_event;
 
     Connection (const LoopSP& loop) : Tcp(loop), _state(State::INITIAL), _error_state() {
         event_listener(this);
@@ -52,13 +72,6 @@ struct Connection : Tcp, protected ITcpSelfListener {
 
     bool connected () const { return _state == State::CONNECTED; }
     bool connecting () const { return _state == State::CONNECTING || _state == State::TCP_CONNECTING; }
-
-    CallbackDispatcher<void(const ConnectionSP&, const MessageSP&)>        message_event;
-    CallbackDispatcher<void(const ConnectionSP&, const ErrorCode&)>        error_event;
-    CallbackDispatcher<void(const ConnectionSP&, uint16_t, const string&)> close_event;
-    CallbackDispatcher<void(const ConnectionSP&, const MessageSP&)>        peer_close_event;
-    CallbackDispatcher<void(const ConnectionSP&, const MessageSP&)>        ping_event;
-    CallbackDispatcher<void(const ConnectionSP&, const MessageSP&)>        pong_event;
 
     Builder message () { return Builder(*this); }
 

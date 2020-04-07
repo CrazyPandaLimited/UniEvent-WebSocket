@@ -11,18 +11,21 @@ struct Server;
 using ServerSP = iptr<Server>;
 
 struct Server : virtual Refcntd {
+    using Connections        = std::map<uint64_t, ServerConnectionSP>;
+    using accept_filter_fn   = function<panda::protocol::http::ResponseSP(const ConnectRequestSP&)>;
+    using connection_fptr    = void(const ServerSP&, const ServerConnectionSP&);
+    using connection_fn      = function<connection_fptr>;
+    using disconnection_fptr = void(const ServerSP&, const ServerConnectionSP&, uint16_t code, const string& payload);
+    using disconnection_fn   = function<disconnection_fptr>;
+
     struct Config {
         std::vector<Location> locations;
         Connection::Config    connection;
     };
-    using accept_filter_fn   = function<panda::protocol::http::ResponseSP(const ConnectRequestSP&)>;
-    using connection_fptr    = void(const ServerSP&, const ServerConnectionSP&);
-    using disconnection_fptr = void(const ServerSP&, const ServerConnectionSP&, uint16_t code, const string& payload);
-    using Connections        = std::map<uint64_t, ServerConnectionSP>;
 
+    accept_filter_fn                       accept_filter;
     CallbackDispatcher<connection_fptr>    connection_event;
     CallbackDispatcher<disconnection_fptr> disconnection_event;
-    accept_filter_fn                       accept_filter;
 
     Server (const LoopSP& loop = Loop::default_loop());
 
