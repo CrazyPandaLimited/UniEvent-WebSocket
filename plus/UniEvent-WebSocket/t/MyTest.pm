@@ -7,10 +7,6 @@ use UniEvent::WebSocket;
 XS::Loader::load();
 
 sub make_server {
-	Panda::Lib::Logger::set_native_logger(sub {
-		my ($level, $code, $msg) = @_;
-	});
-
 	my $loop = UniEvent::Loop->default_loop;
 
 	my $s = new UniEvent::Tcp();
