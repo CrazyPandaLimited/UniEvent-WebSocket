@@ -44,7 +44,7 @@ void Connection::on_read (string& buf, const ErrorCode& err) {
     for (const auto& msg : msg_range) {
         if (msg->error) {
             panda_log_notice("protocol error: " << msg->error);
-            process_error(nest_error(errc::READ_ERROR, msg->error), CloseCode::PROTOCOL_ERROR);
+            process_error(nest_error(errc::READ_ERROR, msg->error), parser->suggested_close_code());
             break;
         }
         switch (msg->opcode()) {
@@ -98,9 +98,10 @@ void Connection::send_pong (string& payload) {
 void Connection::process_peer_close (const MessageSP& msg) {
     if (_state == State::INITIAL) return; // just ignore everything, we are here after close
     _error_state = true;
+    auto suggested_code = parser->suggested_close_code();
     on_peer_close(msg);
     if (_error_state) {
-        if (msg) close(msg->close_code(), msg->close_message());
+        if (msg) close(suggested_code, msg->close_message());
         else     close(CloseCode::ABNORMALLY);
     }
 }
