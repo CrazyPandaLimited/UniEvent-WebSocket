@@ -43,7 +43,7 @@ void Connection::on_read (string& buf, const ErrorCode& err) {
     auto msg_range = parser->get_messages(buf);
     for (const auto& msg : msg_range) {
         if (msg->error) {
-            panda_log_notice("protocol error :" << msg->error);
+            panda_log_notice("protocol error: " << msg->error);
             process_error(nest_error(errc::READ_ERROR, msg->error), CloseCode::PROTOCOL_ERROR);
             break;
         }
