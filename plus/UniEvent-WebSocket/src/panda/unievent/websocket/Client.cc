@@ -73,8 +73,8 @@ void Client::on_connect (const ErrorCode& err, const unievent::ConnectRequestSP&
         call_on_connect(cres_from_cerr(err));
     } else {
         auto have_time = connect_request->timeout.next([=]() {
-            call_on_connect(cres_from_cerr(make_error_code(std::errc::timed_out)));
             Connection::do_close(CloseCode::ABNORMALLY, "");
+            call_on_connect(cres_from_cerr(make_error_code(std::errc::timed_out)));
         });
         if (!have_time) {
             return;
