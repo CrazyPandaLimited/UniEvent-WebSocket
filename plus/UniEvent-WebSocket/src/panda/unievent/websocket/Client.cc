@@ -68,11 +68,12 @@ void Client::on_connect (const ConnectResponseSP& response) {
 }
 
 void Client::on_connect (const ErrorCode& err, const unievent::ConnectRequestSP&) {
-    panda_log_debug("websokcet::Client::on_connect(unievent) " <<  err);
+    panda_log_debug("websocket::Client::on_connect(unievent) " <<  err);
     if (err) {
         call_on_connect(cres_from_cerr(err));
     } else {
-        auto have_time = connect_request->timeout.next([=]() {
+        auto have_time = connect_request->timeout.next([this]() {
+            ClientSP self = this; (void)self; // callback is last line, but just in case of loosing last ref in callback and new code after it
             Connection::do_close(CloseCode::ABNORMALLY, "");
             call_on_connect(cres_from_cerr(make_error_code(std::errc::timed_out)));
         });

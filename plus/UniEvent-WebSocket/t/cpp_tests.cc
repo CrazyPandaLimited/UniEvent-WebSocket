@@ -339,3 +339,35 @@ TEST_CASE("connect timeout", "[uews]") {
         test.wait(TIME + 1);
     }
 }
+
+TEST_CASE("last ref in connect timeout", "[errors][ssl]") {
+    AsyncTest test(1000, {"timeout"});
+
+    StreamSP sconn;
+    panda::unievent::TcpSP tserver = new panda::unievent::Tcp(test.loop);
+    tserver->bind("127.0.0.1", 0);
+    tserver->listen(1);
+    tserver->connection_event.add([&](auto, auto conn, auto) {
+        sconn = conn;
+    });
+    auto addr = tserver->sockaddr();
+
+    ClientSP client = new Client(test.loop);
+
+    ClientConnectRequestSP req = new ClientConnectRequest();
+    req->uri = new panda::uri::URI;
+    req->uri->host(addr.ip());
+    req->uri->port(addr.port());
+    req->uri->scheme(panda::unievent::websocket::ws_scheme(false));
+    req->timeout.set(10);
+    client->connect(req);
+
+    client->connect_event.add([&](const auto&...) {
+        client.reset();
+        test.happens("timeout");
+        test.loop->stop();
+    });
+
+    test.run();
+}
+
