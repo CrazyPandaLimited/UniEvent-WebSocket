@@ -11,6 +11,7 @@ struct WrapperTimeout {
     }
 
     void start(const LoopSP& loop) {
+        loop->update_time();
         t0 = loop->now();
         this->loop = loop;
     }
