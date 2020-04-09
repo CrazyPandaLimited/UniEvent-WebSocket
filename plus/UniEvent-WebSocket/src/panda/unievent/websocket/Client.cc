@@ -46,6 +46,14 @@ void Client::connect (const ClientConnectRequestSP& request) {
     _state = State::TCP_CONNECTING;
 }
 
+void Client::connect(const string& host_path, bool secure, uint16_t port) {
+    ClientConnectRequestSP req = new ClientConnectRequest();
+    req->uri = new URI(host_path, URI::Flags::allow_suffix_reference);
+    req->uri->scheme(ws_scheme(secure));
+    if (port) req->uri->port(port);
+    connect(req);
+}
+
 void Client::do_close (uint16_t code, const string& payload) {
     bool connecting = _state == State::CONNECTING;
     Connection::do_close(code, payload);

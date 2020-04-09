@@ -30,6 +30,7 @@ struct Client : virtual Connection {
     Client (const LoopSP& loop = Loop::default_loop(), const Config& = default_config);
 
     void connect (const ClientConnectRequestSP& request);
+    void connect (const string& host_path, bool secure = false, uint16_t port = 0);
 
 protected:
     using Connection::on_connect; // suppress 'hide' warnings

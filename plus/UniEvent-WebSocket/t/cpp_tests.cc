@@ -340,7 +340,7 @@ TEST_CASE("connect timeout", "[uews]") {
     }
 }
 
-TEST_CASE("last ref in connect timeout", "[errors][ssl]") {
+TEST_CASE("last ref in connect timeout", "[errors]") {
     AsyncTest test(1000, {"timeout"});
 
     StreamSP sconn;
@@ -369,5 +369,17 @@ TEST_CASE("last ref in connect timeout", "[errors][ssl]") {
     });
 
     test.run();
+}
+
+TEST_CASE("simple connect", "[errors]") {
+    AsyncTest test(1000, {"connected"});
+
+    uint16_t port = 0;
+    auto server = make_server(test.loop, port);
+
+    ClientSP client = new Client(test.loop);
+    client->connect("127.0.0.1/path/abc", false, port);
+
+    test.await(client->connect_event, "connected");
 }
 
