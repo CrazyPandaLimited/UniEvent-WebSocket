@@ -36,7 +36,7 @@ $server->connection_event->add(sub {
     $conn->accept_event->add(sub {
         my $conn1 = shift;
         is(ref($conn1), 'Flogs::GetLogs::Connection');
-        $conn1->send(deflate => 1, payload => 'Hey!', cb => sub { $send_cb = 1;} );
+        $conn1->send({deflate => 1, payload => 'Hey!', cb => sub { $send_cb = 1;} });
     });
 
     $serv->foreach_connection(sub {
