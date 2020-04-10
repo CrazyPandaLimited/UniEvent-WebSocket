@@ -81,8 +81,7 @@ private:
     void remove_connection (const ServerConnectionSP& conn, uint16_t code = uint16_t(CloseCode::ABNORMALLY), const string& payload = "");
 };
 
-template <typename Stream>
-Stream& operator<< (Stream& stream, const Server::Config& conf) {
+inline std::ostream& operator<< (std::ostream& stream, const Server::Config& conf) {
     stream << "Server::Config{ locations:[";
     for (auto loc : conf.locations) stream << loc << ",";
     stream << "]};";

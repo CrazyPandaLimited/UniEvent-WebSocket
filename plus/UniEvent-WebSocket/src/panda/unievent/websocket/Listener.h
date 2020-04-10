@@ -27,8 +27,7 @@ private:
 
 using ListenerSP = iptr<Listener>;
 
-template <typename Stream>
-Stream& operator<< (Stream& stream, const Location& loc) {
+inline std::ostream& operator<< (std::ostream& stream, const Location& loc) {
     stream << "Location{";
     stream << "name:" << loc.name;
     stream << ",host:\"" << loc.host << "\"";
