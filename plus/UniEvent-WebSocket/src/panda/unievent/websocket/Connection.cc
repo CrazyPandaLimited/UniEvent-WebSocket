@@ -163,7 +163,8 @@ void Connection::do_close (uint16_t code, const string& payload) {
     panda_log_debug("Connection[close]: code=" << ccfmt(code, payload));
     bool was_connected = connected();
 
-    if (was_connected && !parser->send_closed()) {
+    //in_connected, not out. it checks if we are in eof callback
+    if (Tcp::in_connected() && was_connected && !parser->send_closed()) {
         auto data = parser->send_close(code, payload);
         write(data.begin(), data.end());
     }

@@ -383,3 +383,21 @@ TEST_CASE("simple connect", "[errors]") {
     test.await(client->connect_event, "connected");
 }
 
+TEST_CASE("no close frame on_eof", "[errors]") {
+    AsyncTest test(1000, {"connected", "eof", "close"});
+
+    uint16_t port = 0;
+    auto server = make_server(test.loop, port);
+    ClientSP client = new Client(test.loop);
+    client->connect("127.0.0.1", false, port);
+    test.await(client->connect_event, "connected");
+
+    client->shutdown(); // emulates broken connection
+
+    client->close_event.add([&](auto...) {
+        test.happens("close");
+    });
+
+    test.await(client->eof_event, "eof"); // close should be emulated with 1006 after eof received, if server answer it happens before
+}
+
