@@ -88,7 +88,10 @@ void Client::on_connect (const ErrorCode& err, const unievent::ConnectRequestSP&
         if (!have_time) {
             return;
         }
-        set_nodelay(true);
+        try {
+            set_nodelay(true);
+        } catch (unievent::Error& e) {} // ignore errors, set_nodelay is optional
+
         _state = State::CONNECTING;
         read_start();
     }
