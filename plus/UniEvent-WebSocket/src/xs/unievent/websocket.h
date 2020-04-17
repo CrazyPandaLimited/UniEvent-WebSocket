@@ -132,7 +132,10 @@ template <> struct Typemap<panda::unievent::websocket::Location> : TypemapBase<p
 template <class TYPE> struct Typemap<panda::unievent::websocket::Connection::Config, TYPE> : Typemap<panda::protocol::websocket::Parser::Config, TYPE> {
     static TYPE in (SV* arg) {
         using Super = Typemap<panda::protocol::websocket::Parser::Config, TYPE>;
+        const Hash h = arg;
         TYPE cfg = Super::in(arg);
+        Scalar val;
+        if ((val = h.fetch("tcp_nodelay"))) cfg.tcp_nodelay = val.is_true();
         return cfg;
     }
 };

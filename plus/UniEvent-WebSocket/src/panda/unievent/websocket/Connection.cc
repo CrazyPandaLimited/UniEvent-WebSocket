@@ -25,6 +25,7 @@ WriteRequestSP Builder::send(string& payload, const Stream::write_fn& callback) 
 
 void Connection::configure (const Config& conf) {
     parser->configure(conf);
+    _tcp_nodelay = conf.tcp_nodelay;
 }
 
 static void log_use_after_close () {

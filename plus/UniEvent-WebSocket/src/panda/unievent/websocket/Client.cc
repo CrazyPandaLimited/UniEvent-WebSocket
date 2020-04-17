@@ -79,22 +79,22 @@ void Client::on_connect (const ErrorCode& err, const unievent::ConnectRequestSP&
     panda_log_debug("websocket::Client::on_connect(unievent) " <<  err);
     if (err) {
         call_on_connect(cres_from_cerr(err));
-    } else {
-        auto have_time = connect_request->timeout.next([this]() {
-            ClientSP self = this; (void)self; // callback is last line, but just in case of loosing last ref in callback and new code after it
-            Connection::do_close(CloseCode::ABNORMALLY, "");
-            call_on_connect(cres_from_cerr(make_error_code(std::errc::timed_out)));
-        });
-        if (!have_time) {
-            return;
-        }
-        try {
-            set_nodelay(true);
-        } catch (unievent::Error& e) {} // ignore errors, set_nodelay is optional
-
-        _state = State::CONNECTING;
-        read_start();
+        return;
     }
+
+    auto have_time = connect_request->timeout.next([this]() {
+        ClientSP self = this; (void)self; // callback is last line, but just in case of loosing last ref in callback and new code after it
+        Connection::do_close(CloseCode::ABNORMALLY, "");
+        call_on_connect(cres_from_cerr(make_error_code(std::errc::timed_out)));
+    });
+    if (!have_time) return;
+
+    try {
+        if (_tcp_nodelay) set_nodelay(true);
+    } catch (unievent::Error& e) {} // ignore errors, set_nodelay is optional
+
+    _state = State::CONNECTING;
+    read_start();
 }
 
 void Client::on_read (string& _buf, const ErrorCode& err) {
