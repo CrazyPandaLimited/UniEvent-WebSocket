@@ -4,7 +4,6 @@
 
 namespace panda { namespace unievent { namespace websocket {
 
-static const auto& panda_log_module = uewslog;
 using protocol::websocket::ccfmt;
 
 Builder::Builder (Builder&& b) : MessageBuilder(std::move(b)), _connection{b._connection} {}

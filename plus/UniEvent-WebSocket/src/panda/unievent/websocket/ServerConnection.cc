@@ -4,8 +4,6 @@
 
 namespace panda { namespace unievent { namespace websocket {
 
-static const auto& panda_log_module = uewslog;
-
 ServerConnection::ServerConnection (Server* server, uint64_t id, const Config& conf) : Connection(server->loop()), _id(id), server(server) {
     panda_log_notice("ServerConnection[new]: id = " << _id);
     init(parser);

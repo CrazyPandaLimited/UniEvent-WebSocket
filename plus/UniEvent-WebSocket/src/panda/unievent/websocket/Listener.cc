@@ -1,6 +1,5 @@
 #include "Listener.h"
-#include <panda/log.h>
-#include "Error.h" // just for uewslog
+#include "Error.h" // just for logging
 
 using namespace panda::unievent::websocket;
 
@@ -8,7 +7,7 @@ using namespace panda::unievent::websocket;
 Listener::Listener (const LoopSP& loop, const Location& loc) : Tcp(loop, AF_INET), _location(loc) {}
 
 void Listener::run () {
-    panda_mlog_notice(uewslog, "Listener[run]: listening " << (_location.ssl_ctx ? "wss://" : "ws://") << _location.host << ":" << _location.port
+    panda_log_notice("Listener[run]: listening " << (_location.ssl_ctx ? "wss://" : "ws://") << _location.host << ":" << _location.port
                    << ", backlog:" << _location.backlog << ", wbuf:" << send_buffer_size() << ", rbuf:" << recv_buffer_size());
     if (_location.reuse_port) {
         int on = 1;

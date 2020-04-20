@@ -3,8 +3,6 @@
 
 namespace panda { namespace unievent { namespace websocket {
 
-static const auto& panda_log_module = uewslog;
-
 Connection::Config Client::default_config;
 
 static ConnectResponseSP cres_from_cerr (const ErrorCode& err) {

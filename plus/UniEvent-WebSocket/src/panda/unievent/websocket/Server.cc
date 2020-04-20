@@ -4,8 +4,6 @@
 using namespace std::placeholders;
 namespace panda { namespace unievent { namespace websocket {
 
-static const auto& panda_log_module = uewslog;
-
 std::atomic<uint64_t> Server::lastid(0);
 
 Server::Server (const LoopSP& loop) : running(false), _loop(loop) {

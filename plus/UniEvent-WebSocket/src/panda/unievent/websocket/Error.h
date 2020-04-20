@@ -17,7 +17,7 @@ inline std::error_code make_error_code(errc err) noexcept {
     return std::error_code(int(err), ws_error_category);
 }
 
-extern log::Module uewslog;
+extern log::Module panda_log_module;
 
 }}}
 

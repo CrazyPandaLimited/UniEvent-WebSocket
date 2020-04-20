@@ -3,9 +3,9 @@
 #include <panda/unievent/test/AsyncTest.h>
 #include <panda/unievent/websocket/Client.h>
 #include <panda/unievent/websocket/Server.h>
-
-#include <range/v3/view/transform.hpp>
 #include <thread>
+
+#define panda_log_module panda::unievent::websocket::panda_log_module
 
 using namespace panda::unievent::websocket;
 using panda::unievent::test::AsyncTest;
