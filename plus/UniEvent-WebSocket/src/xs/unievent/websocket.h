@@ -7,6 +7,8 @@ namespace xs { namespace unievent  { namespace websocket {
     using namespace panda::unievent::websocket;
     using panda::unievent::LoopSP;
 
+    inline uint64_t get_time (double val) { return val * 1000; }
+
     struct XSClient : Client, Backref {
         XSClient (const LoopSP& loop, const Client::Config& config) : Connection(loop), Client(loop, config) {}
     private:
@@ -47,8 +49,6 @@ namespace xs { namespace unievent  { namespace websocket {
     private:
         ~XSServer () { Backref::dtor(); }
     };
-
-    inline uint64_t get_time (double val) { return val * 1000; }
 
     inline ClientConnectRequestSP  make_request  (const Hash& params, const ClientConnectRequestSP& dest = {}) {
         ClientConnectRequestSP ret = dest ? dest : ClientConnectRequestSP(new ClientConnectRequest());
@@ -135,7 +135,8 @@ template <class TYPE> struct Typemap<panda::unievent::websocket::Connection::Con
         const Hash h = arg;
         TYPE cfg = Super::in(arg);
         Scalar val;
-        if ((val = h.fetch("tcp_nodelay"))) cfg.tcp_nodelay = val.is_true();
+        if ((val = h.fetch("tcp_nodelay")))      cfg.tcp_nodelay = val.is_true();
+        if ((val = h.fetch("shutdown_timeout"))) cfg.shutdown_timeout = xs::unievent::websocket::get_time(Simple(val));
         return cfg;
     }
 };
