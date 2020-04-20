@@ -5,6 +5,7 @@
 #include <panda/unievent/websocket/Server.h>
 
 #include <range/v3/view/transform.hpp>
+#include <thread>
 
 using namespace panda::unievent::websocket;
 using panda::unievent::test::AsyncTest;
@@ -399,5 +400,23 @@ TEST_CASE("no close frame on_eof", "[errors]") {
     });
 
     test.await(client->eof_event, "eof"); // close should be emulated with 1006 after eof received, if server answer it happens before
+}
+
+TEST_CASE("shutdown timeout", "[uews]") {
+    AsyncTest test(1000, {"shutdown"});
+    auto p = make_pair(test.loop);
+
+    test.await(p.client->connect_event);
+    Connection::Config conf;
+    conf.shutdown_timeout = 1;
+    p.client->configure(conf);
+
+    p.client->close();
+    std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    {
+        auto tup = test.await(p.client->shutdown_event, "shutdown");
+        REQUIRE(std::get<1>(tup) == std::errc::timed_out);
+    }
+    REQUIRE(p.client->refcnt() == 1);
 }
 

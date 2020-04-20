@@ -25,7 +25,7 @@ WriteRequestSP Builder::send(string& payload, const Stream::write_fn& callback) 
 
 void Connection::configure (const Config& conf) {
     parser->configure(conf);
-    _tcp_nodelay = conf.tcp_nodelay;
+    this->conf = conf;
 }
 
 static void log_use_after_close () {
@@ -160,6 +160,13 @@ void Connection::on_write (const ErrorCode& err, const WriteRequestSP& req) {
     }
 }
 
+void websocket::Connection::on_shutdown(const ErrorCode& err, const ShutdownRequestSP&) {
+    panda_log_debug("websocket on_shutdown " << err);
+    if (err == std::errc::timed_out) {
+        reset();
+    }
+}
+
 void Connection::do_close (uint16_t code, const string& payload) {
     panda_log_debug("Connection[close]: code=" << ccfmt(code, payload));
     bool was_connected = connected();
@@ -175,7 +182,7 @@ void Connection::do_close (uint16_t code, const string& payload) {
 
     if (Tcp::connected()) {
         read_stop();
-        shutdown();
+        shutdown(conf.shutdown_timeout);
         disconnect();
     } else {
         reset();

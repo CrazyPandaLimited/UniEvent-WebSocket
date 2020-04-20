@@ -51,8 +51,12 @@ struct Connection : Tcp, protected ITcpSelfListener {
     using pong_fptr       = ping_fptr;
     using pong_fn         = function<pong_fptr>;
 
-    struct Config : Parser::Config {
-        bool tcp_nodelay = false;
+    struct TcpConfig {
+        bool     tcp_nodelay = false;
+        uint64_t shutdown_timeout = 5000; //ms
+    };
+
+    struct Config : Parser::Config, TcpConfig {
     };
 
     enum class State { INITIAL, TCP_CONNECTING, CONNECTING, CONNECTED, HALT };
@@ -135,7 +139,7 @@ struct Connection : Tcp, protected ITcpSelfListener {
 
 protected:
     State _state;
-    bool  _tcp_nodelay = false;
+    TcpConfig conf;
 
     void init (Parser& parser) { this->parser = &parser; }
 
@@ -151,6 +155,7 @@ protected:
     void on_read  (string&, const ErrorCode&) override;
     void on_eof   () override;
     void on_write (const ErrorCode&, const WriteRequestSP&) override;
+    void on_shutdown (const ErrorCode&, const ShutdownRequestSP&) override;
 
     void process_error (const ErrorCode& err, uint16_t code = CloseCode::ABNORMALLY);
 

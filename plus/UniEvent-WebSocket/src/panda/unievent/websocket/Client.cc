@@ -90,7 +90,7 @@ void Client::on_connect (const ErrorCode& err, const unievent::ConnectRequestSP&
     if (!have_time) return;
 
     try {
-        if (_tcp_nodelay) set_nodelay(true);
+        if (conf.tcp_nodelay) set_nodelay(true);
     } catch (unievent::Error& e) {} // ignore errors, set_nodelay is optional
 
     _state = State::CONNECTING;
