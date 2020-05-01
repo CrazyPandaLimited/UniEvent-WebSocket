@@ -65,7 +65,7 @@ void Connection::on_read (string& buf, const ErrorCode& err) {
 }
 
 void Connection::on_message (const MessageSP& msg) {
-    panda_elog_verbose_debug({
+    panda_log_verbose_debug([&]{
         log << "websocket Connection::on_message: payload=\n";
         for (const auto& str : msg->payload) log << encode::encode_base16(str);
     });
