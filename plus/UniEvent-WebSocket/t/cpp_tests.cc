@@ -415,7 +415,7 @@ TEST_CASE("shutdown timeout", "[uews]") {
     std::this_thread::sleep_for(std::chrono::milliseconds(5));
     {
         auto tup = test.await(p.client->shutdown_event, "shutdown");
-        REQUIRE(std::get<1>(tup) == std::errc::timed_out);
+        REQUIRE(std::get<1>(tup) & std::errc::timed_out);
     }
     REQUIRE(p.client->refcnt() == 1);
 }

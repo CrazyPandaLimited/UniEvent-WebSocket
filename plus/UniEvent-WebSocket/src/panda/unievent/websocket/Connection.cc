@@ -150,7 +150,7 @@ void Connection::on_eof () {
 
 void Connection::on_write (const ErrorCode& err, const WriteRequestSP& req) {
     panda_log_debug("websocket on_write: " << err);
-    if (err && err != std::errc::operation_canceled && err != std::errc::broken_pipe && err != std::errc::not_connected) {
+    if (err && !(err & std::errc::operation_canceled || err & std::errc::broken_pipe || err & std::errc::not_connected)) {
         process_error(nest_error(errc::WRITE_ERROR, err));
     } else if (stats) {
         size_t size = std::accumulate(req->bufs.begin(), req->bufs.end(), size_t(0), [](size_t r, const string& s) {return r + s.size();});
@@ -161,7 +161,7 @@ void Connection::on_write (const ErrorCode& err, const WriteRequestSP& req) {
 
 void websocket::Connection::on_shutdown(const ErrorCode& err, const ShutdownRequestSP&) {
     panda_log_debug("websocket on_shutdown " << err);
-    if (err == std::errc::timed_out) {
+    if (err & std::errc::timed_out) {
         reset();
     }
 }
