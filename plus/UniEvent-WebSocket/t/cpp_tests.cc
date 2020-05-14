@@ -15,9 +15,9 @@ using panda::string;
 
 static bool _init () {
     //panda::log::set_level(panda::log::VerboseDebug);
-    panda::log::set_level(panda::log::Warning);
-    panda::log::set_logger([](auto, auto cp, auto& msg) {
-        WARN("" << cp << msg);
+    panda::log::set_level(panda::log::WARNING);
+    panda::log::set_logger([](auto& msg, auto&) {
+        WARN("" << msg);
     });
     return true;
 }
