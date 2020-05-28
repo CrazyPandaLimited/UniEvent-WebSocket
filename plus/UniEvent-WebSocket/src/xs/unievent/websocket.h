@@ -122,7 +122,7 @@ template <> struct Typemap<panda::unievent::websocket::Location> : TypemapBase<p
         if ((val = h["host"]))       loc.host       = xs::in<panda::string>(val);
         if ((val = h["port"]))       loc.port       = Simple(val);
         if ((val = h["name"]))       loc.name       = xs::in<panda::string>(val);
-        if ((val = h["ssl_ctx"]))    loc.ssl_ctx    = xs::in<SSL_CTX*>(val);
+        if ((val = h["ssl_ctx"]))    loc.ssl_ctx    = xs::in<panda::unievent::SslContext>(val);
         if ((val = h["backlog"]))    loc.backlog    = Simple(val);
         if ((val = h["reuse_port"])) loc.reuse_port = val.is_true();
         return loc;
