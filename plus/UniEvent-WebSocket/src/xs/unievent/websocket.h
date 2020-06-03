@@ -65,7 +65,6 @@ namespace xs { namespace unievent  { namespace websocket {
 
 }}}
 
-
 namespace xs {
 
 template <class TYPE> struct Typemap<panda::unievent::websocket::Server*, TYPE> :
@@ -93,6 +92,23 @@ template <class TYPE> struct Typemap<xs::unievent::websocket::XSConnectionIterat
     TypemapObject<xs::unievent::websocket::XSConnectionIterator*, TYPE, ObjectTypePtr, ObjectStorageMG, StaticCast>
 {
     static std::string package () { return "UniEvent::WebSocket::XSConnectionIterator"; }
+};
+
+template <class TYPE> struct Typemap<unievent::websocket::Connection::Statistics*, TYPE> :
+        TypemapObject<xs::unievent::websocket::Connection::Statistics*, TYPE, ObjectTypePtr, ObjectStorageMG, StaticCast>
+{
+    static std::string package () { return "UniEvent::WebSocket::Connection::Statistics"; }
+};
+
+template <class TYPE> struct Typemap<unievent::websocket::Connection::Statistics, TYPE>  {
+    static Hash out(const unievent::websocket::Connection::Statistics& s, const Sv& = Sv()) {
+        return Hash{
+            {"msgs_in",  xs::out<size_t>(s.msgs_in)},
+            {"msgs_out", xs::out<size_t>(s.msgs_out)},
+            {"bytes_in",  xs::out<size_t>(s.bytes_in)},
+            {"bytes_out", xs::out<size_t>(s.bytes_out)}
+        };
+    }
 };
 
 template <class TYPE> struct Typemap<xs::unievent::websocket::ClientConnectRequest*, TYPE> :

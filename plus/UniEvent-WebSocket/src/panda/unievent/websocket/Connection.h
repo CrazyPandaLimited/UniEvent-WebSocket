@@ -132,6 +132,12 @@ struct Connection : Tcp, protected ITcpSelfListener {
         Statistics normalized(double secs) {
             return Statistics(msgs_in / secs, msgs_out / secs, bytes_in / secs, bytes_out / secs);
         }
+
+        Statistics fetch(double secs) {
+            auto ret = normalized(secs);
+            reset();
+            return ret;
+        }
     };
     using StatisticsSP = iptr<Statistics>;
 
