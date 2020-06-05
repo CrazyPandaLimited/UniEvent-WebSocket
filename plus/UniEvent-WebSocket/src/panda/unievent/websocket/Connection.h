@@ -141,7 +141,8 @@ struct Connection : Tcp, protected ITcpSelfListener {
     };
     using StatisticsSP = iptr<Statistics>;
 
-    void set_statistics_counters(const StatisticsSP& val) {stats = val;}
+    void stats_counter(const StatisticsSP& val) {stats = val;}
+    StatisticsSP stats_counter() {return stats;}
 
 protected:
     State _state;
