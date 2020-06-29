@@ -9,7 +9,7 @@ using panda::string;
 struct Location {
     string     host;
     uint16_t   port       = 0;
-    bool       reuse_port = true;    // several listeners(servers) can be bound to the same port if true, useful for threaded apps
+    bool       reuse_port = false;   // do not change, it's a protection against double server start
     int        backlog    = 4096;    // max accept queue
     SslContext ssl_ctx    = nullptr; // config with sertificate for server
     string     name       = "";      // optional name for logging of new connections
