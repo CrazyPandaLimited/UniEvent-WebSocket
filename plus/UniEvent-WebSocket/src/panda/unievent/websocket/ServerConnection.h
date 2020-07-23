@@ -1,6 +1,7 @@
 #pragma once
 #include "Connection.h"
 #include <panda/protocol/websocket/ServerParser.h>
+#include <panda/unievent/websocket/SharedTimeout.h>
 
 namespace panda { namespace unievent { namespace websocket {
 
@@ -16,6 +17,10 @@ using ServerConnectionSP = iptr<ServerConnection>;
 struct ServerConnection : virtual Connection {
     using accept_fptr = void(const ServerConnectionSP&, const ConnectRequestSP&);
     using accept_fn   = function<accept_fptr>;
+
+    struct Config : virtual Connection::Config {
+        uint64_t connect_timeout = 60*1000;
+    };
 
     CallbackDispatcher<accept_fptr> accept_event;
 
@@ -41,6 +46,8 @@ protected:
     ~ServerConnection () {
         panda_log_verbose_debug("connection destroy " << this);
     }
+
+    SharedTimeout connect_timeout;
 
 private:
     friend Server;

@@ -3,8 +3,33 @@ use 5.012;
 use warnings;
 use Test::Catch;
 use UniEvent::WebSocket;
+use XLog;
 
 XS::Loader::load();
+
+{
+    package UniEvent::WebSocket::Logger;
+    use parent 'XLog::Logger';
+
+    sub log_format {
+        my ($self, $msg, $level, $module, $file, $line, $func, $formatter) = @_;
+        $file = substr($file, rindex($file, '/'));
+        $module = substr($module, rindex($module, '::')+2);
+        my $code = "$module$file:$line";
+        my $res = sprintf '%-32s %s', $code, $msg;
+        say $res;
+    }
+}
+
+
+if ($ENV{LOGGER}) {
+    XLog::set_logger(UniEvent::WebSocket::Logger->new);
+    XLog::set_level(XLog::WARNING);
+
+    XLog::set_level(XLog::DEBUG, "UniEvent::WebSocket");
+    XLog::set_level(XLog::INFO, "UniEvent");
+}
+
 
 sub make_server {
     my $loop = UniEvent::Loop->default_loop;

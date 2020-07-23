@@ -75,7 +75,10 @@ void Server::start_listening () {
     for (auto& location : locations) {
         auto l = new Listener(_loop, location);
         l->connection_event.add(std::bind(&Server::on_tcp_connection, this, _1, _2, _3));
-        l->connection_factory = [this](auto&) { return this->new_connection(++lastid); };
+        l->connection_factory = [this](auto&) {
+            auto id = ++lastid;
+            return connections[id] = this->new_connection(id);
+        };
         l->run();
         listeners.push_back(l);
     }
@@ -97,7 +100,7 @@ void Server::on_tcp_connection (const StreamSP& _lstn, const StreamSP& _conn, co
 
     auto connection = dynamic_pointer_cast<ServerConnection>(_conn);
     auto listener = dynamic_pointer_cast<Listener>(_lstn);
-    connections[connection->id()] = connection;
+//    connections[connection->id()] = connection;
     connection->run(listener.get());
 
     panda_log_notice("Server[on_tcp_connection]: somebody connected to " << listener->location() << ", now i have " << connections.size() << " connections");
@@ -111,9 +114,11 @@ void Server::on_connection (const ServerConnectionSP& conn) {
 
 void Server::remove_connection (const ServerConnectionSP& conn, uint16_t code, const string& payload) {
     auto erased = connections.erase(conn->id());
-    assert(erased);
+//    assert(erased);
     panda_log_notice("Server[remove_connection]: now i have " << connections.size() << " connections");
-    on_disconnection(conn, code, payload);
+    if (erased) {
+        on_disconnection(conn, code, payload);
+    }
 }
 
 void Server::on_disconnection (const ServerConnectionSP& conn, uint16_t code, const string& payload) {

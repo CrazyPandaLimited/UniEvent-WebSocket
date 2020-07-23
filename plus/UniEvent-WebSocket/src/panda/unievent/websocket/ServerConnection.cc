@@ -4,12 +4,21 @@
 
 namespace panda { namespace unievent { namespace websocket {
 
-ServerConnection::ServerConnection (Server* server, uint64_t id, const Config& conf) : Connection(server->loop()), _id(id), server(server) {
+ServerConnection::ServerConnection (Server* server, uint64_t id, const Config& conf)
+    : Connection(server->loop())
+    , connect_timeout(server->loop())
+    , _id(id)
+    , server(server)
+{
     panda_log_notice("ServerConnection[new]: id = " << _id);
     init(parser);
     configure(conf);
     if (conf.tcp_nodelay) set_nodelay(true);
     _state = State::TCP_CONNECTING;
+    connect_timeout.set(conf.connect_timeout);
+    connect_timeout.add_step([this]() {
+        close();
+    });
 }
 
 void ServerConnection::run (Listener*) {
@@ -69,6 +78,7 @@ void ServerConnection::on_accept (const ConnectRequestSP& req) {
         ConnectResponse res;
         send_accept_response(&res);
     }
+    connect_timeout.end_step();
     accept_event(this, req);
 }
 
