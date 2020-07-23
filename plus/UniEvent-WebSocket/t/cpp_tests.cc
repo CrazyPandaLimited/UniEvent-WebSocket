@@ -3,6 +3,7 @@
 #include <panda/unievent/test/AsyncTest.h>
 #include <panda/unievent/websocket/Client.h>
 #include <panda/unievent/websocket/Server.h>
+#include <panda/unievent/websocket/SharedTimeout.h>
 #include <thread>
 
 #define panda_log_module panda::unievent::websocket::panda_log_module
@@ -420,3 +421,34 @@ TEST_CASE("shutdown timeout", "[uews]") {
     REQUIRE(p.client->refcnt() == 1);
 }
 
+TEST_CASE("SharedTimeout", "[uews]") {
+    AsyncTest test(1000, {});
+    SharedTimeout t(test.loop);
+    t.set(10);
+    SECTION("single") {
+        t.add_step([&]{test.happens("timeout");});
+        SECTION("timeout") {
+            test.expected.push_back("timeout");
+        }
+        SECTION("stopped") {
+            t.end_step();
+        }
+        test.wait(15);
+    }
+    SECTION("multi") {
+        t.add_step([&]{test.happens("timeout1");});
+        t.add_step([&]{test.happens("timeout2");});
+        SECTION("timeout") {
+            test.expected.push_back("timeout1");
+        }
+        SECTION("timeout2") {
+            test.expected.push_back("timeout2");
+            t.end_step();
+        }
+        SECTION("stopped") {
+            t.end_step();
+            t.end_step();
+        }
+        test.wait(15);
+    }
+}
