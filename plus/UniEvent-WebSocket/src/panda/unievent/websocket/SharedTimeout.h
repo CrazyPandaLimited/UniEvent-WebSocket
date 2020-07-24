@@ -6,18 +6,20 @@
 namespace panda { namespace unievent { namespace websocket {
 
 struct SharedTimeout {
-    SharedTimeout(const LoopSP& loop) : loop(loop) {}
+    SharedTimeout(const LoopSP& loop = nullptr) : loop(loop) {}
 
-    void set(uint64_t timeout, const LoopSP& loop = {}) {
+    void set(uint64_t timeout) {
         this->value = timeout;
-        if (loop) {
-            this->loop = loop;
-        }
+        reset();
+    }
+
+    void reset() {
         callbacks = {};
         timer.reset();
     }
 
     void add_step(const function<void()>& cb) {
+        if (value == 0) return;
         if (callbacks.empty()) {
             timer = Timer::once(value, [this](const TimerSP&) {
                 callbacks.front()();
@@ -27,6 +29,7 @@ struct SharedTimeout {
     }
 
     void end_step() {
+        if (value == 0) return;
         callbacks.pop();
         if (callbacks.empty()) {
             timer->stop();

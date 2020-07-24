@@ -1,6 +1,6 @@
 #pragma once
 #include "Connection.h"
-#include "WrapperTimeout.h"
+#include "SharedTimeout.h"
 #include <panda/protocol/websocket/ClientParser.h>
 
 namespace panda { namespace unievent { namespace websocket {
@@ -8,7 +8,7 @@ namespace panda { namespace unievent { namespace websocket {
 struct ClientConnectRequest : panda::protocol::websocket::ConnectRequest {
     using panda::protocol::websocket::ConnectRequest::ConnectRequest;
 
-    WrapperTimeout timeout;
+    SharedTimeout timeout;
 
     unievent::AddrInfoHints addr_hints = Tcp::defhints;
     bool cached_resolver = true;
