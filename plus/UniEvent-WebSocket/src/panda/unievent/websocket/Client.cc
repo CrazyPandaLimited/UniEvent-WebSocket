@@ -38,8 +38,7 @@ void Client::connect (const ClientConnectRequestSP& request) {
              ->run();
 
     request->timeout.loop = loop();
-    request->timeout.add_step([]{}); // do nothing for tcp timeout
-    request->timeout.add_step([&]{
+    request->timeout.add_prestep([this]{
         ClientSP self = this; (void)self; // callback is last line, but just in case of loosing last ref in callback and new code after it
         Connection::do_close(CloseCode::ABNORMALLY, "");
         call_on_connect(cres_from_cerr(make_error_code(std::errc::timed_out)));
@@ -68,6 +67,7 @@ void Client::do_close (uint16_t code, const string& payload) {
 }
 
 void Client::call_on_connect(const ConnectResponseSP &response) {
+    panda_log_debug("timeout.end_step()");
     connect_request->timeout.end_step();
     if (response->error) {
         _state = State::HALT;
@@ -81,7 +81,11 @@ void Client::on_connect (const ConnectResponseSP& response) {
 
 void Client::on_connect (const ErrorCode& err, const unievent::ConnectRequestSP&) {
     panda_log_debug("websocket::Client::on_connect(unievent) " <<  err);
-    connect_request->timeout.end_step();
+    auto has_time = connect_request->timeout.end_prestep();
+    if (!has_time) {
+        call_on_connect(cres_from_cerr(has_time.error()));
+        return;
+    }
     if (err) {
         call_on_connect(cres_from_cerr(err));
         return;
