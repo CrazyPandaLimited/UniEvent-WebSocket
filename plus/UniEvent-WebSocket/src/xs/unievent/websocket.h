@@ -157,6 +157,17 @@ template <class TYPE> struct Typemap<panda::unievent::websocket::Connection::Con
     }
 };
 
+template <class TYPE> struct Typemap<panda::unievent::websocket::ServerConnection::Config, TYPE> : Typemap<panda::unievent::websocket::Connection::Config, TYPE> {
+    static TYPE in (SV* arg) {
+        using Super = Typemap<panda::unievent::websocket::Connection::Config, TYPE>;
+        const Hash h = arg;
+        TYPE cfg = Super::in(arg);
+        Scalar val;
+        if ((val = h.fetch("connect_timeout"))) cfg.connect_timeout = xs::unievent::websocket::get_time(Simple(val));
+        return cfg;
+    }
+};
+
 template <class TYPE> struct Typemap<panda::unievent::websocket::Server::Config, TYPE> : TypemapBase<panda::unievent::websocket::Server::Config, TYPE> {
     using Location = panda::unievent::websocket::Location;
     static TYPE in (SV* arg) {

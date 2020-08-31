@@ -19,9 +19,10 @@ struct Server : virtual Refcntd {
     using disconnection_fn   = function<disconnection_fptr>;
 
     struct Config {
-        std::vector<Location> locations;
-        Connection::Config    connection;
+        std::vector<Location>    locations;
+        ServerConnection::Config connection;
     };
+    using ConnConfig = ServerConnection::Config;
 
     accept_filter_fn                       accept_filter;
     CallbackDispatcher<connection_fptr>    connection_event;
@@ -54,9 +55,9 @@ struct Server : virtual Refcntd {
     const Connections&       get_connections () { return connections; }
 
 protected:
-    bool               running;
-    Connections        connections;
-    Connection::Config conn_conf;
+    bool         running;
+    Connections  connections;
+    ConnConfig   conn_conf;
 
     virtual void config_validate (const Config&) const;
     virtual void config_apply    (const Config&);
