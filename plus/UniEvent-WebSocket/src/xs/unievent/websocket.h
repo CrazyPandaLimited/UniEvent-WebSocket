@@ -147,11 +147,22 @@ template <> struct Typemap<panda::unievent::websocket::Location> : TypemapBase<p
         if ((val = h["reuse_port"])) loc.reuse_port = val.is_true();
         return loc;
     }
+
+    static Ref out(Location loc, const xs::Sv& = Sv()) {
+        return Ref::create(Hash {
+            {"host",  xs::out(loc.host)},
+            {"port",  xs::out(loc.port)},
+            {"name",  xs::out(loc.name)},
+            {"ssl_ctx",  xs::out(loc.ssl_ctx)},
+            {"backlog",  xs::out(loc.backlog)},
+            {"reuse_port",  xs::out(loc.reuse_port)},
+        });
+    }
 };
 
 template <class TYPE> struct Typemap<panda::unievent::websocket::Connection::Config, TYPE> : Typemap<panda::protocol::websocket::Parser::Config, TYPE> {
+    using Super = Typemap<panda::protocol::websocket::Parser::Config, TYPE>;
     static TYPE in (SV* arg) {
-        using Super = Typemap<panda::protocol::websocket::Parser::Config, TYPE>;
         const Hash h = arg;
         TYPE cfg = Super::in(arg);
         Scalar val;
@@ -159,16 +170,31 @@ template <class TYPE> struct Typemap<panda::unievent::websocket::Connection::Con
         if ((val = h.fetch("shutdown_timeout"))) cfg.shutdown_timeout = xs::unievent::websocket::get_time(Simple(val));
         return cfg;
     }
+
+    static Sv out (TYPE var, const Sv& = Sv()) {
+        Ref ref = Super::out(var);
+        Hash h = ref.value<Hash>();
+        h.store("tcp_nodelay", xs::out(var.tcp_nodelay));
+        h.store("shutdown_timeout", xs::out(var.shutdown_timeout));
+        return ref;
+    }
 };
 
 template <class TYPE> struct Typemap<panda::unievent::websocket::ServerConnection::Config, TYPE> : Typemap<panda::unievent::websocket::Connection::Config, TYPE> {
+    using Super = Typemap<panda::unievent::websocket::Connection::Config, TYPE>;
     static TYPE in (SV* arg) {
-        using Super = Typemap<panda::unievent::websocket::Connection::Config, TYPE>;
         const Hash h = arg;
         TYPE cfg = Super::in(arg);
         Scalar val;
         if ((val = h.fetch("connect_timeout"))) cfg.connect_timeout = xs::unievent::websocket::get_time(Simple(val));
         return cfg;
+    }
+
+    static Sv out (TYPE var, const Sv& = Sv()) {
+        Ref ref = Super::out(var);
+        Hash h = ref.value<Hash>();
+        h.store("connect_timeout", xs::out(var.connect_timeout));
+        return ref;
     }
 };
 
@@ -190,6 +216,13 @@ template <class TYPE> struct Typemap<panda::unievent::websocket::Server::Config,
         if ((val = h["connection"])) cfg.connection = xs::in<decltype(cfg.connection)>(val);
 
         return cfg;
+    }
+
+    static Sv out (TYPE var, const Sv& = Sv()) {
+        Hash ret = Hash::create();
+        ret.store("locations", xs::out(var.locations));
+        ret.store("connection", xs::out(var.connection));
+        return Ref::create(ret);
     }
 };
 
