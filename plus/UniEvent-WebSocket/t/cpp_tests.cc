@@ -15,8 +15,7 @@ using panda::unievent::StreamSP;
 using panda::string;
 
 static bool _init () {
-    //panda::log::set_level(panda::log::VerboseDebug);
-    panda::log::set_level(panda::log::WARNING);
+    panda::log::set_level(panda::log::Level::Warning);
     panda::log::set_logger([](auto& msg, auto&) {
         WARN("" << msg);
     });
