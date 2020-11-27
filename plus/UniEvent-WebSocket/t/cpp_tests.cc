@@ -36,7 +36,7 @@ static ServerSP make_server (LoopSP loop, uint16_t& port) {
     conf.locations.push_back(loc);
     server->configure(conf);
     server->run();
-    port = server->get_listeners()[0]->sockaddr().port();
+    port = server->get_listeners()[0]->sockaddr()->port();
     return server;
 }
 
@@ -308,7 +308,7 @@ TEST_CASE("connect timeout", "[uews]") {
         tserver->connection_event.add([&](auto, auto conn, auto) {
             sconn = conn;
         });
-        addr = tserver->sockaddr();
+        addr = tserver->sockaddr().value();
         server = tserver;
     }
     SECTION("real") {
@@ -351,7 +351,7 @@ TEST_CASE("last ref in connect timeout", "[errors]") {
     tserver->connection_event.add([&](auto, auto conn, auto) {
         sconn = conn;
     });
-    auto addr = tserver->sockaddr();
+    auto addr = tserver->sockaddr().value();
 
     ClientSP client = new Client(test.loop);
 
