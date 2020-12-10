@@ -44,7 +44,11 @@ namespace xs { namespace unievent  { namespace websocket {
     struct XSServer : Server, Backref {
         using Server::Server;
 
-        ServerConnectionSP new_connection (uint64_t id) override { return new XSServerConnection(this, id, conn_conf); }
+        ServerConnectionSP new_connection (uint64_t id) override {
+            ServerConnectionSP ret = new XSServerConnection(this, id, conn_conf);
+            xs::out(ret); // fill backref
+            return ret;
+        }
 
     private:
         ~XSServer () { Backref::dtor(); }
