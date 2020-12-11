@@ -162,7 +162,7 @@ TEST_CASE("destroying server&client in callbacks", "[uews]") {
             SECTION("client - ping_event")       { client->ping_event.add(crm); }
             SECTION("client - pong_event")       { client->pong_event.add(crm); }
 
-            if (res->error) return;
+            if (res->error()) return;
 
             string omsg = "nah";
             client->send_message(omsg);
@@ -258,7 +258,7 @@ TEST_CASE("cleanup on success", "[uews]") {
         });
 
         p.client->connect_event.add([&](auto client, auto res) {
-            CHECK(!res->error);
+            CHECK(!res->error());
             test.happens("connect");
             string omsg = "nah";
             client->send_message(omsg);
@@ -335,7 +335,7 @@ TEST_CASE("connect timeout", "[uews]") {
 
     auto tup = test.await(client->connect_event, "connect");
     if (error) {
-        REQUIRE(std::get<1>(tup)->error.contains(make_error_code(std::errc::timed_out)));
+        REQUIRE(std::get<1>(tup)->error().contains(make_error_code(std::errc::timed_out)));
     } else {
         test.wait(TIME + 1);
     }

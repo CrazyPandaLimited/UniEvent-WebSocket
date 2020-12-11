@@ -38,7 +38,7 @@ void ServerConnection::on_read (string& _buf, const ErrorCode& err) {
     if (err) {
         panda_log_notice("Websocket accept error: " << err);
         ConnectRequestSP creq = new protocol::websocket::ConnectRequest();
-        creq->error = nest_error(errc::READ_ERROR, err);
+        creq->error(nest_error(errc::READ_ERROR, err));
         on_accept(creq);
         close();
         return;
@@ -51,8 +51,8 @@ void ServerConnection::on_read (string& _buf, const ErrorCode& err) {
     auto creq = parser.accept(buf);
     if (!creq) return;
 
-    if (creq->error) {
-        panda_log_notice("Websocket accept error: " << creq->error);
+    if (creq->error()) {
+        panda_log_notice("Websocket accept error: " << creq->error());
         panda::protocol::http::ResponseSP res = new panda::protocol::http::Response();
         send_accept_error(res);
         on_accept(creq);
@@ -74,7 +74,7 @@ void ServerConnection::on_read (string& _buf, const ErrorCode& err) {
 }
 
 void ServerConnection::on_accept (const ConnectRequestSP& req) {
-    if (!req->error) {
+    if (!req->error()) {
         ConnectResponse res;
         send_accept_response(&res);
     }

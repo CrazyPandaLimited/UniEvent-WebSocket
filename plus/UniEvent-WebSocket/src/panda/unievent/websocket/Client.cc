@@ -7,7 +7,7 @@ Connection::Config Client::default_config;
 
 static ConnectResponseSP cres_from_cerr (const ErrorCode& err) {
     ConnectResponseSP res = new ConnectResponse();
-    res->error = nest_error(errc::CONNECT_ERROR, err);
+    res->error(nest_error(errc::CONNECT_ERROR, err));
     return res;
 }
 
@@ -69,7 +69,7 @@ void Client::do_close (uint16_t code, const string& payload) {
 void Client::call_on_connect(const ConnectResponseSP &response) {
     panda_log_debug("timeout.end_step()");
     connect_request->timeout.end_step();
-    if (response->error) {
+    if (response->error()) {
         _state = State::HALT;
     }
     on_connect(response);
