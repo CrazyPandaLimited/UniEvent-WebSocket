@@ -182,7 +182,7 @@ private:
     void process_peer_close (const MessageSP&);
 };
 
-template <class B, class E, class T = decltype(*std::declval<B>()), class = std::enable_if_t<std::is_convertible<T, string_view>::value>>
+template <class B, class E, class, class>
 WriteRequestSP Builder::send (B&& begin, E&& end, const Stream::write_fn& callback) {
     if (!_connection.connected()) {
         if (callback) callback(&_connection, errc::WRITE_ERROR, new unievent::WriteRequest());
@@ -194,7 +194,7 @@ WriteRequestSP Builder::send (B&& begin, E&& end, const Stream::write_fn& callba
     return req;
 }
 
-template <class B, class E, class T = decltype(*std::declval<B>()), class = std::enable_if_t<std::is_convertible<T, string_view>::value>>
+template <class B, class E, class, class>
 WriteRequestSP Builder::send_multiframe (B&& begin, E&& end, const Stream::write_fn& callback) {
     if (!_connection.connected()) {
         if (callback) callback(&_connection, errc::WRITE_ERROR, new unievent::WriteRequest());
@@ -207,7 +207,7 @@ WriteRequestSP Builder::send_multiframe (B&& begin, E&& end, const Stream::write
     return req;
 }
 
-template <class B, class E, class T = decltype(*((*std::declval<B>()).begin()))>
+template <class B, class E, class T>
 std::enable_if_t<std::is_convertible<T, string_view>::value, WriteRequestSP>
 Builder::send_multiframe (B&& begin, E&& end, const Stream::write_fn& callback) {
     if (!_connection.connected()) {
