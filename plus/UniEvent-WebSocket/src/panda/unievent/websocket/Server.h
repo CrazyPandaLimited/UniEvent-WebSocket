@@ -79,7 +79,7 @@ private:
     std::vector<ListenerSP> listeners;
 
     void on_tcp_connection (const StreamSP&, const StreamSP&, const ErrorCode&);
-    void remove_connection (const ServerConnectionSP& conn, uint16_t code = uint16_t(CloseCode::ABNORMALLY), const string& payload = "");
+    void remove_connection (const ServerConnectionSP& conn, uint16_t code = uint16_t(CloseCode::ABNORMALLY), const string& payload = {});
 };
 
 inline std::ostream& operator<< (std::ostream& stream, const Server::Config& conf) {

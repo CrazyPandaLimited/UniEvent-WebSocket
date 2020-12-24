@@ -20,13 +20,20 @@ struct Builder : private MessageBuilder {
 
     Builder (Builder&&);
 
-    WriteRequestSP send (string& payload, const Stream::write_fn& callback = {});
+    WriteRequestSP send (string_view payload, const Stream::write_fn& callback = {});
 
     Builder& opcode  (Opcode value) { MessageBuilder::opcode(value); return *this; }
     Builder& deflate (bool value)   { MessageBuilder::deflate(value); return *this; }
 
-    template <class Begin, class End>
-    WriteRequestSP send (Begin begin, End end, const Stream::write_fn& callback = {});
+    template <class B, class E, class T = decltype(*std::declval<B>()), class = std::enable_if_t<std::is_convertible<T, string_view>::value>>
+    WriteRequestSP send (B&& begin, E&& end, const Stream::write_fn& callback = {});
+
+    template <class B, class E, class T = decltype(*std::declval<B>()), class = std::enable_if_t<std::is_convertible<T, string_view>::value>>
+    WriteRequestSP send_multiframe (B&& begin, E&& end, const Stream::write_fn& callback = {});
+
+    template <class B, class E, class T = decltype(*((*std::declval<B>()).begin()))>
+    std::enable_if_t<std::is_convertible<T, string_view>::value, WriteRequestSP>
+    send_multiframe (B&& begin, E&& end, const Stream::write_fn& callback = {});
 
 protected:
     friend struct Connection;
@@ -81,33 +88,31 @@ struct Connection : Tcp, protected ITcpSelfListener {
 
     Builder message () { return Builder(*this); }
 
-    void send_message (string& payload, const write_fn& callback = {}) {
+    void send_message (string_view payload, const write_fn& callback = {}) {
         message().opcode(Opcode::BINARY).send(payload, callback);
     }
 
-    template <class Begin, class End>
-    void send_message (Begin begin, End end, const write_fn& callback = {}) {
-        message().opcode(Opcode::BINARY).send(begin, end, callback);
+    template <class B, class E, class T = decltype(*std::declval<B>()), class = std::enable_if_t<std::is_convertible<T, string_view>::value>>
+    void send_message (B&& begin, E&& end, const write_fn& callback = {}) {
+        message().opcode(Opcode::BINARY).send(std::forward<B>(begin), std::forward<E>(end), callback);
     }
 
     void send_text (string& payload, const write_fn& callback = {}) {
         message().opcode(Opcode::TEXT).send(payload, callback);
     }
 
-    template <class Begin, class End>
-    void send_text (Begin begin, End end, const write_fn& callback = {}) {
-        message().opcode(Opcode::TEXT).send(begin, end, callback);
+    template <class B, class E, class T = decltype(*std::declval<B>()), class = std::enable_if_t<std::is_convertible<T, string_view>::value>>
+    void send_text (B&& begin, E&& end, const write_fn& callback = {}) {
+        message().opcode(Opcode::TEXT).send(std::forward<B>(begin), std::forward<E>(end), callback);
     }
 
-
-    void send_ping (string& payload);
-    void send_pong (string& payload);
-
     void send_ping ();
+    void send_ping (string_view payload);
     void send_pong ();
+    void send_pong (string_view payload);
 
     void close (uint16_t code = uint16_t(CloseCode::DONE)) {
-        close (code, close_message(code));
+        close(code, close_message(code));
     }
 
     void close (uint16_t code, const string& payload) {
@@ -177,17 +182,41 @@ private:
     void process_peer_close (const MessageSP&);
 };
 
-template <class Begin, class End>
-WriteRequestSP Builder::send (Begin begin, End end, const Stream::write_fn& callback) {
+template <class B, class E, class T = decltype(*std::declval<B>()), class = std::enable_if_t<std::is_convertible<T, string_view>::value>>
+WriteRequestSP Builder::send (B&& begin, E&& end, const Stream::write_fn& callback) {
     if (!_connection.connected()) {
         if (callback) callback(&_connection, errc::WRITE_ERROR, new unievent::WriteRequest());
         return nullptr;
     }
-    auto all = MessageBuilder::send(begin, end);
-    WriteRequestSP req = new WriteRequest(all.begin(), all.end());
-    if (callback) {
-        req->event.add(callback);
+    WriteRequestSP req = new WriteRequest(MessageBuilder::send(std::forward<B>(begin), std::forward<E>(end)));
+    if (callback) req->event.add(callback);
+    _connection.write(req);
+    return req;
+}
+
+template <class B, class E, class T = decltype(*std::declval<B>()), class = std::enable_if_t<std::is_convertible<T, string_view>::value>>
+WriteRequestSP Builder::send_multiframe (B&& begin, E&& end, const Stream::write_fn& callback) {
+    if (!_connection.connected()) {
+        if (callback) callback(&_connection, errc::WRITE_ERROR, new unievent::WriteRequest());
+        return nullptr;
     }
+    auto vdata = MessageBuilder::send_multiframe(std::forward<B>(begin), std::forward<E>(end));
+    WriteRequestSP req = new WriteRequest(vdata.begin(), vdata.end());
+    if (callback) req->event.add(callback);
+    _connection.write(req);
+    return req;
+}
+
+template <class B, class E, class T = decltype(*((*std::declval<B>()).begin()))>
+std::enable_if_t<std::is_convertible<T, string_view>::value, WriteRequestSP>
+Builder::send_multiframe (B&& begin, E&& end, const Stream::write_fn& callback) {
+    if (!_connection.connected()) {
+        if (callback) callback(&_connection, errc::WRITE_ERROR, new unievent::WriteRequest());
+        return nullptr;
+    }
+    auto vdata = MessageBuilder::send_multiframe(std::forward<B>(begin), std::forward<E>(end));
+    WriteRequestSP req = new WriteRequest(vdata.begin(), vdata.end());
+    if (callback) req->event.add(callback);
     _connection.write(req);
     return req;
 }

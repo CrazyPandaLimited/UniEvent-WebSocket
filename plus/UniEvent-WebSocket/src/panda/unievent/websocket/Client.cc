@@ -99,13 +99,12 @@ void Client::on_connect (const ErrorCode& err, const unievent::ConnectRequestSP&
     read_start();
 }
 
-void Client::on_read (string& _buf, const ErrorCode& err) {
+void Client::on_read (string& buf, const ErrorCode& err) {
     if (_state == State::INITIAL) { // just ignore everything, we are here after close
         panda_log_info("use websocket::Client after close");
         return;
     }
 
-    string buf = string(_buf.data(), _buf.length()); // TODO: remove copying
     if (_state == State::CONNECTED) return Connection::on_read(buf, err);
     if (_state != State::CONNECTING) { // may be read in state TCP_CONNECTED
         panda_log_info("ignore all reads if !CONNECTING and !CONNECTED");

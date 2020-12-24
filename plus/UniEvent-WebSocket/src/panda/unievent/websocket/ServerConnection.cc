@@ -25,13 +25,12 @@ void ServerConnection::run (Listener*) {
     _state = State::CONNECTING;
 }
 
-void ServerConnection::on_read (string& _buf, const ErrorCode& err) {
+void ServerConnection::on_read (string& buf, const ErrorCode& err) {
     if (_state == State::INITIAL) { // just ignore everything, we are here after close
         panda_log_info("use websocket::ServerConnection " << id() << " after close");
         return;
     }
 
-    string buf = string(_buf.data(), _buf.length()); // TODO - REMOVE COPYING
     if (_state == State::CONNECTED) return Connection::on_read(buf, err);
     assert(_state == State::CONNECTING);
 

@@ -10,13 +10,12 @@ Builder::Builder (Builder&& b) : MessageBuilder(std::move(b)), _connection{b._co
 
 Builder::Builder (Connection& connection) : MessageBuilder(connection.parser->message()), _connection{connection} {}
 
-WriteRequestSP Builder::send(string& payload, const Stream::write_fn& callback) {
+WriteRequestSP Builder::send (string_view payload, const Stream::write_fn& callback) {
     if (!_connection.connected()) {
         if (callback) callback(&_connection, errc::WRITE_ERROR, new unievent::WriteRequest());
         return nullptr;
     }
-    auto all = MessageBuilder::send(payload);
-    WriteRequestSP req = new WriteRequest(all.begin(), all.end());
+    WriteRequestSP req = new WriteRequest(MessageBuilder::send(payload));
     if (callback) req->event.add(callback);
     _connection.write(req);
     return req;
@@ -77,10 +76,9 @@ void Connection::send_ping () {
     write(parser->send_ping());
 }
 
-void Connection::send_ping (string& payload) {
+void Connection::send_ping (string_view payload) {
     if (_state != State::CONNECTED) return log_use_after_close();
-    auto all = parser->send_ping(payload);
-    write(all.begin(), all.end());
+    write(parser->send_ping(payload));
 }
 
 void Connection::send_pong () {
@@ -88,12 +86,10 @@ void Connection::send_pong () {
     write(parser->send_pong());
 }
 
-void Connection::send_pong (string& payload) {
+void Connection::send_pong (string_view payload) {
     if (_state != State::CONNECTED) return log_use_after_close();
-    auto all = parser->send_pong(payload);
-    write(all.begin(), all.end());
+    write(parser->send_pong(payload));
 }
-
 
 void Connection::process_peer_close (const MessageSP& msg) {
     if (_state == State::INITIAL) return; // just ignore everything, we are here after close
@@ -172,8 +168,7 @@ void Connection::do_close (uint16_t code, const string& payload) {
 
     //in_connected, not out. it checks if we are in eof callback
     if (Tcp::in_connected() && was_connected && !parser->send_closed()) {
-        auto data = parser->send_close(code, payload);
-        write(data.begin(), data.end());
+        write(parser->send_close(code, payload));
     }
     parser->reset();
 
