@@ -17,6 +17,9 @@ void Server::on_delete () noexcept {
     catch (const std::exception& e) {
         panda_log_critical("[Websocket ~Server] exception caught in while stopping server: " << e.what());
     }
+    catch (const panda::exception& e) {
+        panda_log_critical("[Websocket ~Server] exception caught in while stopping server: " << e.what());
+    }
     catch (...) {
         panda_log_critical("[Websocket ~Server] unknown exception caught while stopping server");
     }
