@@ -95,12 +95,17 @@ ServerConnectionSP Server::new_connection (uint64_t id) {
 void Server::on_tcp_connection (const StreamSP& _lstn, const StreamSP& _conn, const ErrorCode& err) {
     if (err) {
         panda_log_notice("Server[on_tcp_connection]: error: " << err);
+    }
+    if (!_conn) {
         return;
     }
 
     auto connection = dynamic_pointer_cast<ServerConnection>(_conn);
+    if (err) {
+        connection->close();
+        return;
+    }
     auto listener = dynamic_pointer_cast<Listener>(_lstn);
-//    connections[connection->id()] = connection;
     connection->run(listener.get());
 
     panda_log_notice("Server[on_tcp_connection]: somebody connected to " << listener->location() << ", now i have " << connections.size() << " connections");
