@@ -5,6 +5,7 @@
 #include <panda/unievent/websocket/Server.h>
 #include <panda/unievent/websocket/SharedTimeout.h>
 #include <thread>
+#include <openssl/ssl.h>
 
 #define panda_log_module panda::unievent::websocket::panda_log_module
 
@@ -28,11 +29,42 @@ struct Pair {
     ClientSP client;
 };
 
-static ServerSP make_server (LoopSP loop, uint16_t& port) {
+using panda::unievent::SslContext;
+static SslContext get_server_context(string ca_name) {
+    auto ctx = SSL_CTX_new(SSLv23_server_method());
+
+    auto r = SslContext::attach(ctx);
+
+    string path("t/cert");
+    string cert = path + "/" + ca_name + ".pem";
+    string key = path + "/" + ca_name + ".key";
+    int err;
+
+    err = SSL_CTX_use_certificate_file(ctx, cert.c_str(), SSL_FILETYPE_PEM);
+    assert(err);
+
+    err = SSL_CTX_use_PrivateKey_file(ctx, key.c_str(), SSL_FILETYPE_PEM);
+    assert(err);
+
+    err = SSL_CTX_check_private_key(ctx);
+    assert(err);
+
+    err = SSL_CTX_load_verify_locations(ctx, cert.c_str(), nullptr);
+    assert(err);
+
+    SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, nullptr);
+    SSL_CTX_set_verify_depth(ctx, 4);
+    return r;
+}
+
+static ServerSP make_server (LoopSP loop, uint16_t& port, bool secure = false) {
     ServerSP server = new Server(loop);
     Server::Config conf;
     Location loc;
     loc.host = "127.0.0.1";
+    if (secure) {
+        loc.ssl_ctx = get_server_context("ca");
+    }
     conf.locations.push_back(loc);
     server->configure(conf);
     server->run();
@@ -40,16 +72,20 @@ static ServerSP make_server (LoopSP loop, uint16_t& port) {
     return server;
 }
 
-static Pair make_pair (LoopSP loop) {
-    uint16_t port;
-    ServerSP server = make_server(loop, port);
-    ClientSP client = new Client(loop);
+static ClientConnectRequestSP make_connect(uint16_t port) {
     ClientConnectRequestSP req = new ClientConnectRequest();
     req->uri = new URI();
     req->uri->host("127.0.0.1");
     req->uri->scheme("ws");
     req->uri->port(port);
-    client->connect(req);
+    return req;
+}
+
+static Pair make_pair (LoopSP loop) {
+    uint16_t port;
+    ServerSP server = make_server(loop, port);
+    ClientSP client = new Client(loop);
+    client->connect(make_connect(port));
     return {server, client};
 }
 
@@ -450,4 +486,17 @@ TEST_CASE("SharedTimeout", "[uews]") {
         }
         test.wait(15);
     }
+}
+
+TEST_CASE("no ssl in client", "[uews]") {
+    AsyncTest test(1000, {"conn"});
+
+    uint16_t port;
+    ServerSP server = make_server(test.loop, port, true);
+    ClientSP client = new Client(test.loop);
+    client->connect(make_connect(port));
+
+    auto ret = test.await(client->connect_event, "conn");
+    auto response = std::get<1>(ret);
+    REQUIRE(response->error());
 }
