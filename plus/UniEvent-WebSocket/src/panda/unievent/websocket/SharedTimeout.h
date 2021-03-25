@@ -64,7 +64,7 @@ struct SharedTimeout {
 
 protected:
     void start_timer(uint64_t t) {
-        timer = Timer::once(t, [this](const TimerSP&) {
+        timer = Timer::create(t, [this](const TimerSP&) {
             callbacks.front()();
         }, loop);
     }
