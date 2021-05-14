@@ -322,7 +322,7 @@ TEST_CASE("connect and close", "[uews]") {
 }
 
 TEST_CASE("connect timeout", "[uews]") {
-    AsyncTest test(1000, {"connect"});
+    AsyncTest test(1000);
     using panda::net::SockAddr;
     using panda::uri::URI;
 
@@ -369,6 +369,7 @@ TEST_CASE("connect timeout", "[uews]") {
 
     client->connect(req);
 
+    test.expected.push_back("connect");
     auto tup = test.await(client->connect_event, "connect");
     if (error) {
         REQUIRE(std::get<1>(tup)->error().contains(make_error_code(std::errc::timed_out)));
