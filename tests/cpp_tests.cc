@@ -35,7 +35,7 @@ static SslContext get_server_context(string ca_name) {
 
     auto r = SslContext::attach(ctx);
 
-    string path("t/cert");
+    string path("tests/cert");
     string cert = path + "/" + ca_name + ".pem";
     string key = path + "/" + ca_name + ".key";
     int err;

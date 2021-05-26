@@ -30,6 +30,13 @@ if ($ENV{LOGGER}) {
     XLog::set_level(XLog::INFO, "UniEvent");
 }
 
+*main::test_catch = \&test_catch;
+
+sub test_catch {
+    chdir 'clib';
+    catch_run(@_);
+    chdir '../';
+}
 
 sub make_server {
     my $loop = UniEvent::Loop->default_loop;

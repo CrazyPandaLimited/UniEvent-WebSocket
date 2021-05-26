@@ -6,6 +6,6 @@ use Test::Catch;
 
 $SIG{PIPE} = 'IGNORE';
 
-catch_run('[uews]');
+test_catch('[uews]');
 
 done_testing();
