@@ -176,7 +176,7 @@ template <class TYPE> struct Typemap<panda::unievent::websocket::Connection::Con
         Hash h = ref.value<Hash>();
         h.store("tcp_nodelay", xs::out(var.tcp_nodelay));
         h.store("shutdown_timeout", xs::out(var.shutdown_timeout));
-        return ref;
+        return Sv(ref);
     }
 };
 
@@ -194,7 +194,7 @@ template <class TYPE> struct Typemap<panda::unievent::websocket::ServerConnectio
         Ref ref = Super::out(var);
         Hash h = ref.value<Hash>();
         h.store("connect_timeout", xs::out(var.connect_timeout));
-        return ref;
+        return Sv(ref);
     }
 };
 
