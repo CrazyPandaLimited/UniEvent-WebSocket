@@ -501,3 +501,25 @@ TEST_CASE("no ssl in client", "[uews]") {
     auto response = std::get<1>(ret);
     REQUIRE(response->error());
 }
+
+
+TEST_CASE("connect on close", "[uews]") {
+    AsyncTest test(1000, {"sconn", "conn", "conn"});
+
+    uint16_t port;
+    ServerSP server = make_server(test.loop, port);
+    ClientSP client = new Client(test.loop);
+    client->connect(make_connect(port));
+
+    auto ret = test.await(server->connection_event, "sconn");
+    test.await(client->connect_event, "conn");
+    auto sconn = std::get<1>(ret);
+    sconn->close();
+
+    client->close_event.add([&](auto...) {
+        client->close();
+        client->connect(make_connect(port));
+    });
+
+    ret = test.await(server->connection_event, "conn");
+}
