@@ -62,7 +62,7 @@ namespace xs { namespace unievent  { namespace websocket {
 
         if ((val = params.fetch("addr_hints")))      ret->addr_hints = xs::in<panda::unievent::AddrInfoHints>(val);
         if ((val = params.fetch("cached_resolver"))) ret->cached_resolver = SvTRUE(val);
-        if ((val = params.fetch("timeout")))         ret->timeout.set(get_time(Simple(val)));
+        if ((val = params.fetch("timeout")))         ret->timeout.set(get_time(val.number()));
 
         return ret;
     }
@@ -140,10 +140,10 @@ template <> struct Typemap<panda::unievent::websocket::Location> : TypemapBase<p
         Scalar val;
         Location loc;
         if ((val = h["host"]))       loc.host       = xs::in<panda::string>(val);
-        if ((val = h["port"]))       loc.port       = Simple(val);
+        if ((val = h["port"]))       loc.port       = val.number();
         if ((val = h["name"]))       loc.name       = xs::in<panda::string>(val);
         if ((val = h["ssl_ctx"]))    loc.ssl_ctx    = xs::in<panda::unievent::SslContext>(val);
-        if ((val = h["backlog"]))    loc.backlog    = Simple(val);
+        if ((val = h["backlog"]))    loc.backlog    = val.number();
         if ((val = h["reuse_port"])) loc.reuse_port = val.is_true();
         return loc;
     }
@@ -167,7 +167,7 @@ template <class TYPE> struct Typemap<panda::unievent::websocket::Connection::Con
         TYPE cfg = Super::in(arg);
         Scalar val;
         if ((val = h.fetch("tcp_nodelay")))      cfg.tcp_nodelay = val.is_true();
-        if ((val = h.fetch("shutdown_timeout"))) cfg.shutdown_timeout = xs::unievent::websocket::get_time(Simple(val));
+        if ((val = h.fetch("shutdown_timeout"))) cfg.shutdown_timeout = xs::unievent::websocket::get_time(val.number());
         return cfg;
     }
 
@@ -186,7 +186,7 @@ template <class TYPE> struct Typemap<panda::unievent::websocket::ServerConnectio
         const Hash h = arg;
         TYPE cfg = Super::in(arg);
         Scalar val;
-        if ((val = h.fetch("connect_timeout"))) cfg.connect_timeout = xs::unievent::websocket::get_time(Simple(val));
+        if ((val = h.fetch("connect_timeout"))) cfg.connect_timeout = xs::unievent::websocket::get_time(val.number());
         return cfg;
     }
 
