@@ -1,4 +1,3 @@
-#include <catch2/catch.hpp>
 #include <panda/log.h>
 #include <panda/unievent/test/AsyncTest.h>
 #include <panda/unievent/websocket/Client.h>
@@ -6,6 +5,7 @@
 #include <panda/unievent/websocket/SharedTimeout.h>
 #include <thread>
 #include <openssl/ssl.h>
+#include <catch2/catch_test_macros.hpp>
 
 #define panda_log_module panda::unievent::websocket::panda_log_module
 
