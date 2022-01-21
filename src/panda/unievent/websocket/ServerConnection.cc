@@ -1,92 +1,72 @@
 #include "ServerConnection.h"
 #include "Server.h"
+#include "panda/protocol/http/Request.h"
+#include "panda/unievent/forward.h"
 #include <panda/encode/base16.h>
 
 namespace panda { namespace unievent { namespace websocket {
 
-ServerConnection::ServerConnection (Server* server, uint64_t id, const Config& conf)
-    : Connection(server->loop())
-    , connect_timeout(server->loop())
-    , _id(id)
-    , server(server)
+ServerConnection::ServerConnection (Server* server, const ConnectionData& data, const Config& conf)
+    : _id(data.id), server(server)
 {
-    panda_log_notice("ServerConnection[new]: id = " << _id);
-    init(parser);
+    panda_log_notice("id = " << _id);
+    init(parser, server->loop());
     configure(conf);
-    if (conf.tcp_nodelay) set_nodelay(true);
-    _state = State::TCP_CONNECTING;
-    connect_timeout.set(conf.connect_timeout);
-    connect_timeout.add_step([this]() {
-        close();
-    });
-}
-
-void ServerConnection::run (Listener*) {
+    set_stream(data.stream);
     _state = State::CONNECTING;
 }
 
-void ServerConnection::on_read (string& buf, const ErrorCode& err) {
-    if (_state == State::INITIAL) { // just ignore everything, we are here after close
-        panda_log_info("use websocket::ServerConnection " << id() << " after close");
-        return;
-    }
-
-    if (_state == State::CONNECTED) return Connection::on_read(buf, err);
-    assert(_state == State::CONNECTING);
-
-    if (err) {
-        panda_log_notice("Websocket accept error: " << err);
-        ConnectRequestSP creq = new protocol::websocket::ConnectRequest();
-        creq->error(nest_error(errc::READ_ERROR, err));
-        on_accept(creq);
-        close();
-        return;
-    }
-
-    panda_log_debug("Websocket on read (accepting):" << log::escaped{buf});
+void ServerConnection::handshake(const protocol::http::RequestSP& req) {
+    // TODO: implement better without stringification
+    auto buf = req->to_string();
+    panda_log_debug("Websocket handshake:" << log::escaped{buf});
 
     assert(!parser.accept_parsed());
 
     auto creq = parser.accept(buf);
-    if (!creq) return;
+    assert(creq); // buf must be a full http request
+    
+    if (creq->error()) panda_log_notice("Websocket accept error: " << creq->error());
 
+    on_handshake(creq);
+    if (_state != State::CONNECTING) return; // connection might get removed in callback
+
+    // automatically send appropriate handshake http response if user hasn't done it in callback
+    if (!handshake_response_sent) {
+        // here we pass empty objects because everything needed by RFC will be filled with defaults by websocket parser
+        if (creq->error()) send_accept_error(new protocol::http::Response());
+        else               send_accept_response(new ConnectResponse());
+    }
+    
     if (creq->error()) {
-        panda_log_notice("Websocket accept error: " << creq->error());
-        panda::protocol::http::ResponseSP res = new panda::protocol::http::Response();
-        send_accept_error(res);
-        on_accept(creq);
         close();
         return;
     }
-
-    if (server->accept_filter) {
-        panda::protocol::http::ResponseSP res = server->accept_filter(creq);
-        if (res) {
-            send_accept_error(res.get());
-            close();
-            return;
-        }
-    }
-
+    
     _state = State::CONNECTED;
-    on_accept(creq);
+    on_connection(creq);
 }
 
-void ServerConnection::on_accept (const ConnectRequestSP& req) {
-    if (!req->error()) {
-        ConnectResponse res;
-        send_accept_response(&res);
-    }
-    connect_timeout.end_step();
-    accept_event(this, req);
+void ServerConnection::on_handshake(const ConnectRequestSP& req) {
+    server->on_handshake(this, req);
+}
+
+void ServerConnection::on_connection(const ConnectRequestSP& req) {
+    server->on_connection(this, req);
 }
 
 void ServerConnection::send_accept_error (panda::protocol::http::Response* res) {
-    write(parser.accept_error(res));
+    if (handshake_response_sent) throw std::logic_error("handshake response has been already sent");
+    handshake_response_sent = true;
+    stream()->write(parser.accept_error(res));
 }
 
 void ServerConnection::send_accept_response (ConnectResponse* res) {
-    write(parser.accept_response(res));
+    if (handshake_response_sent) throw std::logic_error("handshake response has been already sent");
+    handshake_response_sent = true;
+    
+    stream()->write(parser.accept_response(res));
+    
     auto using_deflate = parser.is_deflate_active();
     panda_log_notice("websocket::ServerConnection " << id() << " has been accepted, deflate is " << (using_deflate ? "on" : "off"));
 
@@ -103,8 +83,9 @@ void ServerConnection::send_accept_response (ConnectResponse* res) {
 }
 
 void ServerConnection::do_close (uint16_t code, const string& payload) {
+    auto state_was = _state;
     Connection::do_close(code, payload);
-    if (server) server->remove_connection(this, code, payload); // server might have been removed in callbacks
+    if (server) server->remove_connection(this, state_was, code, payload); // server might have been removed in callbacks
 }
 
 }}}

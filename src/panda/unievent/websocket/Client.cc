@@ -3,16 +3,14 @@
 
 namespace panda { namespace unievent { namespace websocket {
 
-Connection::Config Client::default_config;
-
 static ConnectResponseSP cres_from_cerr (const ErrorCode& err) {
     ConnectResponseSP res = new ConnectResponse();
     res->error(nest_error(errc::CONNECT_ERROR, err));
     return res;
 }
 
-Client::Client (const LoopSP& loop, const Connection::Config& conf) : Connection(loop) {
-    init(parser);
+Client::Client (const LoopSP& loop, const Config& conf) : tcp_nodelay(conf.tcp_nodelay) {
+    init(parser, loop);
     configure(conf);
 }
 
@@ -23,29 +21,26 @@ void Client::connect (const ClientConnectRequestSP& request) {
     if (!request || !request->uri) throw std::invalid_argument("ConnectRequest should contains uri");
 
     auto port = request->uri->port();
-    panda_log_notice("connecting to " << request->uri->host() << ":" << port << " timeout " << request->timeout.value << "ms");
-    bool cur_secure = is_secure();
-    bool need_secure = request->uri->secure();
-    if (cur_secure != need_secure) {
-        if (need_secure) run_in_order([](auto& stream) { stream->use_ssl(); });
-        else             run_in_order([](auto& stream) { stream->no_ssl(); });
-    }
+    panda_log_notice("connecting to " << request->uri->host() << ":" << port << " timeout " << request->connect_timeout << "ms");
 
-    connect()->to(request->uri->host(), port)
-             ->use_cache(request->cached_resolver)
-             ->set_hints(request->addr_hints)
-             ->timeout(request->timeout.value)
-             ->run();
+    TcpSP tcp = new Tcp(loop());
+    set_stream(tcp);
 
-    request->timeout.loop = loop();
-    request->timeout.add_prestep([this]{
-        ClientSP self = this; (void)self; // callback is last line, but just in case of loosing last ref in callback and new code after it
-        Connection::do_close(CloseCode::ABNORMALLY, "");
-        call_on_connect(cres_from_cerr(make_error_code(std::errc::timed_out)));
-    });
+    if (request->uri->secure()) tcp->use_ssl();
+
+    tcp->connect()->to(request->uri->host(), port)
+                  ->use_cache(request->cached_resolver)
+                  ->set_hints(request->addr_hints)
+                  ->timeout(request->connect_timeout)
+                  ->run();
+
+    if (tcp_nodelay) try {
+        tcp->set_nodelay(true);
+    } catch (unievent::Error& e) {} // ignore errors, set_nodelay is optional
+
     connect_request = request;
 
-    write(parser.connect_request(request));
+    tcp->write(parser.connect_request(request));
     _state = State::TCP_CONNECTING;
 }
 
@@ -68,7 +63,11 @@ void Client::do_close (uint16_t code, const string& payload) {
 
 void Client::call_on_connect(const ConnectResponseSP &response) {
     panda_log_debug("timeout.end_step()");
-    connect_request->timeout.end_step();
+    if (connect_request->_timer) {
+        connect_request->_timer->pause();
+        connect_request->_timer->event.remove_all();
+    }
+    
     if (response->error()) {
         _state = State::HALT;
     }
@@ -79,27 +78,29 @@ void Client::on_connect (const ConnectResponseSP& response) {
     connect_event(this, response);
 }
 
-void Client::on_connect (const ErrorCode& err, const unievent::ConnectRequestSP&) {
+void Client::on_connect (const ErrorCode& err, const unievent::ConnectRequestSP& stream_creq) {
     panda_log_debug("websocket::Client::on_connect(unievent) " <<  err);
-    auto has_time = connect_request->timeout.end_prestep();
-    if (!has_time) {
-        call_on_connect(cres_from_cerr(has_time.error()));
-        return;
-    }
     if (err) {
         call_on_connect(cres_from_cerr(err));
         return;
     }
-
-    try {
-        if (conf.tcp_nodelay) set_nodelay(true);
-    } catch (unievent::Error& e) {} // ignore errors, set_nodelay is optional
+    
+    if (connect_request->connect_timeout) {
+        connect_request->_timer = stream_creq->timeout_timer();
+        connect_request->_timer->event.add([this](auto&){
+            ClientSP self = this; (void)self; // callback is last line, but just in case of loosing last ref in callback and new code after it
+            Connection::do_close(CloseCode::ABNORMALLY, "");
+            call_on_connect(cres_from_cerr(make_error_code(std::errc::timed_out)));
+        });
+        connect_request->_timer->resume();
+    }
 
     _state = State::CONNECTING;
-    read_start();
+    stream()->read_start();
 }
 
 void Client::on_read (string& buf, const ErrorCode& err) {
+    ClientSP hold = this; (void)hold;
     if (_state == State::INITIAL) { // just ignore everything, we are here after close
         panda_log_info("use websocket::Client after close");
         return;

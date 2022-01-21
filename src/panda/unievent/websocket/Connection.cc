@@ -1,29 +1,33 @@
 #include "Connection.h"
+#include "panda/protocol/websocket/Frame.h"
 #include <panda/encode/base16.h>
 #include <numeric>
+#include <panda/unievent/Tcp.h>
+#include <panda/unievent/Pipe.h>
 
 namespace panda { namespace unievent { namespace websocket {
 
 using protocol::websocket::ccfmt;
+using protocol::websocket::Frame;
 
 Builder::Builder (Builder&& b) : MessageBuilder(std::move(b)), _connection{b._connection} {}
 
 Builder::Builder (Connection& connection) : MessageBuilder(connection.parser->message()), _connection{connection} {}
 
-WriteRequestSP Builder::send (string_view payload, const Stream::write_fn& callback) {
+WriteRequestSP Builder::send (string_view payload, const send_fn& callback) {
     if (!_connection.connected()) {
         if (callback) callback(&_connection, errc::WRITE_ERROR, new unievent::WriteRequest());
         return nullptr;
     }
     WriteRequestSP req = new WriteRequest(MessageBuilder::send(payload));
-    if (callback) req->event.add(callback);
-    _connection.write(req);
+    if (callback) req->event.add(_connection.wrap_send_fn(callback));
+    _connection.stream()->write(req);
     return req;
 }
 
 void Connection::configure (const Config& conf) {
     parser->configure(conf);
-    this->conf = conf;
+    shutdown_timeout = conf.shutdown_timeout;
 }
 
 static void log_use_after_close () {
@@ -31,6 +35,7 @@ static void log_use_after_close () {
 }
 
 void Connection::on_read (string& buf, const ErrorCode& err) {
+    ConnectionSP hold = this; (void)hold;
     panda_log_debug("Websocket on read:" << log::escaped{buf});
     assert(_state == State::CONNECTED && parser->established());
     if (err) return process_error(nest_error(errc::READ_ERROR, err));
@@ -71,24 +76,14 @@ void Connection::on_message (const MessageSP& msg) {
     message_event(this, msg);
 }
 
-void Connection::send_ping () {
-    if (_state != State::CONNECTED) return log_use_after_close();
-    write(parser->send_ping());
-}
-
 void Connection::send_ping (string_view payload) {
     if (_state != State::CONNECTED) return log_use_after_close();
-    write(parser->send_ping(payload));
-}
-
-void Connection::send_pong () {
-    if (_state != State::CONNECTED) return log_use_after_close();
-    write(parser->send_pong());
+    _stream->write(parser->send_ping(payload));
 }
 
 void Connection::send_pong (string_view payload) {
     if (_state != State::CONNECTED) return log_use_after_close();
-    write(parser->send_pong(payload));
+    _stream->write(parser->send_pong(payload));
 }
 
 void Connection::process_peer_close (const MessageSP& msg) {
@@ -140,11 +135,13 @@ void Connection::on_error (const ErrorCode& err) {
 }
 
 void Connection::on_eof () {
+    ConnectionSP hold = this; (void)hold;
     panda_log_notice("websocket on_eof");
     process_peer_close(nullptr);
 }
 
 void Connection::on_write (const ErrorCode& err, const WriteRequestSP& req) {
+    ConnectionSP hold = this; (void)hold;
     panda_log_debug("websocket on_write: " << err);
     if (err && !(err & std::errc::operation_canceled || err & std::errc::broken_pipe || err & std::errc::not_connected)) {
         process_error(nest_error(errc::WRITE_ERROR, err));
@@ -155,10 +152,11 @@ void Connection::on_write (const ErrorCode& err, const WriteRequestSP& req) {
     }
 }
 
-void websocket::Connection::on_shutdown(const ErrorCode& err, const ShutdownRequestSP&) {
+void Connection::on_shutdown(const ErrorCode& err, const ShutdownRequestSP&) {
+    ConnectionSP hold = this; (void)hold;
     panda_log_debug("websocket on_shutdown " << err);
     if (err & std::errc::timed_out) {
-        reset();
+    	_stream->reset();
     }
 }
 
@@ -167,27 +165,39 @@ void Connection::do_close (uint16_t code, const string& payload) {
     bool was_connected = connected();
 
     //in_connected, not out. it checks if we are in eof callback
-    if (Tcp::in_connected() && was_connected && !parser->send_closed()) {
-        write(parser->send_close(code, payload));
+    if (_stream && _stream->in_connected() && was_connected && !parser->send_closed()) {
+    	_stream->write(parser->send_close(code, payload));
     }
     parser->reset();
 
     _state = State::INITIAL;
 
-    if (Tcp::connected()) {
-        read_stop();
-        shutdown(conf.shutdown_timeout);
-        disconnect();
-    } else {
-        reset();
+    // remove stream before resetting because it may call user callbacks and start new connection with new stream
+    auto stream = std::move(_stream);
+    _stream = nullptr;
+    if (stream) {
+        if (stream->connected()) {
+            stream->read_stop();
+            stream->shutdown(shutdown_timeout);
+            stream->disconnect();
+        } else {
+            // will call on_connect / on_write etc with status cancelled and indirectly lead to calling connection failure callbacks
+            stream->reset();
+        }
+        stream->event_listener(nullptr);
     }
-
     _error_state = false;
     if (was_connected) on_close(code, payload);
 }
 
 void Connection::on_close (uint16_t code, const string& payload) {
     close_event(this, code, payload);
+}
+
+Connection::~Connection () {
+    // need to call reset to call possible callbacks (write/shutdown/etc)
+    // TODO: should be exception-guarded
+    if (_state != State::INITIAL && _stream) _stream->reset();
 }
 
 std::ostream& operator<< (std::ostream& stream, const Connection::Config& conf) {

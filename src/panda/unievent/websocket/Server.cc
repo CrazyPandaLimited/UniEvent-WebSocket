@@ -1,18 +1,31 @@
 #include "Server.h"
+#include "panda/expected.h"
+#include "panda/unievent/http/Server.h"
+#include "panda/unievent/http/ServerRequest.h"
+#include "panda/unievent/http/ServerResponse.h"
+#include "panda/unievent/websocket/ServerConnection.h"
+#include <panda/protocol/websocket/utils.h>
 #include <panda/log.h>
 
 using namespace std::placeholders;
 namespace panda { namespace unievent { namespace websocket {
+    
+using protocol::websocket::string_contains_ci;
 
 std::atomic<uint64_t> Server::lastid(0);
 
 Server::Server (const LoopSP& loop) : running(false), _loop(loop) {
     panda_log_notice("Server(): loop is default = " << (_loop == Loop::default_loop()));
+    // for websocket standalone server we use http server to make the server
+    _http = new http::Server(_loop);
+    // for websocket standalone server, auto-upgrade all non explicitly handled requests
+    _http->request_event.add(std::bind(&Server::auto_upgrade_http_requests, this, _1));
 }
 
 void Server::on_delete () noexcept {
     try {
         stop();
+        if (_http) _http->request_event.remove_all();
     }
     catch (const std::exception& e) {
         panda_log_critical("[Websocket ~Server] exception caught in while stopping server: " << e.what());
@@ -24,33 +37,22 @@ void Server::on_delete () noexcept {
 }
 
 void Server::configure (const Config& conf) {
-    config_validate(conf);
-    bool was_running = running;
-    if (was_running) stop_listening();
-    config_apply(conf);
-    if (was_running) start_listening();
-}
-
-void Server::config_validate (const Config& c) const {
-    if (!c.locations.size()) throw std::invalid_argument("no locations to listen supplied");
-
-    for (auto& loc : c.locations) {
-        if (!loc.host)    throw std::invalid_argument("empty host in one of locations");
-        if (!loc.backlog) throw std::invalid_argument("zero backlog in one of locations");
-        //do not check port, 0 is some free port and you can get if with get_listeners()[i]->sockadr();
+    if (conf.locations.size()) {
+        _http->configure(conf);
+        _listening = true;
+    } else {
+        _http->stop();
+        _listening = false;
     }
-}
-
-void Server::config_apply (const Config& conf) {
-    locations = conf.locations;
-    conn_conf = conf.connection;
+    
+    conn_conf = conf;
 }
 
 void Server::run () {
     if (running) throw std::logic_error("already running");
     running = true;
     panda_log_notice("websocket::Server::run with conn_conf:" << conn_conf);
-    start_listening();
+    if (_listening) _http->run();
 }
 
 void Server::stop () { stop((uint16_t)CloseCode::AWAY); }
@@ -59,9 +61,9 @@ void Server::stop (uint16_t code) {
     if (!running) return;
     running = false;
     panda_log_notice("WebSocket server stop!");
-    stop_listening();
+    if (_listening) _http->stop();
 
-    auto tmp = connections;
+    auto tmp = _connections;
     for (auto& it : tmp) {
         auto& conn = it.second;
         conn->close(code);
@@ -72,56 +74,70 @@ void Server::stop (uint16_t code) {
 }
 
 void Server::start_listening () {
-    for (auto& location : locations) {
-        auto l = new Listener(_loop, location);
-        l->connection_event.add(std::bind(&Server::on_tcp_connection, this, _1, _2, _3));
-        l->connection_factory = [this](auto&) {
-            auto id = ++lastid;
-            return connections[id] = this->new_connection(id);
-        };
-        l->run();
-        listeners.push_back(l);
-    }
+    if (_listening) _http->start_listening();
 }
 
 void Server::stop_listening () {
-    listeners.clear();
+    if (_listening) _http->stop_listening();
 }
 
-ServerConnectionSP Server::new_connection (uint64_t id) {
-    return new ServerConnection(this, id, conn_conf);
-}
-
-void Server::on_tcp_connection (const StreamSP& _lstn, const StreamSP& _conn, const ErrorCode& err) {
-    if (err) {
-        panda_log_notice("Server[on_tcp_connection]: error: " << err);
+const http::Server::Listeners& Server::listeners() const {
+    if (!_http) {
+        static http::Server::Listeners _empty;
+        return _empty;
     }
-    if (!_conn) {
-        return;
-    }
-
-    auto connection = dynamic_pointer_cast<ServerConnection>(_conn);
-    if (err) {
-        connection->close();
-        return;
-    }
-    auto listener = dynamic_pointer_cast<Listener>(_lstn);
-    connection->run(listener.get());
-
-    panda_log_notice("Server[on_tcp_connection]: somebody connected to " << listener->location() << ", now i have " << connections.size() << " connections");
-
-    on_connection(connection);
+    return _http->listeners();
 }
 
-void Server::on_connection (const ServerConnectionSP& conn) {
-    connection_event(this, conn);
+excepted<net::SockAddr, ErrorCode> Server::sockaddr () const {
+    if (!_http) return make_unexpected(make_error_code(std::errc::not_connected));
+    return _http->sockaddr();
 }
 
-void Server::remove_connection (const ServerConnectionSP& conn, uint16_t code, const string& payload) {
-    auto erased = connections.erase(conn->id());
-//    assert(erased);
-    panda_log_notice("Server[remove_connection]: now i have " << connections.size() << " connections");
-    if (erased) {
+void Server::auto_upgrade_http_requests(const http::ServerRequestSP& req) {
+    if (req->response()) return; // do not auto-upgrade requests that have been handled
+    // do not auto-upgrade wrong requests
+    if (!string_contains_ci(req->headers.connection(), "Upgrade") || !string_contains_ci(req->headers.get("Upgrade"), "websocket")) return; 
+    auto res = upgrade_connection(req);
+    if (!res) return; // the only case for error left here is a connection loss (race or already upgraded by user)
+}
+
+excepted<void, ErrorCode> Server::upgrade_connection(const http::ServerRequestSP& req) {
+    ServerSP hold = this; (void)hold;
+    auto est_time = req->connection() ? req->connection()->establish_time() : 0;
+    auto res = req->upgrade();
+    if (!res) return make_unexpected(res.error());
+    auto stream = res.value();
+    
+    auto id = ++lastid;
+    
+    auto connection = new_connection({id, stream, est_time});
+    _connections[id] = connection;
+    panda_log_notice("somebody connected to " << stream->sockaddr() << ", now i have " << _connections.size() << " connections");
+    
+    // will accept or deny connection. will call on_handshake and on_connection on server(us)
+    // connection may get closed after this method if something is wrong
+    connection->handshake(req);
+    
+    return {};
+}
+
+ServerConnectionSP Server::new_connection (const ServerConnection::ConnectionData& data) {
+    return new ServerConnection(this, data, conn_conf);
+}
+
+void Server::on_handshake(const ServerConnectionSP& conn, const ConnectRequestSP& req) {
+    if (handshake_callback) handshake_callback(this, conn, req);
+}
+
+void Server::on_connection (const ServerConnectionSP& conn, const ConnectRequestSP& creq) {
+    connection_event(this, conn, creq);
+}
+
+void Server::remove_connection (const ServerConnectionSP& conn, Connection::State state_was, uint16_t code, const string& payload) {
+    _connections.erase(conn->id());
+    panda_log_notice("[remove_connection]: now i have " << _connections.size() << " connections");
+    if (state_was == Connection::State::CONNECTED) {
         on_disconnection(conn, code, payload);
     }
 }
@@ -129,5 +145,6 @@ void Server::remove_connection (const ServerConnectionSP& conn, uint16_t code, c
 void Server::on_disconnection (const ServerConnectionSP& conn, uint16_t code, const string& payload) {
     disconnection_event(this, conn, code, payload);
 }
+
 
 }}}

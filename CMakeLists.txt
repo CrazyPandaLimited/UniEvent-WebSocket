@@ -20,11 +20,11 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_14)
 
-find_package(unievent REQUIRED)
+find_package(unievent-http REQUIRED)
 find_package(panda-protocol-websocket REQUIRED)
 find_package(panda-encode-base2n REQUIRED)
 
-target_link_libraries(${PROJECT_NAME} PUBLIC unievent panda-protocol-websocket panda-encode-base2n)
+target_link_libraries(${PROJECT_NAME} PUBLIC unievent-http panda-protocol-websocket panda-encode-base2n)
 
 #tests
 file(GLOB_RECURSE testSource RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "tests/*.cc")
@@ -37,9 +37,9 @@ target_link_libraries(unievent-websocket-tests PUBLIC Catch2::Catch2)
 
 #ctest
 enable_testing()
-#add_library(test-lib STATIC EXCLUDE_FROM_ALL tests/lib/test.cc)
-#target_compile_definitions(test-lib PRIVATE CATCH_CONFIG_MAIN)
-#target_link_libraries(test-lib Catch2::Catch2 ${PROJECT_NAME})
+add_library(${PROJECT_NAME}-test-lib STATIC EXCLUDE_FROM_ALL tests/lib/test.cc)
+target_compile_definitions(${PROJECT_NAME}-test-lib PRIVATE CATCH_CONFIG_MAIN)
+target_link_libraries(${PROJECT_NAME}-test-lib Catch2::Catch2 ${PROJECT_NAME})
 list(FILTER testSource EXCLUDE REGEX "lib")
 #foreach(tobj ${testSource})
 #    get_filename_component(tname ${tobj} NAME_WE)

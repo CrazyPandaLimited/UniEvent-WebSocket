@@ -1,8 +1,8 @@
+#include "panda/unievent/http/Server.h"
 #include <panda/log.h>
 #include <panda/unievent/test/AsyncTest.h>
 #include <panda/unievent/websocket/Client.h>
 #include <panda/unievent/websocket/Server.h>
-#include <panda/unievent/websocket/SharedTimeout.h>
 #include <thread>
 #include <openssl/ssl.h>
 #include <catch2/catch_test_macros.hpp>
@@ -10,6 +10,7 @@
 #define panda_log_module panda::unievent::websocket::panda_log_module
 
 using namespace panda::unievent::websocket;
+using Location = panda::unievent::http::Server::Location;
 using panda::unievent::test::AsyncTest;
 using panda::unievent::LoopSP;
 using panda::unievent::StreamSP;
@@ -68,7 +69,7 @@ static ServerSP make_server (LoopSP loop, uint16_t& port, bool secure = false) {
     conf.locations.push_back(loc);
     server->configure(conf);
     server->run();
-    port = server->get_listeners()[0]->sockaddr()->port();
+    port = server->sockaddr()->port();
     return server;
 }
 
@@ -107,27 +108,17 @@ TEST_CASE("on_read after close", "[uews]") {
         auto p = make_pair(test.loop);
 
         ServerConnectionSP sconn;
-        p.server->connection_event.add([&](auto, auto conn) {
+        p.server->connection_event.add([&](auto, auto conn, auto) {
             sconn = conn;
-            sconn->accept_event.add([](auto conn, auto) {
-                string msg = "123";
-                conn->send_message(msg);
-
-            });
+            string msg = "123";
+            conn->send_message(msg);
         });
         test.await(p.client->message_event, "connect");
 
-        const size_t SIZE = 120 * 1024;
-        string big_buf;
-        big_buf.resize(SIZE);
-        for (size_t i = 0; i < SIZE; ++i) {
-            big_buf[i] = '1';
-        }
-
-        sconn->write(big_buf);
+        sconn->stream()->write(string(120 * 1024, '1'));
 
         size_t rcount = 0;
-        p.client->read_event.add([&](auto client, auto&, auto& err){
+        p.client->stream()->read_event.add([&](auto client, auto&, auto& err){
             if (err) WARN(err);
             REQUIRE_FALSE(err);
             rcount++;
@@ -135,7 +126,7 @@ TEST_CASE("on_read after close", "[uews]") {
             client->disconnect();
         });
 
-        test.await(sconn->eof_event, "close");
+        test.await(sconn->stream()->eof_event, "close");
         REQUIRE(rcount == 1);
     }
 
@@ -159,12 +150,12 @@ TEST_CASE("destroying server&client in callbacks", "[uews]") {
             p.server->stop_listening();
         };
 
+        SECTION("server - handshake_callback")  { p.server->handshake_callback = srm; }
         SECTION("server - connection_event")    { p.server->connection_event.add(srm); }
         SECTION("server - disconnection_event") { p.server->disconnection_event.add(srm); }
 
-        p.server->connection_event.add([&](auto, auto conn) {
+        p.server->connection_event.add([&](auto, auto conn, auto) {
             panda_log_info("s-conn");
-            SECTION("server - accept_event")     { conn->accept_event.add(srm); }
             SECTION("server - message_event")    { conn->message_event.add(srm); }
             SECTION("server - close_event")      { conn->close_event.add(srm); }
             SECTION("server - peer_close_event") { conn->peer_close_event.add(srm); }
@@ -180,7 +171,6 @@ TEST_CASE("destroying server&client in callbacks", "[uews]") {
             });
 
             conn->error_event.add([&](auto, auto& err) { panda_log_info("s-err: " << err); });
-            conn->accept_event.add([&](auto...)        { panda_log_info("s-accept"); });
             conn->message_event.add([&](auto...)       { panda_log_info("s-message"); });
             conn->close_event.add([&](auto...)         { panda_log_info("s-close"); });
             conn->peer_close_event.add([&](auto...)    { panda_log_info("s-peer-close"); });
@@ -228,7 +218,7 @@ TEST_CASE("destroying server in error callback", "[uews]") {
     AsyncTest test(1000, 1);
     auto p = make_pair(test.loop);
 
-    p.server->connection_event.add([&](auto, auto conn) {
+    p.server->connection_event.add([&](auto, auto conn, auto) {
         conn->error_event.add([&](auto, auto&){
             test.happens();
             CHECK(true);
@@ -239,7 +229,7 @@ TEST_CASE("destroying server in error callback", "[uews]") {
     });
 
     p.client->connect_event.add([&](auto client, auto) {
-        client->write("fuck you bitch");
+        client->stream()->write("fuck you bitch");
     });
 
     test.run();
@@ -250,10 +240,8 @@ TEST_CASE("destroying client in error callback", "[uews]") {
     AsyncTest test(1000, 1);
     auto p = make_pair(test.loop);
 
-    p.server->connection_event.add([&](auto, auto conn) {
-        conn->accept_event.add([&](auto conn, auto) {
-            conn->write("f1uck you dudefuck you dudefuck you dudefuck you dudefuck you dudefuck you dudefuck you dudefuck you");
-        });
+    p.server->connection_event.add([&](auto, auto conn, auto) {
+        conn->stream()->write("f1uck you dudefuck you dudefuck you dudefuck you dudefuck you dudefuck you dudefuck you dudefuck you");
     });
 
     p.client->error_event.add([&](auto, auto&){
@@ -272,7 +260,7 @@ TEST_CASE("cleanup on success", "[uews]") {
     AsyncTest test(1000, {"connect", "srecv", "crecv", "disconn"});
     {
         auto p = make_pair(test.loop);
-        p.server->connection_event.add([&](auto, auto conn) {
+        p.server->connection_event.add([&](auto, auto conn, auto) {
             conn->message_event.add([&](auto conn, auto msg) {
                 test.happens("srecv");
                 CHECK(msg->payload[0] == "nah");
@@ -365,7 +353,7 @@ TEST_CASE("connect timeout", "[uews]") {
     req->uri->host(addr.ip());
     req->uri->port(addr.port());
     req->uri->scheme(panda::unievent::websocket::ws_scheme(false));
-    req->timeout.set(TIME);
+    req->connect_timeout = TIME;
 
     client->connect(req);
 
@@ -397,7 +385,7 @@ TEST_CASE("last ref in connect timeout", "[errors]") {
     req->uri->host(addr.ip());
     req->uri->port(addr.port());
     req->uri->scheme(panda::unievent::websocket::ws_scheme(false));
-    req->timeout.set(10);
+    req->connect_timeout = 10;
     client->connect(req);
 
     client->connect_event.add([&](const auto&...) {
@@ -430,13 +418,13 @@ TEST_CASE("no close frame on_eof", "[errors]") {
     client->connect("127.0.0.1", false, port);
     test.await(client->connect_event, "connected");
 
-    client->shutdown(); // emulates broken connection
+    client->stream()->shutdown(); // emulates broken connection
 
     client->close_event.add([&](auto...) {
         test.happens("close");
     });
 
-    test.await(client->eof_event, "eof"); // close should be emulated with 1006 after eof received, if server answer it happens before
+    test.await(client->stream()->eof_event, "eof"); // close should be emulated with 1006 after eof received, if server answer it happens before
 }
 
 TEST_CASE("shutdown timeout", "[uews]") {
@@ -448,45 +436,14 @@ TEST_CASE("shutdown timeout", "[uews]") {
     conf.shutdown_timeout = 1;
     p.client->configure(conf);
 
+    auto stream = p.client->stream().get(); // stream via stream() getter will no longer be accessible after close()
     p.client->close();
     std::this_thread::sleep_for(std::chrono::milliseconds(5));
     {
-        auto tup = test.await(p.client->shutdown_event, "shutdown");
+        auto tup = test.await(stream->shutdown_event, "shutdown");
         REQUIRE(std::get<1>(tup) & std::errc::timed_out);
     }
     REQUIRE(p.client->refcnt() == 1);
-}
-
-TEST_CASE("SharedTimeout", "[uews]") {
-    AsyncTest test(1000, {});
-    SharedTimeout t(test.loop);
-    t.set(10);
-    SECTION("single") {
-        t.add_step([&]{test.happens("timeout");});
-        SECTION("timeout") {
-            test.expected.push_back("timeout");
-        }
-        SECTION("stopped") {
-            t.end_step();
-        }
-        test.wait(15);
-    }
-    SECTION("multi") {
-        t.add_step([&]{test.happens("timeout1");});
-        t.add_step([&]{test.happens("timeout2");});
-        SECTION("timeout") {
-            test.expected.push_back("timeout1");
-        }
-        SECTION("timeout2") {
-            test.expected.push_back("timeout2");
-            t.end_step();
-        }
-        SECTION("stopped") {
-            t.end_step();
-            t.end_step();
-        }
-        test.wait(15);
-    }
 }
 
 TEST_CASE("no ssl in client", "[uews]") {
