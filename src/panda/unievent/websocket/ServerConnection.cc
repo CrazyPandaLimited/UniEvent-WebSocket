@@ -25,7 +25,7 @@ void ServerConnection::handshake(const protocol::http::RequestSP& req) {
 
     auto creq = parser.accept(buf);
     assert(creq); // buf must be a full http request
-    
+
     if (creq->error()) panda_log_notice("Websocket accept error: " << creq->error());
 
     on_handshake(creq);
@@ -37,12 +37,12 @@ void ServerConnection::handshake(const protocol::http::RequestSP& req) {
         if (creq->error()) send_accept_error(new protocol::http::Response());
         else               send_accept_response(new ConnectResponse());
     }
-    
+
     if (creq->error()) {
         close();
         return;
     }
-    
+
     _state = State::CONNECTED;
     on_connection(creq);
 }
@@ -61,12 +61,12 @@ void ServerConnection::send_accept_error (panda::protocol::http::Response* res) 
     stream()->write(parser.accept_error(res));
 }
 
-void ServerConnection::send_accept_response (ConnectResponse* res) {
+void ServerConnection::send_accept_response (ConnectResponseSP res) {
     if (handshake_response_sent) throw std::logic_error("handshake response has been already sent");
     handshake_response_sent = true;
-    
+
     stream()->write(parser.accept_response(res));
-    
+
     auto using_deflate = parser.is_deflate_active();
     panda_log_notice("websocket::ServerConnection " << id() << " has been accepted, deflate is " << (using_deflate ? "on" : "off"));
 

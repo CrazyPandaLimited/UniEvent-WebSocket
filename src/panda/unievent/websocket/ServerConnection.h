@@ -21,7 +21,7 @@ struct ServerConnection : virtual Connection {
     using accept_fn   = function<accept_fptr>;
 
     struct Config : virtual Connection::Config {};
-    
+
     struct ConnectionData {
         uint64_t        id;
         const StreamSP& stream;
@@ -33,16 +33,16 @@ struct ServerConnection : virtual Connection {
     uint64_t id () const { return _id; }
 
     virtual void send_accept_error    (panda::protocol::http::Response*);
-    virtual void send_accept_response (ConnectResponse*);
+    virtual void send_accept_response (ConnectResponseSP);
 
     template <typename T = Server> T* get_server () const { return dyn_cast<T*>(server); }
 
 protected:
     virtual void handshake(const protocol::http::RequestSP&);
-    
+
     virtual void on_handshake (const ConnectRequestSP&);
     virtual void on_connection(const ConnectRequestSP&);
-    
+
     void do_close (uint16_t code, const string& payload) override;
 
     ~ServerConnection () {
