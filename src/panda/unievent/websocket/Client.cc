@@ -62,12 +62,12 @@ void Client::do_close (uint16_t code, const string& payload) {
 }
 
 void Client::call_on_connect(const ConnectResponseSP &response) {
-    panda_log_debug("timeout.end_step()");
+    panda_log_notice("websocket::Client::on_connect " << response->error());
     if (connect_request->_timer) {
         connect_request->_timer->pause();
         connect_request->_timer->event.remove_all();
     }
-    
+
     if (response->error()) {
         _state = State::HALT;
     }
@@ -84,7 +84,7 @@ void Client::on_connect (const ErrorCode& err, const unievent::ConnectRequestSP&
         call_on_connect(cres_from_cerr(err));
         return;
     }
-    
+
     if (connect_request->connect_timeout) {
         connect_request->_timer = stream_creq->timeout_timer();
         connect_request->_timer->event.add([this](auto&){
