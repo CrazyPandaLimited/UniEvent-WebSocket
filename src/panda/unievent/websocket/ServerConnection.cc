@@ -59,6 +59,7 @@ void ServerConnection::send_accept_error (panda::protocol::http::Response* res) 
     if (handshake_response_sent) throw std::logic_error("handshake response has been already sent");
     handshake_response_sent = true;
     stream()->write(parser.accept_error(res));
+    close();
 }
 
 void ServerConnection::send_accept_response (ConnectResponseSP res) {
