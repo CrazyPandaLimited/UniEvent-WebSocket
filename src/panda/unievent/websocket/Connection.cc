@@ -1,4 +1,5 @@
 #include "Connection.h"
+#include "panda/log/log.h"
 #include "panda/protocol/websocket/Frame.h"
 #include <panda/encode/base16.h>
 #include <numeric>
@@ -16,6 +17,7 @@ Builder::Builder (Connection& connection) : MessageBuilder(connection.parser->me
 
 WriteRequestSP Builder::send (string_view payload, const send_fn& callback) {
     if (!_connection.connected()) {
+        panda_log_warn("WS: writeing to closed connection");
         if (callback) callback(&_connection, errc::WRITE_ERROR, new unievent::WriteRequest());
         return nullptr;
     }
