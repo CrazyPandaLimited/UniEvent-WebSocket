@@ -155,6 +155,10 @@ struct Connection : Refcnt, protected IStreamSelfListener {
     void stats_counter(const StatisticsSP& val) {stats = val;}
     StatisticsSP stats_counter() {return stats;}
 
+    bool should_deflate(Opcode opcode, size_t payload_length) const {
+        return parser->should_deflate(opcode, payload_length);
+    }
+
 protected:
     State    _state;
     uint64_t shutdown_timeout = Config().shutdown_timeout;
