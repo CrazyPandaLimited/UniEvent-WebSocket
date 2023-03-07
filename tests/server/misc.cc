@@ -84,8 +84,7 @@ TEST_CASE("ws synopsis", "[.]") {
     client->connect("ws://myserver.com:12345");
     client->connect_event.add([](ClientSP client, ConnectResponseSP connect_response) {
         if (connect_response->error()) { /*...*/ }
-        string text = "hello";
-        client->send_text(text); // lvalue expected, content can be changed by send
+        client->send_text("hello");
     });
     client->message_event.add([](ConnectionSP client, MessageSP message){
         for (string s : message->payload) {
@@ -132,8 +131,7 @@ TEST_CASE("ws synopsis", "[.]") {
             std::cout << message->close_code();
             std::cout << message->close_message();
         });
-        string hello = "hello from server";
-        client->send_text(hello);
+        client->send_text("hello from server");
     });
 
     server->run();

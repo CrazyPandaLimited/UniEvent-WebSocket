@@ -10,8 +10,7 @@ ClientSP client = new Client();
 client->connect("ws://myserver.com:12345");
 client->connect_event.add([](ClientSP client, ConnectResponseSP connect_response) {
     if (connect_response->error()) { /*...*/ }
-    string text = "hello";
-    client->send_text(text); // lvalue expected, content can be changed by send
+    client->send_text("hello");
 });
 client->message_event.add([](ConnectionSP client, MessageSP message){
     for (string s : message->payload) {
@@ -19,7 +18,7 @@ client->message_event.add([](ConnectionSP client, MessageSP message){
     }
     client->close(CloseCode::DONE);
 });
-client->peer_close_event.add([](ConnectionSP client, MessageSP message) {
+client->peer_close_event.add([](ConnectionSP /*client*/, MessageSP message) {
     std::cout << message->close_code();
     std::cout << message->close_message();
 });
@@ -48,18 +47,17 @@ conf.deflate->compression_threshold = 1000;
 ServerSP server = new Server();
 server->configure(conf);
 
-server->connection_event.add([](ServerSP server, ServerConnectionSP client, ConnectRequestSP req) {
-    client->message_event.add([](ConnectionSP client, MessageSP message) {
+server->connection_event.add([](ServerSP /*server*/, ServerConnectionSP client, ConnectRequestSP) {
+    client->message_event.add([](ConnectionSP /*client*/, MessageSP message) {
         for (string s : message->payload) {
             std::cout << s;
         }
     });
-    client->peer_close_event.add([](ConnectionSP client, MessageSP message) {
+    client->peer_close_event.add([](ConnectionSP /*client*/, MessageSP message) {
         std::cout << message->close_code();
         std::cout << message->close_message();
     });
-    string hello = "hello from server";
-    client->send_text(hello);
+    client->send_text("hello from server");
 });
 
 server->run();
