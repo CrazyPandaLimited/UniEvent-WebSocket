@@ -73,6 +73,39 @@ It is built on top of [UniEvent-HTTP](https://github.com/CrazyPandaLimited/UniEv
 
 You can use [UniEvent::HTTP::Manager](https://github.com/CrazyPandaLimited/UniEvent-HTTP-Manager) to run multi-process http/websocket server with process management.
 
+# Build
+
+UniEvent-WebSocket can be built using CMake. It can be used as a subproject or standalone installation. Add all dependencies with `add_subdirectory` before including UniEvent-WebSocket or make sure they are available via `find_package`. Direct dependencies are
+* [UniEvent-HTTP](https://github.com/CrazyPandaLimited/UniEvent-HTTP)
+* [Protocol-Websocket](https://github.com/CrazyPandaLimited/Protocol-WebSocket-Fast)
+
+All the dependencies can be downloaded automatically on the configuration step. Just set `UNIEVENT_WEBSOCKET_FETCH_DEPS=ON` and they would be downloaded recursively.
+
+To add UniEvent-WebSocket to your CMake project it is easier to use FetchContent as well
+
+```cmake
+include(FetchContent)
+FetchContent_Declare(unievent-websocket GIT_REPOSITORY https://github.com/CrazyPandaLimited/UniEvent-WebSocket.git)
+FetchContent_MakeAvailable(unievent-websocket)
+```
+
+And then link against `unievent-websocket` target
+
+```cmake
+target_link_libraries(your_project PUBLIC unievent-websocket)
+```
+
+If you want to build  UniEvent-WebSocket itself then just run
+
+```bash
+mkdir build
+cd build
+cmake .. -DUNIEVENT_WEBSOCKET_FETCH_DEPS=ON
+cmake --build . -j
+```
+
+More information and common build details of UniEvent-based project look [here](https://github.com/CrazyPandaLimited/UniEvent/blob/master/doc/build.md).
+
 # Reference
 
 In progress
